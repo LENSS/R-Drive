@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <EditTextPreference
+        android:dialogTitle="Enter the blocking IPs of this node"
+        android:key="pref_blocking_ips"
+        android:negativeButtonText="Cancel"
+        android:positiveButtonText="Set"
+        android:title="Blocking IPs" />
+    
+    <EditTextPreference
+        android:dialogTitle="Enter the ratio of nodes used for key storaage"
+        android:key="pref_keystorage_ratio"
+        android:negativeButtonText="Cancel"
+        android:positiveButtonText="Set" android:defaultValue="0.6"
+        android:title="Key Storage Ratio" />
+    
+    <EditTextPreference
+        android:dialogTitle="Enter the ratio of nodes used for file storaage"
+        android:key="pref_filestorage_ratio"
+        android:negativeButtonText="Cancel"
+        android:positiveButtonText="Set" android:defaultValue="0.6"
+        android:title="File Storage Ratio" />
+    
+    <EditTextPreference
+        android:dialogTitle="Enter the coding ratio of key fragments"
+        android:key="pref_keycoding_ratio"
+        android:negativeButtonText="Cancel"
+        android:positiveButtonText="Set" android:defaultValue="0.5"
+        android:title="Key Coding Ratio" />
+    
+    <EditTextPreference
+        android:dialogTitle="Enter the coding ratio of file fragments"
+        android:key="pref_filecoding_ratio"
+        android:negativeButtonText="Cancel" 
+        android:positiveButtonText="Set" android:defaultValue="0.5"
+        android:title="File Coding Ratio" />
+    
+    
+	<!--EditTextPreference android:key="pref_gps_searching_time"
+		android:title="GPS Searching Timeout" android:dialogTitle="Enter the time in second"
+		android:positiveButtonText="Set" android:negativeButtonText="Cancel"
+		android:defaultValue="@string/df_gps_search_time" />
+	<EditTextPreference android:key="pref_gps_lastknown_location_timeout"
+		android:title="Last Known Location Timeout" android:dialogTitle="Enter the time in minutes"
+		android:positiveButtonText="Set" android:negativeButtonText="Cancel"
+		android:defaultValue="@string/df_gps_lastknown_time" />
+	<EditTextPreference android:key="pref_dflocation_latitude"
+		android:title="Default Location Latitude" android:dialogTitle="Enter the latitude in degree"
+		android:positiveButtonText="Set" android:negativeButtonText="Cancel"
+		android:defaultValue="@string/df_location_latitude" />
+	<EditTextPreference android:key="pref_dflocation_longtitude"
+		android:title="Default Location Longtitude" android:dialogTitle="Enter the longtitude in degree"
+		android:positiveButtonText="Set" android:negativeButtonText="Cancel"
+		android:defaultValue="@string/df_location_longtitude" / -->
+    
+</PreferenceScreen>

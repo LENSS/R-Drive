@@ -1,20 +1,14 @@
 package edu.tamu.cse.lenss.android;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 
 import org.apache.log4j.Logger;
-
-import edu.tamu.cse.lenss.mdfs.MDFSHandler;
 
 
 public class MDFSService extends Service {

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#000</color>
+    <color name="bright_blue">#D5EFFF</color>
+    <color name="dark_gray">#202020</color>
+    <color name="dark_red">#D16587</color>
+    <color name="gray">#6D6D6D</color>
+    <color name="light_blue">#44A3FC</color>
+    <color name="light_gray">#D7D7D7</color>
+    <color name="listview_bg_selected">#300000</color>
+    <color name="pink">#6A287E</color>
+    <color name="red">#FF0000</color>
+    <color name="transparent">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <string name="app_name">MDFS</string>
+    <string name="hello">Hello World, MDFSActivity!</string>
+    <style name="Theme.NoBackground" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@null</item>
+    </style>
+</resources>
