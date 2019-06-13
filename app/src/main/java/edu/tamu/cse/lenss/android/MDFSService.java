@@ -7,6 +7,7 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import java.io.IOException;
 
+import edu.tamu.cse.lenss.CLI.cli_processor;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 import java.io.File;
@@ -96,14 +97,10 @@ import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 public class MDFSService extends Service {
 
     public static final String loggerLocation = Environment.getExternalStorageDirectory().toString() + "/distressnet/mdfs.log";
-
     public final String CHANNEL_ID = "edu.tamu.cse.lenss.android.CHANNEL";
-
     private Context appContext;
+    public cli_processor cli;
 
-
-    NotificationManagerCompat notificationManager;
-    static int notificationID;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -111,9 +108,19 @@ public class MDFSService extends Service {
     }
 
 
+    @Override
     public void onCreate(){
-
         appContext = getApplication().getApplicationContext();
+        startMDFS();
+        startCLI();
+    }
+
+    private void startCLI() {
+         cli = new cli_processor();
+        cli.start();
+    }
+
+    public void startMDFS(){
         if(AndroidIOUtils.isConnectedToWifi(appContext)) {
             //init serviceHelper
             ServiceHelper.getInstance(appContext);  //sagor
@@ -128,50 +135,31 @@ public class MDFSService extends Service {
             LocalBroadcastManager.getInstance(appContext).registerReceiver(mMessageReceiver, new IntentFilter("current_ip"));  //sagor
 
         }
-        System.out.println("ServiceHelper is created");
+        System.out.println(" onetime ServiceHelper is created");
 
     }
+
 
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             //todo
+            //myIP = intent.getStringExtra("message");
+            //displayIP.setText(myIP);
         }
     };
 
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
-        notificationManager = NotificationManagerCompat.from(appContext);
-
-        //createNotification("Service started");
-
-
         return START_NOT_STICKY;
-
     }
-
-    private void createNotification(String notificationText){
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(appContext, CHANNEL_ID)
-                //.setSmallIcon(R.drawable.notification_icon)
-                //.setSmallIcon(R.drawable.ic_launcher_background)
-                .setContentText(notificationText)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-
-    // notificationId is a unique int for each notification that you must define
-        notificationManager.notify(++notificationID, builder.build());
-    }
-
 
     @Override
     public void onDestroy() {
 
-
-        //createNotification("Service terminated");
-
-
-        // Now restart the service
+        cli.interrupt();
+        //restart the service
         Intent broadcastIntent = new Intent();
         broadcastIntent.setAction("edu.tamu.cse.lenss.android.restartservice");
         broadcastIntent.setClass(this, Restarter.class);

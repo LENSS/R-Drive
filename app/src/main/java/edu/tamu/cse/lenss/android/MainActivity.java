@@ -38,13 +38,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
-/*        try {
-            GNSServiceUtils.initLogger(MDFSService.loggerLocation, Level.ALL);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-
         checkPermissions();
     }
 
@@ -81,14 +74,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    //if device permission is OK, this function is called from checkPermissions() function
     public void initializeApp(){
         runService();
     }
 
 
-    /*
-		This code starts a service. It gets the own Ip from selection.
-	*/
+    //this function starts a service
     void runService(){
         Intent intent = new Intent(this, MDFSService.class);
         this.startService(intent);
@@ -96,13 +88,11 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    /*
-    Before executing any code, the app should check whether the permissions are granted or not.
-    If the permission is not granted then ask the user to grant the required permission.
-    Check the detail code here: https://developer.android.com/training/permissions/requesting#java
-*/
-    private static final int REQEUST_PERMISSION_GNSSERVICE = 22;
 
+    //Before executing any code, the app should check whether the permissions are granted or not.
+    //If the permission is not granted then ask the user to grant the required permission.
+    //Check the detail code here: https://developer.android.com/training/permissions/requesting#java
+    private static final int REQEUST_PERMISSION_GNSSERVICE = 22;
     private void checkPermissions() {
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)

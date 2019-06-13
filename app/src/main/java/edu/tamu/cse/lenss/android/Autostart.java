@@ -22,12 +22,6 @@ public class Autostart extends BroadcastReceiver
     public void onReceive(Context context, Intent arg1)
     {
 
-/*        try { // Initialize the logger
-            GNSServiceUtils.initLogger(MDFSService.loggerLocation, Level.ALL);
-        } catch (IOException e) {
-            System.out.println("Problem with creating logger");
-        }*/
-
         Intent intent = new Intent(context,MDFSService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent);
