@@ -16,9 +16,17 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        incremental true
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    productFlavors {
+    }
 }
 
 dependencies {
+    api project(':MDFS5')
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:27.0.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
@@ -26,18 +34,6 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    implementation 'de.mindpipe.android:android-logging-log4j:1.0.3'
-    implementation 'log4j:log4j:1.2.17'
-    implementation files('MDFS5/libs/aspectjrt-1.7.3.jar')
-    implementation files('MDFS5/libs/API.jar')
-    implementation files('MDFS5/libs/commons-math3-3.0.jar')
-    implementation files('MDFS5/libs/GnsService-client-api.jar')
-    implementation files('MDFS5/libs/isoparser-1.0.6.jar')
-    implementation files('MDFS5/libs/jackson-annotations-2.9.4.jar')
-    implementation files('MDFS5/libs/jackson-core-2.9.4.jar')
-    implementation files('MDFS5/libs/jackson-databind-2.9.4.jar')
-    implementation files('MDFS5/libs/org.sat4j.pb.jar')
-    implementation files('MDFS5/libs/org.sat4j.core.jar')
-    implementation files('MDFS5/libs/secretshare-v1.1.jar')
-    implementation files('MDFS5/libs/uncommons-maths-1.2.2.jar')
+    //implementation files('libs/GnsService-client-api.jar')
+    //implementation files('libs/log4j-1.2.17.jar')
 }

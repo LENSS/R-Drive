@@ -5,12 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
-import edu.tamu.cse.lenss.gnsService.server.GNSServiceUtils;
 
 /**
  * This class will get notification during restart service when application is killed.
@@ -20,25 +17,24 @@ import edu.tamu.cse.lenss.gnsService.server.GNSServiceUtils;
  */
 public class Restarter extends BroadcastReceiver
 {
-    Logger logger = Logger.getLogger(this.getClass());
+
 
 
     public void onReceive(Context context, Intent arg1)
     {
 
-        try { // Initialize the logger
+/*        try { // Initialize the logger
             GNSServiceUtils.initLogger(MDFSService.loggerLocation, Level.ALL);
         } catch (IOException e) {
             System.out.println("Problem with creating logger");
-        }
+        }*/
 
-        logger.debug("Restarter got notification of boot");
         Intent intent = new Intent(context,MDFSService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent);
         } else {
             context.startService(intent);
         }
-        logger.info("Started the Service from Restarter");
+
     }
 }

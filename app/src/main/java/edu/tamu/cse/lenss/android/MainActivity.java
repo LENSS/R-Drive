@@ -15,15 +15,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
-import edu.tamu.cse.lenss.gnsService.server.GNSServiceUtils;
 
 public class MainActivity extends AppCompatActivity {
-    Logger logger = Logger.getLogger(this.getClass());
 
 
     @Override
@@ -43,11 +39,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        try {
+/*        try {
             GNSServiceUtils.initLogger(MDFSService.loggerLocation, Level.ALL);
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
 
         checkPermissions();
     }
@@ -111,7 +107,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
-            logger.warn("Permission not granted for Writing to external storage");
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
 
             } else {
@@ -129,11 +124,9 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case REQEUST_PERMISSION_GNSSERVICE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    logger.info("WRITE_EXTERNAL_STORAGE permission granted");
                     initializeApp();
                 } else {
                     Toast.makeText(this, "You denied the permission", Toast.LENGTH_SHORT).show();
-                    logger.info("Permission not granted");
                     checkPermissions();
                 }
         }
