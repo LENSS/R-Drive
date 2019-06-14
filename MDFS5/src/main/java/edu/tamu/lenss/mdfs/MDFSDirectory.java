@@ -244,7 +244,7 @@ public class MDFSDirectory implements Serializable {
 		//for any incoming NEW_FILE_UPDATE msg, this block is executed and checks some time-mechanism
 		//if check fails, it triggers a DELETE_FILE msg which deletes the file from entire network
 		//commenting this block prevents that delete from taking place - Mohammad Sagor
-		for (MyPair<Long, Long> pair : recentDelete) {
+		/*for (MyPair<Long, Long> pair : recentDelete) {
 			if (pair.first.equals(file.getCreatedTime())) {
 				// This file has been deleted
 				DeleteFile deleteFile = new DeleteFile();
@@ -252,7 +252,7 @@ public class MDFSDirectory implements Serializable {
 				ServiceHelper.getInstance().deleteFiles(deleteFile);
 				return;
 			}
-		}
+		}*/
 
 		fileMap.put(file.getCreatedTime(), file);
 		nameToIDMap.put(file.getFileName(), file.getCreatedTime());

@@ -10,9 +10,11 @@ import java.net.ServerSocket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import edu.tamu.lenss.mdfs.Constants;
+
 public class cli_processor extends Thread {
 
-    public static final int JAVA_PORT = 2223;
+    public static final int JAVA_PORT = Constants.CLI_PORT;
 
     public ExecutorService executor = Executors.newFixedThreadPool(5);
     public ServerSocket serverSocket;

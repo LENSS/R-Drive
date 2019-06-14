@@ -103,10 +103,9 @@ public class Constants {
 
 	public static String my_wifi_ip_temp = "";
 	public static final String dummy_EdgeKeeper_ip = "192.168.0.2";
-	public static final int dummy_EdgeKeeper_port = 9999;
-	//check if I am the dummy EdgeKeeper or nah.
-	//if yes, I run a server in a thread and store all metadata in me.
-	//if nah, I am a client and store/fetch metadata to the server.
+	public static final int dummy_EdgeKeeper_port = 9995;
+	public static final int CLI_PORT = 2223;
+
 
 
 

@@ -51,6 +51,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         // Stop the service
         this.stopService(new Intent(this, MDFSService.class));
+
+        //
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction("edu.tamu.cse.lenss.android.restartservice");
+        broadcastIntent.setClass(this, Restarter.class);
+        this.sendBroadcast(broadcastIntent);
+
+
+
         //restartGNSService();
         super.onDestroy();
 
@@ -82,6 +91,12 @@ public class MainActivity extends AppCompatActivity {
 
     //this function starts a service
     void runService(){
+        //this.stopService(new Intent(this, MDFSService.class));
+
+        // First stop the already running service
+        this.stopService(new Intent(this, MDFSService.class));
+
+
         Intent intent = new Intent(this, MDFSService.class);
         this.startService(intent);
     }
