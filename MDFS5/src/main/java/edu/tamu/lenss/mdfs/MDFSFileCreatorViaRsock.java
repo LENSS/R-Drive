@@ -292,10 +292,16 @@ public class MDFSFileCreatorViaRsock {
         if(peerGUIDsListfromGNS==null){ System.out.println("GNS Error! called getPeerGUIDs() and returned null."); System.exit(0);}
 
         //third,get all nearby vertices from Topology.java from rsockJavaAPI(OLSR) and put it in a list
-        Set<String> peerGUIDsSetfromOLSR = Topology.getInstance(Constants.intrfc_creation_appid).getVertices();
+        Set<String> peerGUIDsSetfromOLSR = Topology.getInstance(Constants.intrfc_creation_appid).getVertices();  //todo: check if it returns null first
         List<String> peerGUIDsListfromOLSR = new ArrayList<String>();
-        Iterator<String> it = peerGUIDsSetfromOLSR.iterator();
-        while(it.hasNext()){ peerGUIDsListfromOLSR.add(it.next()); }
+        if(peerGUIDsListfromOLSR!=null){
+            Iterator<String> it = peerGUIDsSetfromOLSR.iterator();
+            while(it.hasNext()){ peerGUIDsListfromOLSR.add(it.next()); }
+        }else{
+            fileCreatorListener.onError("no neighbors found from OLSR");
+            return;
+        }
+
 
         //fourth, cross the peerGUIDsListfromGNS and peerGUIDsListfromOLSR and get the common ones
         List<String> commonPeerGUIDs = new ArrayList<>();
@@ -372,7 +378,6 @@ public class MDFSFileCreatorViaRsock {
     private void updateDirectory() {
         try { sleep(3000); } catch (InterruptedException e) { e.printStackTrace(); }
 
-        System.out.println("inside update directory");
         ServiceHelper serviceHelper = ServiceHelper.getInstance();
         fileInfo.setCreator(serviceHelper.getNodeManager().getMyMAC());
         NewFileUpdate update = new NewFileUpdate(fileInfo);

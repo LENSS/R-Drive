@@ -21,7 +21,8 @@ int main(int argc , char *argv[])
   while(true){
     cout<<"\n";
     cout<<"command to MDFS: ";
-    cin>>command;
+    //cin>>command;
+    getline(cin, command);
     reply = cli.send_receive(command);
     cout<<"reply: " + reply;
     cout<<"\n";

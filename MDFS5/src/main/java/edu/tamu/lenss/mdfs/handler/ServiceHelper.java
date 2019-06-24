@@ -8,6 +8,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+
+import edu.tamu.lenss.mdfs.Constants;
+import edu.tamu.lenss.mdfs.GNS.GNS;
 import edu.tamu.lenss.mdfs.MDFSDirectory;
 import edu.tamu.lenss.mdfs.MDFSNodeStatusMonitor;
 import edu.tamu.lenss.mdfs.handler.BlockReplyHandler.BlockRepListener;
@@ -20,6 +23,8 @@ import edu.tamu.lenss.mdfs.models.JobReq;
 import edu.tamu.lenss.mdfs.models.NewFileUpdate;
 import edu.tamu.lenss.mdfs.utils.AndroidDataLogger;
 import edu.tamu.lenss.mdfs.utils.Logger;
+
+import static java.lang.Thread.sleep;
 
 
 public class ServiceHelper {
@@ -65,6 +70,7 @@ public class ServiceHelper {
 	 * It won't be synced to the global shared MDFSDirectory in ServiceHelper.
 	 * @return MDFSDirectory held by ServiceHelper
 	 */
+
 	public MDFSDirectory getDirectory() {
 		return directory;
 	}
@@ -78,6 +84,10 @@ public class ServiceHelper {
 	}
 
 	public static void releaseService(){
+		//unregister GNS
+		boolean gnsUnreg = GNS.gnsServiceClient.removeService(Constants.GNS_s);
+		System.out.println("gnsUnreg: " + gnsUnreg);
+
 		if(instance != null ){ 
 			Logger.v(TAG, "releaseService");
 			directory.saveDirectory();

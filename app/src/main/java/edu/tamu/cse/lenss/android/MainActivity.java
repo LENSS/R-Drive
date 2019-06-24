@@ -52,15 +52,13 @@ public class MainActivity extends AppCompatActivity {
         // Stop the service
         this.stopService(new Intent(this, MDFSService.class));
 
-        //
+        /*
+        //this block of code restarts the service once again after the app is closed
         Intent broadcastIntent = new Intent();
         broadcastIntent.setAction("edu.tamu.cse.lenss.android.restartservice");
         broadcastIntent.setClass(this, Restarter.class);
-        this.sendBroadcast(broadcastIntent);
+        this.sendBroadcast(broadcastIntent);*/
 
-
-
-        //restartGNSService();
         super.onDestroy();
 
 

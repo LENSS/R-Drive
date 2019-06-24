@@ -11,7 +11,7 @@ public class GNS {
     public static GnsServiceClient gnsServiceClient;
     public static String ownGUID;
 
-    public static GnsServiceClient getGNSInstance() {
+    public static GnsServiceClient getGNSInstance() { //todo: make sure this funtion starts after GNS service is running
         if (gnsServiceClient == null) {
             gnsServiceClient = new GnsServiceClient();
             try { sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }

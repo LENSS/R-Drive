@@ -118,7 +118,7 @@ public class NetworkObserver extends Service implements Observer {
 		SP = PreferenceManager.getDefaultSharedPreferences(this);
 		firstStarted = true;
 
-		//log4j used by rsockJavaAPI and GNS							//RSOCK
+		//log4j used by rsockJavaAPI and GNS
 		try {
 			GNSServiceUtils.initLogger(Environment.getExternalStorageDirectory() + "/someLog", Level.ALL);
 		} catch (IOException e) {

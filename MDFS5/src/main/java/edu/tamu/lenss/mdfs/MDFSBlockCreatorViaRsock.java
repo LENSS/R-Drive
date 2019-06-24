@@ -1,5 +1,6 @@
 package edu.tamu.lenss.mdfs;
 
+import static android.os.Environment.getExternalStoragePublicDirectory;
 import static java.lang.Thread.sleep;
 
 import java.io.ByteArrayOutputStream;
@@ -8,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -239,8 +241,10 @@ public class MDFSBlockCreatorViaRsock {
                     oos.flush();
                     byte [] data = bos.toByteArray();
 
-                    //print the byteArray for testing
-                    //System.out.println("print: " + Arrays.toString(data));
+
+                    //print
+                    System.out.println(Arrays.toString(data));
+
 
                     //send the object over rsock
                     String uuid = UUID.randomUUID().toString().substring(0,12);

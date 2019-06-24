@@ -66,6 +66,11 @@ public class Constants {
 //========================================RSOCK===============================================
 
 
+	//GNS variables
+	public static final int GUID_LENGTH = 40;
+	public static String GNS_s = "MDFS";
+	public static String GNS_s1 = "default";
+
 	//rsock api instances, initialized in PacketExchanger.java class
 	public static Interface intrfc_creation;
 	public static Interface intrfc_retrieval;

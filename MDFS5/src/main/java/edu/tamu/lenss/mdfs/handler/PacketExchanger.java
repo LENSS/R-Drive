@@ -55,7 +55,7 @@ public class PacketExchanger extends Observable {
 		//if file creation or retrieval is via rsock, then we need gns, so init gns first in GNS.java file		//RSOCK
 		if(Constants.file_creation_via_rsock_or_tcp.equals("rsock") || Constants.file_retrieval_via_rsock_or_tcp.equals("rsock")) {
 			GNS.getGNSInstance();
-			GNS.gnsServiceClient.addService("MDFS", "default");
+			GNS.gnsServiceClient.addService(Constants.GNS_s, Constants.GNS_s1);
 		}
 
 		try { sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }

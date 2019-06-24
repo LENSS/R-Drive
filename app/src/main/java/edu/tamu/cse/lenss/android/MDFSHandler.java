@@ -10,6 +10,8 @@ import android.support.v4.content.LocalBroadcastManager;
 import java.io.IOException;
 
 import edu.tamu.cse.lenss.CLI.cli_processor;
+import edu.tamu.lenss.mdfs.Constants;
+import edu.tamu.lenss.mdfs.GNS.GNS;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 
@@ -60,7 +62,7 @@ public class MDFSHandler extends Thread {
 
 
     private void startCLI() {
-        cli = new cli_processor();
+        cli = new cli_processor(appContext);
         cli.start();
     }
 

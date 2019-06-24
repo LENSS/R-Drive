@@ -1,5 +1,7 @@
 package edu.tamu.cse.lenss.CLI;
 
+import android.content.Context;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -19,6 +21,11 @@ public class cli_processor extends Thread {
     public ExecutorService executor = Executors.newFixedThreadPool(5);
     public ServerSocket serverSocket;
     public boolean isRunning = false;
+    Context appContext;
+
+    public cli_processor(Context con){
+        this.appContext = con;
+    }
 
     //The purpose of the server is to accept new connection and let
     //the Request Handler deal with the service request in another thread.
@@ -38,7 +45,7 @@ public class cli_processor extends Thread {
             try {
                 cSocket = serverSocket.accept();
                 System.out.println("CLIII received new connection..." );
-                executor.execute(new RequestHandler(cSocket));
+                executor.execute(new RequestHandler(cSocket, appContext));
 
             } catch (IOException e) {
                 System.out.println("CLIII Error in accepting client connection"+ e);
