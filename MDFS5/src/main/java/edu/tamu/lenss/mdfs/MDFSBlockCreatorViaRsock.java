@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperMetadata;
 import edu.tamu.lenss.mdfs.GNS.GNS;
+import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.crypto.FragmentInfo;
 import edu.tamu.lenss.mdfs.crypto.MDFSEncoder;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
@@ -49,11 +49,11 @@ public class MDFSBlockCreatorViaRsock {
     private boolean fetchTopology, isEncryptComplete;
     private AtomicInteger fragCounter;
     List<String> chosenNodes;
-    EdgeKeeperMetadata metadata;
     public boolean isFinished = false;
+    String clientID;
 
 
-    public MDFSBlockCreatorViaRsock(File file, MDFSFileInfo info, byte blockIndex, MDFSBlockCreatorListenerViaRsock lis, List<String> chosenodes, EdgeKeeperMetadata metadata) {  //RSOCK
+    public MDFSBlockCreatorViaRsock(File file, MDFSFileInfo info, byte blockIndex, MDFSBlockCreatorListenerViaRsock lis, List<String> chosenodes, String clientID) {  //RSOCK
         this.blockIdx = blockIndex;
         this.blockFile = file;
         this.listener = lis;
@@ -63,11 +63,12 @@ public class MDFSBlockCreatorViaRsock {
         this.n2 = fileInfo.getN2();
         this.fragCounter = new AtomicInteger();
         this.chosenNodes = chosenodes;
-        this.metadata = metadata;
+        this.clientID = clientID;
     }
 
 
     public void start() {
+        System.out.println("start gets called aaa");
         encryptFile();
         initTopology();
         distributeFragments();
@@ -96,7 +97,7 @@ public class MDFSBlockCreatorViaRsock {
 
         //if (!encoder.encode()) {
         if(fragInfos == null) {
-            listener.onError("File Encryption Failed");
+            listener.onError("File Encryption Failed", clientID);
             return;
         }
 
@@ -127,13 +128,20 @@ public class MDFSBlockCreatorViaRsock {
         //check if file encryption and fetch topoplogy succeeded
         if (!fetchTopology || !isEncryptComplete)
             return;
-        Logger.d(TAG, "distributeFragments() is called");
+        System.out.println("distributeFragments() is called");
+
+        //check if fileStoragesAddrasGUID only contains one entry ans that is ownGUID
+        //that means locally fragment storage is done and needs to call oncomplete() and return.
+        if(fileStoragesAddrasGUID.size()==1 && fileStoragesAddrasGUID.contains(GNS.ownGUID)){
+            listener.onComplete("fragments were distributed", clientID);
+            return;
+        }
 
         // Scan through all files in the folder and upload them
         File fileFragDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileInfo.getFileName(), fileInfo.getCreatedTime(), blockIdx));
         if(!fileFragDir.exists()){
             Logger.e(TAG, "Can't find fragments directory of the block");
-            listener.onError("No block directory");
+            listener.onError("No block directory", clientID);
             return;
         }
 
@@ -246,11 +254,11 @@ public class MDFSBlockCreatorViaRsock {
                     System.out.println(Arrays.toString(data));
 
 
-                    //send the object over rsock
-                    String uuid = UUID.randomUUID().toString().substring(0,12);
-
-                    Constants.intrfc_creation.send(uuid, data, data.length, "nothing","nothing", destGUID,0,"default","default","default");
+                    //send the object over rsock. only send people who are not me
+                    String uuid = UUID.randomUUID().toString().substring(0, 12);
+                    RSockConstants.intrfc_creation.send(uuid, data, data.length, "nothing", "nothing", destGUID, 0, "default", "default", "default");
                     System.out.println("fragment has been pushed to the rsock daemon to : " + destGUID);
+
 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -258,21 +266,18 @@ public class MDFSBlockCreatorViaRsock {
 
                 success = true;
 
-                //add fragment metadata into metadata object
-                metadata.addInfo(destGUID, Integer.toString((int)blockIdx), Integer.toString((int)fragmentIndex));
-
             } catch (NullPointerException nulp) {
                 nulp.printStackTrace();
             }finally {
                 if (!success) {
-                    //todo: do what
+                    //do something
                 }
                 else if(fragCounter.incrementAndGet() >= n2){	// success!
                     if(isFinished)
                         return;
                     if (fragCounter.get() > k2 || (fragCounter.get()==k2 && n2 == k2 )){
                         Logger.v(TAG, fragCounter.get() + " fragments were distributed");
-                        listener.onComplete();
+                        listener.onComplete("fragments were distributed", clientID);
 
                     }
                     else{
@@ -280,8 +285,7 @@ public class MDFSBlockCreatorViaRsock {
                         DeleteFile deleteFile = new DeleteFile();
                         deleteFile.setFile(fileInfo.getFileName(), fileInfo.getCreatedTime());
                         ServiceHelper.getInstance().deleteFiles(deleteFile);
-                        listener.onError("Fail to distribute file fragments. " +
-                                "Only " + fragCounter.get() + " were successfully sent. Please try again later");
+                        listener.onError("Fail to distribute file fragments. " + "Only " + fragCounter.get() + " were successfully sent. Please try again later", clientID);
                     }
                     isFinished = true;
 
@@ -297,19 +301,19 @@ public class MDFSBlockCreatorViaRsock {
         public void statusUpdate(String status) {}
 
         @Override
-        public void onError(String error) {}
+        public void onError(String error, String clientID) {}
 
         @Override
-        public void onComplete() {}
+        public void onComplete(String msg, String clientID) {}
 
     };
 
     public interface MDFSBlockCreatorListenerViaRsock {
         public void statusUpdate(String status);
 
-        public void onError(String error);
+        public void onError(String error, String clientID);
 
-        public void onComplete();
+        public void onComplete(String msg, String clientID);
     }
 
     private class BlockCreationLog{

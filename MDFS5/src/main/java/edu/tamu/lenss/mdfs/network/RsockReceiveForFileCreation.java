@@ -1,43 +1,24 @@
 package edu.tamu.lenss.mdfs.network;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.io.StreamCorruptedException;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.security.PrivateKey;
 import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.GNS.GNS;
 import edu.tamu.lenss.mdfs.MDFSBlockCreator;
+import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
-import edu.tamu.lenss.mdfs.models.DeleteFile;
 import edu.tamu.lenss.mdfs.models.FragmentTransferInfo;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
-import edu.tamu.lenss.mdfs.network.TCPControlPacket.TCPPacketType;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
-import edu.tamu.lenss.mdfs.utils.IOUtilities;
 import edu.tamu.lenss.mdfs.utils.Logger;
-import edu.tamu.lenss.mdfs.utils.MyTextUtils;
 import edu.tamu.lenss.mdfs.MDFSRsockBlockCreator;
 import example.Interface;
 import example.ReceivedFile;
-import edu.tamu.lenss.mdfs.utils.JCountDownTimer;
-import java.nio.ByteBuffer;
 
 import static java.lang.Thread.sleep;
 
@@ -56,15 +37,15 @@ public class RsockReceiveForFileCreation implements Runnable{
 
     @Override
     public void run() {
-        if(Constants.intrfc_creation==null) {
-            Constants.intrfc_creation = Interface.getInstance(GNS.getGNSInstance().getOwnGuid(), Constants.intrfc_creation_appid, 999);
+        if(RSockConstants.intrfc_creation==null) {
+            RSockConstants.intrfc_creation = Interface.getInstance(GNS.getGNSInstance().getOwnGuid(), RSockConstants.intrfc_creation_appid, 999);
         }
         System.out.println("Rsock receiver thread is running...");
         ReceivedFile rcvdfile = null;
         while(!isTerminated){
             try {
                 //blocking on receving through rsock
-                try { rcvdfile = Constants.intrfc_creation.receive(0, "default"); } catch (InterruptedException e) {e.printStackTrace(); }
+                try { rcvdfile = RSockConstants.intrfc_creation.receive(0, "default"); } catch (InterruptedException e) {e.printStackTrace(); }
                 if(rcvdfile!=null) {
                     System.out.println("new incoming rsock");
 
@@ -116,12 +97,19 @@ public class RsockReceiveForFileCreation implements Runnable{
                 }
             }
 
+            //write on file
             tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(header.getFileName(), header.getCreatedTime(), header.getBlockIndex(), header.getFragIndex()));
             FileOutputStream outputStream = new FileOutputStream(tmp0);
             outputStream.write(byteArray);
             outputStream.flush();
             outputStream.close();
+
+            //update own local directory data
             ServiceHelper.getInstance().getDirectory().addBlockFragment(header.getCreatedTime(), header.getBlockIndex(), header.getFragIndex());
+
+            //todo: make a connection to the edgekeeper and send data to edgeKeeper
+
+
         }catch(IOException | NullPointerException | SecurityException e){
             e.printStackTrace();
         }

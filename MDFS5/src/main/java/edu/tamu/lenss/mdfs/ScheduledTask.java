@@ -35,7 +35,7 @@ public class ScheduledTask {
 		taskExecutor.scheduleAtFixedRate(new Runnable(){
     		@Override
     		public void run() {
-    			ServiceHelper.getInstance().broadcastMyDirectory();
+    			//ServiceHelper.getInstance().broadcastMyDirectory();  //commented by mohammad sagor(reason: no need to update directory periodically,,,edgekeeper already does directory service)
     			ServiceHelper.getInstance().getDirectory().saveDirectory();
     			//Logger.v(TAG, "Directory broadcasted");
     		}

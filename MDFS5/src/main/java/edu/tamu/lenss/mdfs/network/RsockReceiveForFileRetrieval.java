@@ -1,11 +1,9 @@
 package edu.tamu.lenss.mdfs.network;
 
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -13,35 +11,18 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.security.PrivateKey;
-import java.util.Arrays;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.GNS.GNS;
-import edu.tamu.lenss.mdfs.MDFSBlockCreator;
 import edu.tamu.lenss.mdfs.MDFSBlockRetriever;
 import edu.tamu.lenss.mdfs.MDFSRsockBlockRetrieval;
-import edu.tamu.lenss.mdfs.handler.ServiceHelper;
-import edu.tamu.lenss.mdfs.models.DeleteFile;
+import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.models.FragmentTransferInfo;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
-import edu.tamu.lenss.mdfs.network.TCPControlPacket.TCPPacketType;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
-import edu.tamu.lenss.mdfs.utils.IOUtilities;
 import edu.tamu.lenss.mdfs.utils.Logger;
-import edu.tamu.lenss.mdfs.utils.MyTextUtils;
-import edu.tamu.lenss.mdfs.MDFSRsockBlockCreator;
 import example.*;
-import edu.tamu.lenss.mdfs.utils.JCountDownTimer;
-import java.nio.ByteBuffer;
 
 import static java.lang.Thread.sleep;
 
@@ -59,7 +40,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
 
         try {
             //create rsock Interface intrfc
-            Constants.intrfc_retrieval = Interface.getInstance(GNS.getGNSInstance().getOwnGuid(), Constants.intrfc_retrieval_appid, 999);
+            RSockConstants.intrfc_retrieval = Interface.getInstance(GNS.getGNSInstance().getOwnGuid(), RSockConstants.intrfc_retrieval_appid, 999);
 
             ReceivedFile receivedFile = null;
             byte[] byteArray = null;
@@ -70,7 +51,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
 
                 //blocking receive
                 ////receivedFile = intrfc.receive(0);
-                try { receivedFile = Constants.intrfc_retrieval.receive(0,"hdrRecv");} catch (InterruptedException e) {e.printStackTrace(); }
+                try { receivedFile = RSockConstants.intrfc_retrieval.receive(0,"hdrRecv");} catch (InterruptedException e) {e.printStackTrace(); }
 
                 //if unblocked, check if received something
                 if (receivedFile != null) {
@@ -98,7 +79,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
 
 
                     //create TCP on the same machine
-                    TCPSend send = TCPConnection.creatConnection(GNS.gnsServiceClient.getIPbyGUID(destGUID).get(0)); //todo: check before passing the ip OR dont make tcp
+                    TCPSend send = TCPConnection.creatConnection(GNS.gnsServiceClient.getIPbyGUID(destGUID).get(0)); //todo:  dont make tcp fetch the fragment from disk
                     if(send == null){ Logger.e(TAG, "Connection Failed"); return; }
 
                     //send header
@@ -162,7 +143,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
 
                             //send the object over rsock
                             String uuid = UUID.randomUUID().toString().substring(0,12);
-                            Constants.intrfc_retrieval.send(uuid, data, data.length, "nothing","nothing", srcGUID, 0, "hdrRecv", receivedFile.getReplyEndpoint(), "noReply");
+                            RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing","nothing", srcGUID, 0, "hdrRecv", receivedFile.getReplyEndpoint(), "noReply");
                             System.out.println("fragment has been pushed to the rsock daemon (success)");
 
                             //delete tmp0 file
@@ -189,7 +170,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
 
                             //send the object over rsock
                             String uuid = UUID.randomUUID().toString().substring(0,12);
-                            Constants.intrfc_retrieval.send(uuid, data, data.length, "nothing","nothing", srcGUID, 0, "hdrRecv", receivedFile.getReplyEndpoint(), "nothing");
+                            RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing","nothing", srcGUID, 0, "hdrRecv", receivedFile.getReplyEndpoint(), "nothing");
                             System.out.println("fragment has been pushed to the rsock daemon (failure)");
 
                         } catch (IOException e) {

@@ -7,8 +7,10 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import edu.tamu.lenss.mdfs.Constants;
+import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
 import edu.tamu.lenss.mdfs.EdgeKeeper.server;
 import edu.tamu.lenss.mdfs.GNS.GNS;
+import edu.tamu.lenss.mdfs.GNS.GNSConstants;
 import edu.tamu.lenss.mdfs.handler.Receiver.UDPReceiverListener;
 import edu.tamu.lenss.mdfs.network.TCPConnection;
 import edu.tamu.lenss.mdfs.network.TCPReceive.TCPReceiverData;
@@ -55,7 +57,7 @@ public class PacketExchanger extends Observable {
 		//if file creation or retrieval is via rsock, then we need gns, so init gns first in GNS.java file		//RSOCK
 		if(Constants.file_creation_via_rsock_or_tcp.equals("rsock") || Constants.file_retrieval_via_rsock_or_tcp.equals("rsock")) {
 			GNS.getGNSInstance();
-			GNS.gnsServiceClient.addService(Constants.GNS_s, Constants.GNS_s1);
+			GNS.gnsServiceClient.addService(GNSConstants.GNS_s, GNSConstants.GNS_s1);
 		}
 
 		try { sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
@@ -73,8 +75,8 @@ public class PacketExchanger extends Observable {
 		}
 
 		//check if I am the dummy EdgeKeeper server.
-		if(Constants.dummy_EdgeKeeper_ip.equals(Constants.my_wifi_ip_temp)){
-			server server = new server(Constants.dummy_EdgeKeeper_port);
+		if(EdgeKeeperConstants.dummy_EdgeKeeper_ip.equals(EdgeKeeperConstants.my_wifi_ip_temp)){
+			server server = new server(EdgeKeeperConstants.dummy_EdgeKeeper_port);
 			server.start();
 		}
 

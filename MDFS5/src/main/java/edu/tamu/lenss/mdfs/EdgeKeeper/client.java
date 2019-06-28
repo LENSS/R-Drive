@@ -5,6 +5,9 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 
 public class client{
     public String serverIP;
@@ -12,12 +15,15 @@ public class client{
     public SocketChannel socket;
     public boolean isConnected = false;
 
+    public static BlockingQueue<EdgeKeeperMetadata> temporaryMetadataHolder = new LinkedBlockingDeque<>();
+    public static Thread queueCleaner;
+
     public client(String serverip, int port){
         this.serverIP = serverip;
         this.port = port;
     }
 
-    public void connect(){
+    public boolean connect(){
         if(socket==null){
             try { this.socket = SocketChannel.open();
                 this.socket.connect(new InetSocketAddress(serverIP, port));
@@ -25,8 +31,13 @@ public class client{
             if(socket!=null){
                 isConnected = true;
                 System.out.println("EdgeKeeper client Socket is connected");
-            }else{System.out.println("EdgeKeeper client Socket is not connected");}
+                return true;
+            }else{
+                System.out.println("EdgeKeeper client Socket is not connected");
+                return false;
+            }
         }
+        return false;
     }
 
     public void close(){
@@ -67,7 +78,7 @@ public class client{
         }
     }
 
-    public ByteBuffer receive(){
+    public ByteBuffer receive(){  //todo: should add a timeout
         //first, read only Long.BYTES amount to figure out the total receive size
         System.out.println("EdgeKeeper client waiting for reply");
         long size_of_recv = 0;
@@ -117,11 +128,17 @@ public class client{
         recvBuf.order(ByteOrder.LITTLE_ENDIAN);
         recvBuf.clear();
 
-        //put all the data in the recvBuf
+        //put all the data in the staticrecvBuf
         for(int i=0; i< recv.limit(); i++){ recvBuf.put(recv.get(i)); }
         recvBuf.flip();
 
         //return
         return recvBuf;
+    }
+
+    //this function should only be used when manually connecting to the endgekeeper fails
+    //this function only handles EdgeKeeperMetadata of command types FILE_CREATOR_METADATA_DEPOSIT_REQUEST, FRAGMENT_RECEIVER_METADATA_DEPOSIT_REQUEST, GROUP_INFO_SUBMISSION_REQUEST
+    public static void putInDTNQueue(){
+        //todo : make a thread if not alredy created and put data in the queue to send when connection is available
     }
 }

@@ -16,7 +16,7 @@ import edu.tamu.lenss.mdfs.Constants;
 
 public class cli_processor extends Thread {
 
-    public static final int JAVA_PORT = Constants.CLI_PORT;
+    public static final int JAVA_PORT = CLIConstants.CLI_PORT;
 
     public ExecutorService executor = Executors.newFixedThreadPool(5);
     public ServerSocket serverSocket;
@@ -32,7 +32,7 @@ public class cli_processor extends Thread {
     public void run() {
         try {
             serverSocket = new ServerSocket(JAVA_PORT);
-            System.out.println("CLIII server running" );
+            System.out.println("CLIII server is running" );
         } catch (IOException e) {
             System.out.println("CLIII server init failed" );
             e.printStackTrace();

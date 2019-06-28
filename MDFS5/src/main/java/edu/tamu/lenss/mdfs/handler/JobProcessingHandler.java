@@ -22,7 +22,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import android.content.Context;
 import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.MDFSBlockRetriever;
-import edu.tamu.lenss.mdfs.MDFSBlockRetriever.BlockRetrieverListener;
 import edu.tamu.lenss.mdfs.models.AssignTaskReq;
 import edu.tamu.lenss.mdfs.models.JobReply;
 import edu.tamu.lenss.mdfs.models.JobReq;
@@ -267,7 +266,7 @@ public class JobProcessingHandler {
 	 */
 	private boolean downloadAndProcess(final Context context, final Queue<MyPair<Long, Byte>> downloadQ,
 			final String outputDirPath, final byte[] decryptKey ){
-		BlockRetrieverListener blockListener = new BlockRetrieverListener(){
+		MDFSBlockRetriever.BlockRetrieverListener blockListener = new MDFSBlockRetriever.BlockRetrieverListener(){
 			private long sleepPeriod = Constants.IDLE_BTW_FAILURE;
 			
 			@Override
@@ -336,7 +335,7 @@ public class JobProcessingHandler {
 				fInfo = ServiceHelper.getInstance().getDirectory().getFileInfo(blockPair.first);
 				if(fInfo == null)
 					continue;
-				curBlock = new MDFSBlockRetriever(fInfo, blockPair.second); 
+				curBlock = new MDFSBlockRetriever(fInfo, blockPair.second);
 				curBlock.setDecryptKey(decryptKey);
 				curBlock.setListener(blockListener);
 				curBlock.start();

@@ -3,14 +3,12 @@ package edu.tamu.lenss.mdfs;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,15 +23,14 @@ import android.os.Environment;
 
 import com.google.common.io.Files;
 
-import org.sat4j.pb.tools.INegator;
-
+import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
 import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperMetadata;
 import edu.tamu.lenss.mdfs.EdgeKeeper.client;
 import edu.tamu.lenss.mdfs.GNS.GNS;
+import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.models.NewFileUpdate;
-import edu.tamu.lenss.mdfs.utils.AndroidDataLogger.LogFileInfo.LogFileName;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 import edu.tamu.lenss.mdfs.utils.CallableTask;
 import edu.tamu.lenss.mdfs.utils.CallableTask.CallableCallback;
@@ -64,11 +61,14 @@ public class MDFSFileCreatorViaRsock {
     private boolean deleteWhenComplete = false;
     private boolean isSending = false;
     List<String> chosenNodes;
+    String[] permList;
     EdgeKeeperMetadata metadata;
+    String clientID;
+
 
 
     //this constructor is called from the application side HomeScreen.java class
-    public MDFSFileCreatorViaRsock(File f, long maxBlockSize, double encodingRatio) {  //RSOCK
+    public MDFSFileCreatorViaRsock(File f, long maxBlockSize, double encodingRatio, String[] permList, String clientID) {  //RSOCK
         this.file = f;
         this.encodingRatio = encodingRatio;
         this.blockCount = (int)Math.ceil((double)file.length()/maxBlockSize);
@@ -76,21 +76,24 @@ public class MDFSFileCreatorViaRsock {
         this.fileInfo.setFileSize(file.length());
         this.fileInfo.setNumberOfBlocks((byte)blockCount);
         Logger.w(TAG, "Split file " + f.getName() + " to " + blockCount + " blocks");
-        this.metadata = new EdgeKeeperMetadata('d', GNS.ownGUID, fileInfo.getCreatedTime(), fileInfo.getFileName(), blockCount, (byte)0,(byte) 0);  //d = deposit
+        this.metadata = new EdgeKeeperMetadata(EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, fileInfo.getCreatedTime(), fileInfo.getFileName(), blockCount, (byte)0,(byte) 0);
+        this.permList = permList;
+        this.clientID = clientID;
+        this.chosenNodes = new ArrayList<>();
     }
 
 
     //this function is called from HomeScreen.java class
     //this function sets a listener(listener is used to update app activity )
-    public void setListener(MDFSBlockCreatorListenerViaRsock fileList){
-        fileCreatorListener = fileList;
+    public void setListener(MDFSBlockCreatorListenerViaRsock fileListener){
+        fileCreatorListener = fileListener;
     }
 
 
     public void start(){
 
-        //first fetch topology from
-        fetchTopology();
+        //first fetch topology from olsr
+        fetchTopologyAndChooseNodes();
 
         if(blockCount > 1){
             partition();
@@ -104,9 +107,10 @@ public class MDFSFileCreatorViaRsock {
                 Files.copy(file, fileBlock);
             } catch (IOException e) {
                 e.printStackTrace();
-                fileCreatorListener.onError("Copy block fails");
+                fileCreatorListener.onError("Copying block from local drive failed", clientID);
             }
 
+            //no need for partition but make this variable true
             synchronized(fileInfo){
                 isPartComplete = true;
             }
@@ -117,6 +121,7 @@ public class MDFSFileCreatorViaRsock {
     public void setEncryptKey(byte[] key){
         this.encryptKey = key;
     }
+
 
 
     public void partition(){
@@ -144,7 +149,7 @@ public class MDFSFileCreatorViaRsock {
                 }
                 else{
                     Logger.e(TAG, "Fail to split video.");
-                    fileCreatorListener.onError("Fail to split video");
+                    fileCreatorListener.onError("Fail to split video", clientID);
                 }
             }
         };
@@ -165,6 +170,7 @@ public class MDFSFileCreatorViaRsock {
                 return;
             }
         }
+
         isSending = true;
         Logger.i(TAG, "Start to send blocks");
         fileCreatorListener.statusUpdate("Start to send blocks");
@@ -197,7 +203,7 @@ public class MDFSFileCreatorViaRsock {
                 for(File blockF : blocks){
                     fName = blockF.getName();
                     byte idx = Byte.parseByte(fName.substring((fName.lastIndexOf("_")+1)));   //idx = block number
-                    uploadQ.add(new MDFSBlockCreatorViaRsock(blockF, fileInfo, idx, blockListener, chosenNodes, metadata));
+                    uploadQ.add(new MDFSBlockCreatorViaRsock(blockF, fileInfo, idx, blockListener, chosenNodes, clientID));
                 }
             }
 
@@ -232,9 +238,9 @@ public class MDFSFileCreatorViaRsock {
                 }
 
                 @Override
-                public void onError(String error) {
+                public void onError(String error, String clientID) {
                     Logger.w(TAG, "Send block failure.  " + error);
-                    fileCreatorListener.onError("Retrying...  " + error);
+                    fileCreatorListener.onError("file creation unsuccessful..some blocks failed to be sent", clientID);
                     try {
                         sleep(sleepPeriod);
                     } catch (InterruptedException e) {
@@ -248,12 +254,13 @@ public class MDFSFileCreatorViaRsock {
                 }
 
                 @Override
-                public void onComplete() {
+                public void onComplete(String msg, String clientID) {
                     synchronized(uploadQ){
                         sleepPeriod = edu.tamu.lenss.mdfs.Constants.IDLE_BTW_FAILURE;
                         curBlock.deleteBlockFile();
                         uploadQ.notify();
                     }
+                    fileCreatorListener.onComplete("file creation complete",clientID);
                 }
             };
         };
@@ -272,7 +279,7 @@ public class MDFSFileCreatorViaRsock {
                 }
                 else{
                     Logger.e(TAG, "Fail to distribute some blocks");
-                    fileCreatorListener.onError("Fail to distribute some blocks");
+                    fileCreatorListener.onError("Fail to distribute some blocks", clientID);
                 }
             }
         };
@@ -280,56 +287,124 @@ public class MDFSFileCreatorViaRsock {
     }
 
     //this function fetches a list of nodes from rsock java api (which fetches it from olsrd)
-    //about who are the two hops nodes nearby. Then also fetches a list of nodes from GNS
-    // about who are the nodes currently running mdfs.
-    //then croses the two lists and choses a subset of the nodes as candidate nodes to hold the file fragments.
-    private void fetchTopology(){
-        //first get my own guid
-        String myGUID = GNS.ownGUID;
+    //who are the two hops nodes nearby. Then also fetches a list of nodes from GNS
+    // about who are the nodes currently running mdfs. cross the two lists.
+    //then matches the list with the list of permitted nodes.
+    //the final list is contains nodes as candidate nodes to hold the file fragments.
+    //overall, this function basically populates chosenNodes list.
+    private void fetchTopologyAndChooseNodes(){
 
-        //second get peer guids who are running mdfs from GNS
-        List<String> peerGUIDsListfromGNS = GNS.gnsServiceClient.getPeerGUIDs("MDFS", "default");
-        if(peerGUIDsListfromGNS==null){ System.out.println("GNS Error! called getPeerGUIDs() and returned null."); System.exit(0);}
+        //check if the perm list has only one entry and that is OWNER or WORLD
+        if(permList.length==1 && permList[0].equals("OWNER")){
+            //if permission is OWNER, then send fragments to the same node
+            chosenNodes.add( GNS.ownGUID);
+        }else if(permList.length==1 && permList[0].equals("WORLD")){
+            //if permission is WORLD, then we only send to those GUIDs who are running MDFS + nearby to me
+            //get peer guids who are running mdfs from GNS
+            List<String> peerGUIDsListfromGNS = GNS.gnsServiceClient.getPeerGUIDs("MDFS", "default");
+            if(peerGUIDsListfromGNS==null){ fileCreatorListener.onError("GNS Error! called getPeerGUIDs() and returned null.", clientID); return;}
+            if(peerGUIDsListfromGNS.size()==0){fileCreatorListener.onError("no other MDFS peer registered to GNS.", clientID); return; }
 
-        //third,get all nearby vertices from Topology.java from rsockJavaAPI(OLSR) and put it in a list
-        Set<String> peerGUIDsSetfromOLSR = Topology.getInstance(Constants.intrfc_creation_appid).getVertices();  //todo: check if it returns null first
-        List<String> peerGUIDsListfromOLSR = new ArrayList<String>();
-        if(peerGUIDsListfromOLSR!=null){
-            Iterator<String> it = peerGUIDsSetfromOLSR.iterator();
-            while(it.hasNext()){ peerGUIDsListfromOLSR.add(it.next()); }
-        }else{
-            fileCreatorListener.onError("no neighbors found from OLSR");
-            return;
-        }
+            //get all nearby vertices from Topology.java from rsockJavaAPI(OLSR) and put it in a list
+            Set<String> peerGUIDsSetfromOLSR = Topology.getInstance(RSockConstants.intrfc_creation_appid).getVertices();
+            if(peerGUIDsSetfromOLSR.size()==0){fileCreatorListener.onError("no neighbors found from OLSR", clientID);return;}
+            List<String> peerGUIDsListfromOLSR = new ArrayList<String>(peerGUIDsSetfromOLSR);
 
-
-        //fourth, cross the peerGUIDsListfromGNS and peerGUIDsListfromOLSR and get the common ones
-        List<String> commonPeerGUIDs = new ArrayList<>();
-        for(int i = 0; i < peerGUIDsListfromOLSR.size(); i++){
-            if(peerGUIDsListfromGNS.contains(peerGUIDsListfromOLSR.get(i))){
-                commonPeerGUIDs.add(peerGUIDsListfromOLSR.get(i));
+            //cross the peerGUIDsListfromGNS and peerGUIDsListfromOLSR and get the common ones
+            List<String> commonPeerGUIDs = new ArrayList<>();
+            for(int i = 0; i < peerGUIDsListfromOLSR.size(); i++){
+                if(peerGUIDsListfromGNS.contains(peerGUIDsListfromOLSR.get(i))){
+                    commonPeerGUIDs.add(peerGUIDsListfromOLSR.get(i));
+                }
             }
-        }
 
-        //fifth, make a map<guid, pathWeight> for all nodes from ownGUID to each commonPeerGUIDs
-        HashMap<String, Double> peerGUIDsWithWeights = new HashMap<>();
+            //make a map<guid, pathWeight> for all nodes from ownGUID to each commonPeerGUIDs
+            HashMap<String, Double> peerGUIDsWithWeights = new HashMap<>();
 
-        //sixth, call Dijkstra from ownGUID to each of the commonPeerGUIDs and populate peerGUIDsWithWeights map
-        for(int i=0; i< commonPeerGUIDs.size(); i++){
-           double pathWeight = Topology.getInstance(Constants.intrfc_creation_appid).getShortestPathWeight(myGUID, commonPeerGUIDs.get(i));
-            peerGUIDsWithWeights.put(commonPeerGUIDs.get(i), pathWeight);
-        }
+            //call Dijkstra from ownGUID to each of the commonPeerGUIDs and populate peerGUIDsWithWeights map
+            for(int i=0; i< commonPeerGUIDs.size(); i++){
+                double pathWeight = Topology.getInstance(RSockConstants.intrfc_creation_appid).getShortestPathWeight(GNS.ownGUID, commonPeerGUIDs.get(i));
+                peerGUIDsWithWeights.put(commonPeerGUIDs.get(i), pathWeight);
+            }
 
-        //seventh, sort the map by ascending order(less weight to more weight)
-        Map<String, Double> peerGUIDsWithWeightsSorted = sortByComparator(peerGUIDsWithWeights,true );
+            //sort the map by ascending order(less weight to more weight)
+            Map<String, Double> peerGUIDsWithWeightsSorted = sortByComparator(peerGUIDsWithWeights,true );
 
-        //eighth, get first MAX_N_VAL(or less) number of nodes in a list(ones with less weight)
-        this.chosenNodes = new ArrayList<>();
-        int count = 0;
-        for (Map.Entry<String, Double> pair: peerGUIDsWithWeightsSorted.entrySet()) {
-            this.chosenNodes.add(pair.getKey());
-            count++;
-            if(count>= Constants.MAX_N_VAL){break;}
+            //get first MAX_N_VAL(or less) number of nodes in a list(ones with less weight)
+            int count = 0;
+            for (Map.Entry<String, Double> pair: peerGUIDsWithWeightsSorted.entrySet()) {
+                this.chosenNodes.add(pair.getKey());
+                count++;
+                if(count>= Constants.MAX_N_VAL){break;}
+            }
+
+        }else{
+            //permission list has either GUIDs or GROUP-<group_name> entities, so we only send to those GUIDs who are running MDFS + nearby to me + belongs to permission list
+            //note: at this point, there must be entries inside permLIst and each entry in permList is valid and has already been checked by checkPermittedNodes() in RequestHandler.java files.
+            //each entry is either 40 bytes GUID or a string with GROUP:<group_name> tag
+
+            //make a list of all permitted GUIDS in the perm list
+            List<String> permittedGUIDs = new ArrayList<>();
+
+            //first separate out the <group_name> from the group:<group_name> tag
+            List<String> groups = new ArrayList<>();
+            for(int i=0; i< permList.length; i++){
+                if(permList[i].contains("GROUP:")){
+                    String groupName = permList[i].replaceAll("GROUP:", "");
+                    groups.add(groupName);
+                }else{
+                    permittedGUIDs.add(permList[i]);
+                }
+            }
+
+            //convert groups to GUID
+            List<String> groupGUIDs = groupToGUIDConvert(groups);
+
+            //add ALL groupGUIDs to the permitted GUIDs list
+            for(int i=0; i< groupGUIDs.size(); i++){
+                permittedGUIDs.add(groupGUIDs.get(i));
+            }
+
+            //get peer guids who are running mdfs from GNS
+            List<String> peerGUIDsListfromGNS = GNS.gnsServiceClient.getPeerGUIDs("MDFS", "default");
+            if(peerGUIDsListfromGNS==null){ fileCreatorListener.onError("GNS Error! called getPeerGUIDs() and returned null.", clientID); return;}
+            if(peerGUIDsListfromGNS.size()==0){fileCreatorListener.onError("no other MDFS peer registered to GNS.", clientID); return; }
+
+            //get all nearby vertices from Topology.java from rsockJavaAPI(OLSR) and put it in a list
+            Set<String> peerGUIDsSetfromOLSR = Topology.getInstance(RSockConstants.intrfc_creation_appid).getVertices();
+            if(peerGUIDsSetfromOLSR.size()==0){fileCreatorListener.onError("no neighbors found from OLSR", clientID);return;}
+            List<String> peerGUIDsListfromOLSR = new ArrayList<String>(peerGUIDsSetfromOLSR);
+
+            //cross the peerGUIDsListfromGNS and peerGUIDsListfromOLSR and get the common ones
+            List<String> commonPeerGUIDs = new ArrayList<>();
+            for(int i = 0; i < peerGUIDsListfromOLSR.size(); i++){
+                if(peerGUIDsListfromGNS.contains(peerGUIDsListfromOLSR.get(i))){
+                    commonPeerGUIDs.add(peerGUIDsListfromOLSR.get(i));
+                }
+            }
+
+            //make a map<guid, pathWeight> for all nodes from ownGUID to each commonPeerGUIDs
+            HashMap<String, Double> peerGUIDsWithWeights = new HashMap<>();
+
+            //call Dijkstra from ownGUID to each of the commonPeerGUIDs and populate peerGUIDsWithWeights map
+            for(int i=0; i< commonPeerGUIDs.size(); i++){
+                double pathWeight = Topology.getInstance(RSockConstants.intrfc_creation_appid).getShortestPathWeight(GNS.ownGUID, commonPeerGUIDs.get(i));
+                peerGUIDsWithWeights.put(commonPeerGUIDs.get(i), pathWeight);
+            }
+
+            //sort the map by ascending order(less weight to more weight)
+            Map<String, Double> peerGUIDsWithWeightsSorted = sortByComparator(peerGUIDsWithWeights,true );
+
+            //get first MAX_N_VAL(or less) number of nodes in a list(ones with less weight) only IFF that node also belongs to permittedList
+            int count = 0;
+            for (Map.Entry<String, Double> pair: peerGUIDsWithWeightsSorted.entrySet()) {
+                if(permittedGUIDs.contains(pair.getKey())) {
+                    this.chosenNodes.add(pair.getKey());
+                }
+                count++;
+                if(count>= Constants.MAX_N_VAL){break;}
+            }
+
         }
 
         //print
@@ -337,21 +412,73 @@ public class MDFSFileCreatorViaRsock {
         for(String node: chosenNodes){System.out.print(node + " , ");}
         System.out.println();
 
+        //set n2 , k2
         byte n2; if(chosenNodes.size() >= Constants.MAX_N_VAL){ n2 = (byte)Constants.MAX_N_VAL;} else{ n2 = (byte)chosenNodes.size();}
         byte k2 = (byte) Math.round(n2 * encodingRatio);
         fileInfo.setFragmentsParms(n2, k2);
         System.out.println("n2: " + n2 + "   k2: " + k2);
         this.metadata.setn2(n2);
         this.metadata.setk2(k2);
-        fileCreatorListener.statusUpdate("n2:" + n2 + " k2:" + k2);
-        if(n2 <= 1 || k2 < 1){
-            fileCreatorListener.onError("Insufficeint storage nodes.");
+        if(n2 < 1 || k2 < 1){
+            fileCreatorListener.onError("insufficient storage nodes. maybe permission denied Or N to K ratio is wrong!",clientID);
             return;
         }
         synchronized(fileInfo){
             isTopComplete = true;
         }
         sendBlocks();
+    }
+
+    //this function takes a list of group names, makes a call to edgekeeper, and returns a list of GUIDs
+    //this list may return empty due to conversion failure(due to disconnection etc)
+    private List<String> groupToGUIDConvert(List<String> groups){
+        //create client connection
+        client client = new client(EdgeKeeperConstants.dummy_EdgeKeeper_ip, EdgeKeeperConstants.dummy_EdgeKeeper_port);
+
+        //connect
+        boolean connected = client.connect();
+
+        //check if connection succeeded..if not, return with empty list
+        if(!connected){ return new ArrayList<>();}
+
+        //make EdgeKeeper object with cmd = GROUP_TO_GUID_CONV_REQUEST
+        EdgeKeeperMetadata metadataReq = new EdgeKeeperMetadata(EdgeKeeperConstants.GROUP_TO_GUID_CONV_REQUEST, EdgeKeeperConstants.getMyGroupName() , GNS.ownGUID, groups);
+
+        //convert into json string
+        String str = metadataReq.toBuffer(metadataReq);
+
+        //create bytebuffer
+        ByteBuffer sendBuf = ByteBuffer.allocate(str.length());
+        sendBuf.order(ByteOrder.LITTLE_ENDIAN);
+        sendBuf.clear();
+
+        //put str in sendBuf and flip
+        sendBuf.put(str.getBytes());
+        sendBuf.flip();
+
+        //send metadata req
+        client.send(sendBuf);
+
+        //get return
+        ByteBuffer recvBuf = client.receive();
+
+        //close client socket
+        client.close();
+
+        //get data from recvBuf and make string
+        StringBuilder bd = new StringBuilder();
+        while (recvBuf.remaining() > 0){ bd.append((char)recvBuf.get());}
+        String str1 = bd.toString();
+
+        //make metadata from str1
+        EdgeKeeperMetadata metadataRet = EdgeKeeperMetadata.parse(str1);
+
+        //check cmd = GROUP_TO_GUID_CONV_REPLY_SUCCESS, then success)
+        if(metadataRet.command == EdgeKeeperConstants.GROUP_TO_GUID_CONV_REPLY_SUCCESS){
+            return metadataRet.groupOrGUID;
+        }else{
+            return new ArrayList<>();
+        }
     }
 
     //utility function
@@ -376,13 +503,12 @@ public class MDFSFileCreatorViaRsock {
 
 
     private void updateDirectory() {
-        try { sleep(3000); } catch (InterruptedException e) { e.printStackTrace(); }
-
+        //todo: add acl metadata
         ServiceHelper serviceHelper = ServiceHelper.getInstance();
         fileInfo.setCreator(serviceHelper.getNodeManager().getMyMAC());
         NewFileUpdate update = new NewFileUpdate(fileInfo);
 
-        serviceHelper.sendFileUpdate(update);
+        //serviceHelper.sendFileUpdate(update);  (commented by mohammad sagor/// reason: no need to update dir..dgekeeper already does that)
         Logger.w(TAG, "File Id: " + fileInfo.getCreatedTime());
         // Update my directory as well
         serviceHelper.getDirectory().addFile(fileInfo);
@@ -393,14 +519,11 @@ public class MDFSFileCreatorViaRsock {
         //now update file metadata to EdgeKeeper
         updateEdgeKeeper();
 
-        fileCreatorListener.onComplete(); //notifies HomeScreen "File Creation Complete"
+        fileCreatorListener.onComplete("file creation complete",clientID); //notifies handleCreateCommand
     }
 
     //this function sends the
     private void updateEdgeKeeper() {  //todo: only report frag that I have
-
-        //set command
-        this.metadata.setCommand('d');
 
         //add information of all blocks/fragments that I(file creator) have(file creator has all blocks of all fragments)
         for(int i=0; i< blockCount; i++){
@@ -413,8 +536,12 @@ public class MDFSFileCreatorViaRsock {
         printMetadata(metadata);
 
         //create client connection and connect
-        client client = new client(Constants.dummy_EdgeKeeper_ip, Constants.dummy_EdgeKeeper_port);
-        client.connect();
+        client client = new client(EdgeKeeperConstants.dummy_EdgeKeeper_ip, EdgeKeeperConstants.dummy_EdgeKeeper_port);
+        boolean connected = client.connect();
+
+        if(!connected){
+            //todo: store the metadata locally somewhere to send it to EdgeKeeper later
+        }
 
         //get json string
         String str= metadata.toBuffer(metadata);
@@ -495,10 +622,10 @@ public class MDFSFileCreatorViaRsock {
         public void statusUpdate(String status) {}
 
         @Override
-        public void onError(String error) {}
+        public void onError(String error, String clientID) {}
 
         @Override
-        public void onComplete() {}
+        public void onComplete(String msg, String clientID) {}
 
     };
 

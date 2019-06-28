@@ -5,32 +5,65 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.*;
 
+//This class is used to send and requests and receive reply from edgeKeeper.
 public class EdgeKeeperMetadata implements Serializable {
-    public char command; //deposit or withdraw
+
+    //all variables
+    public int command;
+    public List<String> ownGroupNames;
     public String fileCreatorGUID;
+    public String metadataRequesterGUID;
+    public String groupConversionRequesterGUID;
     public String filename;
     public long fileID;
     public int numOfBlocks;
     public byte n2;
     public byte k2;
     public List<Map<String, Map<String, List<String>>>> chosenNodes;
+    public List<String> groupOrGUID;
+    //todo: add acl info here
 
+    //empty constructors
     public EdgeKeeperMetadata(){}
 
-    public EdgeKeeperMetadata(char cmd, String fileCreatorguid, long fileid, String name, int numofblocks, byte n2, byte k2){
+    //constructor for metadata deposit by file creator with cmd = FILE_CREATOR_METADATA_DEPOSIT_REQUEST (object made by -client, sent to- EdgeKeeper, reason - to deposit metadata after a file creator created a file)
+    //constructor for metadata withdraw reply with cmd = METADATA_WITHDRAW_REPLY_SUCCESS (object made by EdgeKeeper, sent to - client, reason - success to reply with metadata of a file)
+    //constructor for metadata withdraw reply with cmd = METADATA_WITHDRAW_REPLY_FAILED (object made by EdgeKeeper, sent to - client, reason - failed to reply with metadata of a file but no metadata found for this file so dummy metadata sent)
+    public EdgeKeeperMetadata(int cmd, List<String> owngroupnames, String fileCreatorGUID, long fileid, String filename, int numofblocks, byte n2, byte k2){
         this.command = cmd;
-        this.fileCreatorGUID = fileCreatorguid;
-        this.filename = name;
+        this.ownGroupNames = owngroupnames;
+        this.fileCreatorGUID = fileCreatorGUID;
+        this.filename = filename;
         this.fileID = fileid;
         this. numOfBlocks = numofblocks;
         this.n2 = n2;
         this.k2 = k2;
-        this.chosenNodes = new ArrayList<>();
+        this.chosenNodes = new ArrayList<>(); //this list if populated by addInfo() function
     }
+
+    //constructor for metadata withdrawal request with cmd  = METADATA_WITHDRAW_REQUEST (object made by -client, sent to - EdgeKeeper, reason -to ask for metadata for a file)
+    public EdgeKeeperMetadata(int cmd, List<String> owngroupnames, String metadataRequesterGUID, long fileid, String filename){
+        this.command = cmd;
+        this.ownGroupNames = owngroupnames;
+        this.metadataRequesterGUID = metadataRequesterGUID;
+        this.filename = filename;
+        this.fileID = fileid;
+        this.chosenNodes = new ArrayList<>(); //this list if populated by addInfo() function
+    }
+
+    //constructor for GroupName to GUID conversion requests with cmd = GROUP_TO_GUID_CONV_REQUEST  (object made by -client, sent to -EdgeKeeper, reason - asking for GUIDs who belong to a group name)
+    //constructor for GroupName to GUID conversion reply with cmd = GROUP_TO_GUID_CONV_REPLY_SUCCESS  (object made by -EdgeKeeper, sent to -Client, reason - success in replying with GUIDs who belong to a group name)
+    //constructor for GroupName to GUID conversion reply with cmd = GROUP_TO_GUID_CONV_REPLY_FAILED  (object made by -EdgeKeeper, sent to -Client, reason - failed in replying with GUIDs who belong to a group name)
+    public EdgeKeeperMetadata(int cmd, List<String> owngroupnames, String groupConversionRequesterGUID, List<String> list){
+        this.command = cmd;
+        this.ownGroupNames = owngroupnames;
+        this.groupConversionRequesterGUID = groupConversionRequesterGUID;
+        this.groupOrGUID = list;
+        this.chosenNodes = new ArrayList<>(); //this list if populated by addInfo() function
+    }
+
 
     public void setn2(byte n2){
         this.n2 = n2;
@@ -40,12 +73,13 @@ public class EdgeKeeperMetadata implements Serializable {
         this.k2 = k2;
     }
 
-    public void setCommand(char c){
+    public void setCommand(int c){
         this.command = c;
     }
 
 
 
+    //conversion of EdgeKeeper object to json String
     public String toBuffer(EdgeKeeperMetadata metadata){
         //convert class to json to string
         ObjectMapper Obj = new ObjectMapper();
@@ -54,6 +88,7 @@ public class EdgeKeeperMetadata implements Serializable {
         return jsonStr;
     }
 
+    //convertion of json string to EdgeKeeper object
     public static EdgeKeeperMetadata parse(String incoming){
         ObjectMapper Obj = new ObjectMapper();
         EdgeKeeperMetadata metadata = null;
@@ -61,8 +96,8 @@ public class EdgeKeeperMetadata implements Serializable {
         return metadata;
     }
 
+    //returns list of GUIDs who has any fragment of a block number
     public List<String> getNodesContainingFragmentsOfABlock(String blocknum){
-
         List<String> allUniqueNodes = getAllUniqueFragmentHolders();
         List<String>  guidsList = new ArrayList<>();
 
@@ -80,6 +115,7 @@ public class EdgeKeeperMetadata implements Serializable {
     }
 
 
+    //returns a list of unique GUIDs who have one/any fragment of this file
     public List<String> getAllUniqueFragmentHolders(){
         Set<String> nodeSet = new HashSet<>();
         for(int i=0; i< chosenNodes.size(); i++){
@@ -93,16 +129,12 @@ public class EdgeKeeperMetadata implements Serializable {
             }
         }
 
-        List<String> nodeList = new ArrayList<>();
-        Iterator<String> it = nodeSet.iterator();
-        while(it.hasNext()){
-            nodeList.add(it.next());
-        }
-
+        List<String> nodeList = new ArrayList<>(nodeSet);
         return nodeList;
     }
 
 
+    //takes a GUID and returns the blockNumbers carried by this GUID for this file
     public List<String> getBlockNumbersHeldByNode(String guid){
         Set<String> blockNumSet = new HashSet<>();
         for(int i=0; i< chosenNodes.size(); i++){
@@ -118,15 +150,11 @@ public class EdgeKeeperMetadata implements Serializable {
             }
         }
 
-        List<String> blockNumList = new ArrayList<>();
-        Iterator<String> it = blockNumSet.iterator();
-        while(it.hasNext()){
-            blockNumList.add(it.next());
-        }
-
+        List<String> blockNumList = new ArrayList<>(blockNumSet);
         return blockNumList;
     }
 
+    //takes a GUID and a block number and returns the list of fragments of this block this node contains for this file
     public List<String> getFragmentListByNodeAndBlockNumber(String guid, String blocknum){
         for(int i=0; i< chosenNodes.size(); i++){
             if(chosenNodes.get(i).containsKey(guid)){
@@ -140,6 +168,8 @@ public class EdgeKeeperMetadata implements Serializable {
     }
 
 
+    //add information to the metadata object
+    //this function populates the chosenNodes list
     public void addInfo(String guid, String blocknum, String fragmentnum){
         boolean done = false;
 
@@ -175,25 +205,25 @@ public class EdgeKeeperMetadata implements Serializable {
 
     }
 
-    public List<Map<String, Map<String, List<String>>>> addGUIDMapToChosenList(List<Map<String, Map<String, List<String>>>> chosenNodes, Map<String, Map<String, List<String>>> guidmap, String guid, Map<String, List<String>> blockmap, String blocknum, List<String> fraglist, String fragment){
+    private List<Map<String, Map<String, List<String>>>> addGUIDMapToChosenList(List<Map<String, Map<String, List<String>>>> chosenNodes, Map<String, Map<String, List<String>>> guidmap, String guid, Map<String, List<String>> blockmap, String blocknum, List<String> fraglist, String fragment){
         Map<String, Map<String, List<String>>> guidmapRet = addBlockmapToGUIDmap(guidmap, guid, blockmap, blocknum, fraglist, fragment);
         chosenNodes.add(guidmapRet);
         return chosenNodes;
     }
 
-    public Map<String, Map<String, List<String>>> addBlockmapToGUIDmap(Map<String, Map<String, List<String>>> guidmap, String guid, Map<String, List<String>> blockmap, String blocknum, List<String> fraglist, String fragment){
+    private Map<String, Map<String, List<String>>> addBlockmapToGUIDmap(Map<String, Map<String, List<String>>> guidmap, String guid, Map<String, List<String>> blockmap, String blocknum, List<String> fraglist, String fragment){
         Map<String, List<String>> blockmapRet = addFragListToBlockMap(blockmap, blocknum, fraglist, fragment);
         guidmap.put(guid, blockmapRet);
         return guidmap;
     }
 
-    public Map<String, List<String>> addFragListToBlockMap(Map<String, List<String>> blockmap, String blocknum, List<String> fraglist, String fragment){
+    private Map<String, List<String>> addFragListToBlockMap(Map<String, List<String>> blockmap, String blocknum, List<String> fraglist, String fragment){
         List<String> fraglistRet = addFragmentToFragList(fraglist, fragment);
         blockmap.put(blocknum, fraglistRet);
         return blockmap;
     }
 
-    public List<String> addFragmentToFragList(List<String> fraglist, String fragment){
+    private List<String> addFragmentToFragList(List<String> fraglist, String fragment){
         fraglist.add(fragment);
         return fraglist;
     }

@@ -11,6 +11,7 @@ import android.os.IBinder;
 
 import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.GNS.GNS;
+import edu.tamu.lenss.mdfs.GNS.GNSConstants;
 import edu.tamu.lenss.mdfs.MDFSDirectory;
 import edu.tamu.lenss.mdfs.MDFSNodeStatusMonitor;
 import edu.tamu.lenss.mdfs.handler.BlockReplyHandler.BlockRepListener;
@@ -65,12 +66,7 @@ public class ServiceHelper {
 		return instance;
 	}
 	
-	/**
-	 * MDFSDirectory is NOT a singleton. You should not get a local copy of MDFSDirectory and update it. 
-	 * It won't be synced to the global shared MDFSDirectory in ServiceHelper.
-	 * @return MDFSDirectory held by ServiceHelper
-	 */
-
+	//if need directory call this fucntion to get a copy og MDFSDirectory..dont make a new copy of directory
 	public MDFSDirectory getDirectory() {
 		return directory;
 	}
@@ -85,7 +81,7 @@ public class ServiceHelper {
 
 	public static void releaseService(){
 		//unregister GNS
-		boolean gnsUnreg = GNS.gnsServiceClient.removeService(Constants.GNS_s);
+		boolean gnsUnreg = GNS.gnsServiceClient.removeService(GNSConstants.GNS_s);
 		System.out.println("gnsUnreg: " + gnsUnreg);
 
 		if(instance != null ){ 
@@ -102,10 +98,7 @@ public class ServiceHelper {
 	
 	
 	////////////////////////////////////////////////////////////////////////
-	/**ver = new MDFSBlockRetriever(fInfo, pair.second);
-retriever.setDecryptKey(ServiceHelper.getInstance().getEncryptKey());
-	 * Non-blocking function call. Returns Immediately
-	 */
+
 	public void broadcastJobRequest(JobReq jobReq, JobRequestListener lis){
 		netObserver.getJobHandler().broadcastRequest(jobReq, lis);
 	}
@@ -118,11 +111,8 @@ retriever.setDecryptKey(ServiceHelper.getInstance().getEncryptKey());
 		netObserver.getTopologyHandler().broadcastRequest(lis);
 	}
 	
-	/**
-	 * 
-	 * @param lis
-	 * @param timeout : time in millisecond that I'm willing to wait for a successful topology reply
-	 */
+	//sends topology discovery requests
+	//timeout = time in millisecond that I'm willing to wait for a successful topology reply
 	public void startTopologyDiscovery(TopologyListener lis, long timeout){
 		netObserver.getTopologyHandler().broadcastRequest(lis, timeout);
 	}
@@ -157,25 +147,18 @@ retriever.setDecryptKey(ServiceHelper.getInstance().getEncryptKey());
 		return netObserver.getNodeStatusMonitor();
 	}
 	
-	/**
-	 * Broadcast the file in my directory one by one.
-	 */
+
+	//periodically called by scheduledTask.java to send out NEW_FILE_UPDATES for each files in the directory
 	public void broadcastMyDirectory(){
 		getDirectory().broadcastMyDirectory();
 	}
 	
-	/**
-	 * Submit a task to ExecutorService
-	 * @param task
-	 */
+	//submit a task to executorService
 	public void executeRunnableTask(Runnable task){
 		netObserver.executeRunnableTask(task);
 	}
 	
-	/**
-	 * submit a callable task to ExecutorService
-	 * @param task
-	 */
+	//submit a callable task to ExecutorService
 	public Future<?> submitCallableTask(Callable<?> task){
 		return netObserver.submitCallableTask(task);
 	}

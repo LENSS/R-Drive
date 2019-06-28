@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 public class server extends Thread{
@@ -28,7 +28,7 @@ public class server extends Thread{
         System.out.println("EdgeKeeper server is running...");
 
         //create DataStore object
-        this.datastore = new DataStore();
+        this.datastore = DataStore.getInstance();
 
     }
 
@@ -36,6 +36,8 @@ public class server extends Thread{
         ByteBuffer sendBuf;
         while(true){
             //accept a client
+            //server accepts a client, serves it and then moves on to serve the next client.
+            // this is important to ensure data consistency.
             try {socketChannel = serverSocketChannel.accept(); } catch (IOException e) { e.printStackTrace(); }
             System.out.println("EdgeKeeper server accepted a client");
 
@@ -51,23 +53,71 @@ public class server extends Thread{
                     bd.append((char)recvBuf.get());
                 String str1 = bd.toString();
 
-                //make object by passing flipped ByteBuffer
+                //make EdgeKeeperMetadata object by passing flipped ByteBuffer
                 EdgeKeeperMetadata metadataRec = EdgeKeeperMetadata.parse(str1);
 
                 //check for command
                 if(metadataRec!=null) {
-                    if (metadataRec.command=='d') {
-                        System.out.println("EdgeKeeper server got deposit request");
-                        this.datastore.putFileMetadata(metadataRec);  //todo: write on disk
-                    }else if(metadataRec.command=='w') {
-                        System.out.println("EdgeKeeper server got withdraw request");
+                    if (metadataRec.command == EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST) {
+                        System.out.println("EdgeKeeper server got metadata Deposit request from file creator");
+                        this.datastore.putFileMetadata(metadataRec);
+                        this.datastore.putGroupNameBYGUID(metadataRec.fileCreatorGUID, metadataRec.ownGroupNames);
 
-                        //get the metadata from dataStore
+                    }else if(metadataRec.command == EdgeKeeperConstants.METADATA_WITHDRAW_REQUEST) {
+                        System.out.println("EdgeKeeper server got metadata Withdraw request");
+
+                        //first get the GROUP name of this GUID and store this
+                        this.datastore.putGroupNameBYGUID(metadataRec.metadataRequesterGUID, metadataRec.ownGroupNames);
+
+                        //get the requested metadata from dataStore
                         EdgeKeeperMetadata metadataRet = datastore.getFileMetadata(metadataRec.fileID);
 
-                        //change command into r(return) unless command is already 'f'(failed)
-                        if(metadataRet.command!='f') {
-                            metadataRet.setCommand('r');  //r = return
+                        //convert metadata into json string
+                        String str= metadataRet.toBuffer(metadataRet);
+
+                        //allocate space for reply
+                        sendBuf = ByteBuffer.allocate(str.length());
+                        sendBuf.order(ByteOrder.LITTLE_ENDIAN);
+                        sendBuf.clear();
+
+                        //put data in sendBuf
+                        sendBuf.put(str.getBytes());
+                        sendBuf.flip();
+
+                        //send back
+                        send(sendBuf);
+                    }else if(metadataRec.command == EdgeKeeperConstants.GROUP_TO_GUID_CONV_REQUEST){
+                        //first get the GROUP name of this GUID and store this
+                        this.datastore.putGroupNameBYGUID(metadataRec.groupConversionRequesterGUID, metadataRec.ownGroupNames);
+
+                        System.out.println("EdgeKeeper server got Group to GUID Conversion request(C)");
+                        List<String> groupnames = metadataRec.groupOrGUID;
+
+                        //make a GUIDList to return
+                        List<String> listofResultantGUIDS =  new ArrayList<>();
+
+                        //get all GUIDs who are member of at least one group
+                        List<String> allGUIDsBelongsToAnyGroup = new ArrayList(datastore.GUIDtoGroupNamesMap.keySet());
+
+                        //check and find
+                        for(int i=0; i< groupnames.size(); i++){
+                            String groupname = groupnames.get(i);
+                            //trace all GUIDs who belong to this groupname
+                            for(int j=0; j< allGUIDsBelongsToAnyGroup.size(); j++){
+                                String guid = allGUIDsBelongsToAnyGroup.get(j);
+                                if(datastore.GUIDtoGroupNamesMap.get(guid).contains(groupname)){
+                                    listofResultantGUIDS.add(guid);
+                                }
+                            }
+                        }
+
+
+                        //make reply metadata object
+                        EdgeKeeperMetadata metadataRet;
+                        if(listofResultantGUIDS.size()!=0) {
+                            metadataRet = new EdgeKeeperMetadata(EdgeKeeperConstants.GROUP_TO_GUID_CONV_REPLY_SUCCESS, new ArrayList<>(), metadataRec.groupConversionRequesterGUID, listofResultantGUIDS);
+                        }else{
+                            metadataRet = new EdgeKeeperMetadata(EdgeKeeperConstants.GROUP_TO_GUID_CONV_REPLY_FAILED, new ArrayList<>(), metadataRec.groupConversionRequesterGUID, listofResultantGUIDS);
                         }
 
                         //convert metadata into json string
@@ -84,6 +134,7 @@ public class server extends Thread{
 
                         //send back
                         send(sendBuf);
+
                     }
                 }
 

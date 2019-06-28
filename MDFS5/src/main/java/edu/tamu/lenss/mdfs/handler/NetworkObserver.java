@@ -1,6 +1,5 @@
 package edu.tamu.lenss.mdfs.handler;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.StreamCorruptedException;
@@ -16,7 +15,6 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.res.AssetManager;
 import android.net.ConnectivityManager;
 import android.os.Binder;
 import android.os.Environment;
@@ -31,8 +29,8 @@ import org.apache.log4j.Level;
 
 import edu.tamu.cse.lenss.gnsService.server.GNSServiceUtils;
 import edu.tamu.lenss.mdfs.Constants;
+import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
 import edu.tamu.lenss.mdfs.FragExchangeHelper;
-import edu.tamu.lenss.mdfs.GNS.GNS;
 import edu.tamu.lenss.mdfs.MDFSBlockRetriever;
 import edu.tamu.lenss.mdfs.MDFSDirectory;
 import edu.tamu.lenss.mdfs.MDFSLockManager;
@@ -97,7 +95,7 @@ public class NetworkObserver extends Service implements Observer {
 	public void init(){
 		System.out.println("onetime netObserver gets called!");
 		nodeManager = new NodeManager(this);
-		Constants.my_wifi_ip_temp = AndroidIOUtils.getWifiIP(this);
+		EdgeKeeperConstants.my_wifi_ip_temp = AndroidIOUtils.getWifiIP(this);
 		pktExchanger = PacketExchanger.getInstance(AndroidIOUtils.getWifiIP(this));
 		if(pktExchanger == null){
 			stopSelf();
@@ -160,7 +158,7 @@ public class NetworkObserver extends Service implements Observer {
 	protected ConnectionMonitor getConnectionMonitor(){
 		return connMonitor;
 	}
-	
+
 	
 	/**
 	 * Use PacketExchanger to send a UDP packet
@@ -282,7 +280,7 @@ public class NetworkObserver extends Service implements Observer {
 					final NewFileUpdate dirUpdate = (NewFileUpdate)msg.getContainedData();
 					final MDFSDirectory dir = ServiceHelper.getInstance().getDirectory();
 					dir.addFile(dirUpdate.getFileInfo());
-					// update directory 
+					// update directory  //todo: comment this block
 					if(SP.getBoolean("aggressivenode", false)){
 						pool.execute(new Runnable(){
 							@Override

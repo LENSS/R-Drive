@@ -1,7 +1,9 @@
 package edu.tamu.lenss.mdfs;
 
 import java.io.File;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Handler;
@@ -63,21 +65,7 @@ public class Constants {
 
 
 
-//========================================RSOCK===============================================
-
-
-	//GNS variables
-	public static final int GUID_LENGTH = 40;
-	public static String GNS_s = "MDFS";
-	public static String GNS_s1 = "default";
-
-	//rsock api instances, initialized in PacketExchanger.java class
-	public static Interface intrfc_creation;
-	public static Interface intrfc_retrieval;
-
-	//appID using which above Rsock api objects are registered to the daemon.
-	public static String intrfc_creation_appid = "mdfsFileCreation";
-	public static String intrfc_retrieval_appid = "mdfsFileRetrieval";
+//========================================MDFS-NG===============================================
 
 	//RSOCK variables | (value: "rsock" or "tcp").
 	//when "tcp", file creation happens using tcp,
@@ -87,8 +75,7 @@ public class Constants {
 	//when "rsock", file creation happens using rsock,
 	//no topology discovery takes place, instead topology fetching
 	//takes place, and all data packet is GUID based.
-	//using rsock, file metadata is stored i EdgeKeeper.
-	//not a param to toggle between during runtime.
+	//using rsock, file metadata is stored in EdgeKeeper.
 	public static final String file_creation_via_rsock_or_tcp = "rsock";
 
 	//RSOCK variables | (value: "rsock" or "tcp").
@@ -103,18 +90,12 @@ public class Constants {
 	//is GUID based.
 	//using rsock, file metadata is first fetched from EdgeKeeper
 	//before fetching fragments.
-	//not a param to toggle between during runtime.
 	public static final String file_retrieval_via_rsock_or_tcp = "rsock";
 
-	public static String my_wifi_ip_temp = "";
-	public static final String dummy_EdgeKeeper_ip = "192.168.0.2";
-	public static final int dummy_EdgeKeeper_port = 9995;
-	public static final int CLI_PORT = 2223;
 
 
 
-
-//========================================RSOCK===============================================
+//========================================MDFS-NG===============================================
 
 
 }

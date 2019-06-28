@@ -8,7 +8,6 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -16,6 +15,7 @@ import com.google.common.io.Files;
 
 import android.os.Environment;
 
+import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
 import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperMetadata;
 import edu.tamu.lenss.mdfs.EdgeKeeper.client;
 import edu.tamu.lenss.mdfs.GNS.GNS;
@@ -30,7 +30,6 @@ import edu.tamu.lenss.mdfs.utils.Logger;
 import edu.tamu.lenss.mp4process.MergeVideo;
 
 //rsock imports
-import edu.tamu.lenss.mdfs.MDFSBlockRetrieverViaRsock;
 import edu.tamu.lenss.mdfs.MDFSBlockRetrieverViaRsock.BlockRetrieverListenerViaRsock;
 
 
@@ -53,9 +52,11 @@ public class MDFSFileRetrieverViaRsock {
         fetchFileMetadataFromEdgeKeeper();
 
         //check if metadata is valid
-        if(metadata.command=='f'){
+        if(metadata.command == EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED){
             fileListener.onError("Failed, EdgeKeeper has no metadata for this file.", fileInfo);
-        }else if(metadata.command=='r'){
+        }else if(metadata.command == EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED){
+            fileListener.onError("Failed, could not connect to EdgeKeeper.", fileInfo);
+        }else if(metadata.command ==  EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_SUCCESS){
             retrieveBlocks();
         }
 
@@ -63,16 +64,20 @@ public class MDFSFileRetrieverViaRsock {
 
     private void fetchFileMetadataFromEdgeKeeper() {
         //create client connection
-        client client = new client(Constants.dummy_EdgeKeeper_ip, Constants.dummy_EdgeKeeper_port);
+        client client = new client(EdgeKeeperConstants.dummy_EdgeKeeper_ip, EdgeKeeperConstants.dummy_EdgeKeeper_port);
 
         //connect
-        client.connect();
+        boolean connected = client.connect();
+
+        //if could not connect to edgeKeeper
+        if(!connected){
+            //return with dummy metadata with cmd = EDGEKEEPER_CONNECTION_FAILED and other dummy information
+            this.metadata = new EdgeKeeperMetadata(EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED, EdgeKeeperConstants.getMyGroupName(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000,"name",  0, (byte)0, (byte)0); //dummy metadata with command f(failed)..otherwise command would be r(return)
+            return;
+        }
 
         //make request metadata object
-        EdgeKeeperMetadata metadataReq = new EdgeKeeperMetadata('w', GNS.ownGUID, fileInfo.getCreatedTime(), fileInfo.getFileName(), fileInfo.getNumberOfBlocks(), fileInfo.getN2(), fileInfo.getK2());
-
-        //ser command
-        metadataReq.setCommand('w');
+        EdgeKeeperMetadata metadataReq = new EdgeKeeperMetadata(EdgeKeeperConstants.METADATA_WITHDRAW_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, fileInfo.getCreatedTime(), fileInfo.getFileName()); //w = withdraw
 
         //convert into json string
         String str = metadataReq.toBuffer(metadataReq);

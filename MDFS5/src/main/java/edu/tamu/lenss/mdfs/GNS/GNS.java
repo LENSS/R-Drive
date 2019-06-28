@@ -16,9 +16,10 @@ public class GNS {
             gnsServiceClient = new GnsServiceClient();
             try { sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
             ownGUID = gnsServiceClient.getOwnGuid();
+            System.out.println("own GUID: " + ownGUID);
             if(gnsServiceClient==null || ownGUID==null){
                 System.out.println("GNS Error! could not init gns");
-                throw  new NullPointerException("GNS initialization error...Maybe GNS is not running or not connected.");
+                throw new NullPointerException("GNS initialization error...Maybe GNS is not running or not connected.");
             }
         }
         return gnsServiceClient;

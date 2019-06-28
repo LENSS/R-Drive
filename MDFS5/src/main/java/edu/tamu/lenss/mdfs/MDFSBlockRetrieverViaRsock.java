@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperMetadata;
 import edu.tamu.lenss.mdfs.GNS.GNS;
+import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.crypto.FragmentInfo;
 import edu.tamu.lenss.mdfs.crypto.MDFSDecoder;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
@@ -111,8 +112,13 @@ public class MDFSBlockRetrieverViaRsock {
         }
     }
 
+    //this function is ony called by start() function.
+    //this function is only called if locally stored fragments are not enough,
+    // so we need to fetch fargments from other nodes.
+    // this function pulls out all the GUIDs of fragment holders of a file and
+    //selects the best nodes among them, and then passes them to the
+    //doAnotherThing() function.
     private void doTheThing() {
-        //todo: match guids from edgekeeper vs guids from olsr
 
         List<String> nodes = metadata.getAllUniqueFragmentHolders();
         Set<BlockReplyDumb> blockrepdumbSet = new HashSet<>();
@@ -142,6 +148,8 @@ public class MDFSBlockRetrieverViaRsock {
         doAnotherThing(blockrepdumbSet);
     }
 
+
+    //this function prepares a list of GUIDs from which fragments will be requested.
     private void doAnotherThing(Set<BlockReplyDumb> blockREPs){
 
         // Retrieve block fragments info
@@ -225,7 +233,7 @@ public class MDFSBlockRetrieverViaRsock {
     //how: we first generate a header, pack the header and other important params in a
     //MDFSRsockBlockRetriever object, convert the object into byteArray, and send that over rsock.
     //when other side receives the packet, and gets the fragment request, it sends back a MDFSRsockBlockRetriever
-    //object containing file fragment. when fileFrag is received, it is written on disk.
+    //object containing file fragment. when fileFrag is received, it is written on disk, and checked if the entire file is retrieve-able.
     class FragmentDownloaderViaRsock implements Runnable{
         private String destGUID;
         private byte blockIdx;
@@ -258,7 +266,7 @@ public class MDFSBlockRetrieverViaRsock {
                 //make an object of MDFSRsockBlockRetrieval
                 MDFSRsockBlockRetrieval mdfsrsockblock = new MDFSRsockBlockRetrieval(header, destGUID, GNS.ownGUID, fileName, fileId, blockIdx, fragmentIndex);
 
-                //get byteArray and size of the MDFSRsockBlockRetreival obj and do send
+                //get byteArray and size of the MDFSRsockBlockRetreival obj
                 byte[] data;
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 ObjectOutputStream oos = null;
@@ -272,7 +280,7 @@ public class MDFSBlockRetrieverViaRsock {
 
                 //send happening here
                 String uuid = UUID.randomUUID().toString().substring(0, 12);
-                Constants.intrfc_retrieval.send(uuid, data, data.length,"nothing", "nothing", destGUID,0, sendAndReplyEndpoint, "hdrRecv", sendAndReplyEndpoint);
+                RSockConstants.intrfc_retrieval.send(uuid, data, data.length,"nothing", "nothing", destGUID,0, sendAndReplyEndpoint, "hdrRecv", sendAndReplyEndpoint);
 
 
                 //now waiting for reply with fileFrag
@@ -283,18 +291,18 @@ public class MDFSBlockRetrieverViaRsock {
 
                     //check if blocking time expired then break out of while(whether or not fragment received))
                     if(total_pooling_time>= Constants.FRAGMENT_RETRIEVAL_TIMEOUT_INTERVAL){
-                        Constants.intrfc_retrieval.deleteEndpoint(sendAndReplyEndpoint);
+                        RSockConstants.intrfc_retrieval.deleteEndpoint(sendAndReplyEndpoint);
                         System.out.println("un blocking on while ");
                         break;
                     }
 
                     //or something has been received
-                    try { receivedFile = Constants.intrfc_retrieval.receive(interval, sendAndReplyEndpoint); } catch (InterruptedException e) {e.printStackTrace(); }
+                    try { receivedFile = RSockConstants.intrfc_retrieval.receive(interval, sendAndReplyEndpoint); } catch (InterruptedException e) {e.printStackTrace(); }
                     total_pooling_time = total_pooling_time + interval;
                     if(receivedFile!=null) {
-                        //coming here means we received a reply with for file fragent request
+                        //coming here means we received a reply for file fragment request
                         System.out.println("received file frag which is not null inside MDFSBlockRetrieval (success)");
-                        Constants.intrfc_retrieval.deleteEndpoint(sendAndReplyEndpoint);
+                        RSockConstants.intrfc_retrieval.deleteEndpoint(sendAndReplyEndpoint);
 
                         //get the byteArray[] from the receivedFile obj and convert into MDFSRsockBlockRetrieval object
                         ByteArrayInputStream bis = new ByteArrayInputStream(receivedFile.getFileArray());
@@ -338,7 +346,7 @@ public class MDFSBlockRetrieverViaRsock {
                             Logger.v(TAG, "Finish downloading fragment " + fragmentIndex + " from node " + destGUID );
                         }else{
                             System.out.println("file signature is not true");
-                            //this means other side received fragment request, other side processed fragment request, but other side did not have the fragment so it sent back empty file
+                            //this means other side received fragment request, other side processed fragment request, but other side did not have the fragment so it sent back an empty file
                         }
                         break;
                     }else{

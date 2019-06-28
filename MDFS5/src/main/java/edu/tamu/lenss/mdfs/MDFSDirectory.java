@@ -50,8 +50,6 @@ public class MDFSDirectory implements Serializable {
 	private static final String TAG = MDFSDirectory.class.getSimpleName();
 	private static final long serialVersionUID = 1L;
 
-
-
 	// All available files in the Network
 	//map from file id to MDFSFileInfo
 	//fileid = File Creation Time
@@ -83,6 +81,7 @@ public class MDFSDirectory implements Serializable {
 	/** blocks that are being downloaded. < filId, Map<BlockIdx, StartTime>> */
 	private Map<Long, HashMap<Byte, Long>> downloadingBlocks;
 
+
 	public MDFSDirectory() {
 		fileMap = new HashMap<Long, MDFSFileInfo>();
 		nameToIDMap = new HashMap<String, Long>();
@@ -95,12 +94,7 @@ public class MDFSDirectory implements Serializable {
 		downloadingBlocks = new HashMap<Long, HashMap<Byte, Long>>();
 	}
 
-	/**
-	 * Return null if the fileId does not exist in the directory
-	 * 
-	 * @param fileId
-	 * @return
-	 */
+	//Return null if the fileId does not exist in the directory
 	public MDFSFileInfo getFileInfo(long fileId) {
 		return fileMap.get(fileId);
 	}
@@ -113,12 +107,7 @@ public class MDFSDirectory implements Serializable {
 			return null;
 	}
 
-	/**
-	 * Check if this file (fileId) was updated within the past FILE_SYNC_PERIOD
-	 * 
-	 * @param fileId
-	 * @return
-	 */
+	//Check if this file (fileId) was updated within the past FILE_SYNC_PERIOD
 	public synchronized boolean isRecentUpdated(long fileId) {
 		for (MyPair<Long, Long> pair : recentUpdate) {
 			if (pair.first.equals(fileId))
@@ -127,9 +116,8 @@ public class MDFSDirectory implements Serializable {
 		return false;
 	}
 
-	/**
-	 * @return A List of all available files. The List may be empty
-	 */
+
+	//return A List of all available files. The List may be empty
 	public synchronized List<MDFSFileInfo> getFileList() {
 		List<MDFSFileInfo> list;
 		if (!fileMap.isEmpty())
@@ -476,7 +464,8 @@ public class MDFSDirectory implements Serializable {
 			e.printStackTrace();
 		}
 	}
-	
+
+	//periodically called by scheduledTask.java to send out NEW_FILE_UPDATES for each files in the directory
 	public void broadcastMyDirectory(){
 		// Remove expired items
 		long curTime = System.currentTimeMillis();
