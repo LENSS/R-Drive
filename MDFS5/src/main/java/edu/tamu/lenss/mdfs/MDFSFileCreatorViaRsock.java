@@ -8,6 +8,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -51,19 +52,18 @@ import static java.lang.Thread.sleep;
 //most of the codes are copied from MDFSFileCreator.java class.
 public class MDFSFileCreatorViaRsock {
     private static final String TAG = MDFSFileCreatorViaRsock.class.getSimpleName();
-    private File file;
-    private MDFSFileInfo fileInfo;
+    private File file;              //the actual file
+    private MDFSFileInfo fileInfo;  //file information
     private byte[] encryptKey;
     private int blockCount;
     private double encodingRatio;
     private boolean isTopComplete = false;
     private boolean isPartComplete = false;
-    private boolean deleteWhenComplete = false;
     private boolean isSending = false;
     List<String> chosenNodes;
-    String[] permList;
-    EdgeKeeperMetadata metadata;
-    String clientID;
+    String[] permList;              //permList contains entries like WORLD, OWNER, GROUP:<group_name> or GUIDs
+    EdgeKeeperMetadata metadata;    //metadata object for this file
+    String clientID;                //the client who is making this request
 
 
 
@@ -76,7 +76,7 @@ public class MDFSFileCreatorViaRsock {
         this.fileInfo.setFileSize(file.length());
         this.fileInfo.setNumberOfBlocks((byte)blockCount);
         Logger.w(TAG, "Split file " + f.getName() + " to " + blockCount + " blocks");
-        this.metadata = new EdgeKeeperMetadata(EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, fileInfo.getCreatedTime(), fileInfo.getFileName(), blockCount, (byte)0,(byte) 0);
+        this.metadata = new EdgeKeeperMetadata(EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, GNS.ownGUID, fileInfo.getCreatedTime(), new String[1], new Date().getTime(), fileInfo.getFileName(), blockCount, (byte)0,(byte) 0);
         this.permList = permList;
         this.clientID = clientID;
         this.chosenNodes = new ArrayList<>();
@@ -93,6 +93,7 @@ public class MDFSFileCreatorViaRsock {
     public void start(){
 
         //first fetch topology from olsr
+        //then convert permList[] into GUIDs and populates chosenNodes list
         fetchTopologyAndChooseNodes();
 
         if(blockCount > 1){
@@ -203,7 +204,7 @@ public class MDFSFileCreatorViaRsock {
                 for(File blockF : blocks){
                     fName = blockF.getName();
                     byte idx = Byte.parseByte(fName.substring((fName.lastIndexOf("_")+1)));   //idx = block number
-                    uploadQ.add(new MDFSBlockCreatorViaRsock(blockF, fileInfo, idx, blockListener, chosenNodes, clientID));
+                    uploadQ.add(new MDFSBlockCreatorViaRsock(blockF, fileInfo, idx, blockListener, permList, chosenNodes, clientID));
                 }
             }
 
@@ -290,8 +291,9 @@ public class MDFSFileCreatorViaRsock {
     //who are the two hops nodes nearby. Then also fetches a list of nodes from GNS
     // about who are the nodes currently running mdfs. cross the two lists.
     //then matches the list with the list of permitted nodes.
-    //the final list is contains nodes as candidate nodes to hold the file fragments.
-    //overall, this function basically populates chosenNodes list.
+    //the final list contains nodes as candidate nodes to hold the file fragments.
+    //overall, this function basically populates chosenNodes list with GUIDs, and
+    //decides n and k value for fragment distribution.
     private void fetchTopologyAndChooseNodes(){
 
         //check if the perm list has only one entry and that is OWNER or WORLD
@@ -339,18 +341,18 @@ public class MDFSFileCreatorViaRsock {
             }
 
         }else{
-            //permission list has either GUIDs or GROUP-<group_name> entities, so we only send to those GUIDs who are running MDFS + nearby to me + belongs to permission list
-            //note: at this point, there must be entries inside permLIst and each entry in permList is valid and has already been checked by checkPermittedNodes() in RequestHandler.java files.
-            //each entry is either 40 bytes GUID or a string with GROUP:<group_name> tag
+            //permList[] has either GUIDs or GROUP-<group_name> entities, so we only send to those GUIDs who are running MDFS + nearby to me + belongs to permission list
+            //note: at this point, there must be entries inside permList and each entry in permList is valid and has already been checked by checkPermittedNodes() in RequestHandler.java files.
+            //each entry in permList[] is either 40 bytes GUID or a string with GROUP:<group_name> tag
 
             //make a list of all permitted GUIDS in the perm list
             List<String> permittedGUIDs = new ArrayList<>();
 
-            //first separate out the <group_name> from the group:<group_name> tag
+            //first separate out the <group_name> from the GROUP:<group_name> tag
             List<String> groups = new ArrayList<>();
-            for(int i=0; i< permList.length; i++){
+            for(int i = 0; i< permList.length; i++){
                 if(permList[i].contains("GROUP:")){
-                    String groupName = permList[i].replaceAll("GROUP:", "");
+                    String groupName = permList[i].substring("GROUP:".length()); //only get the <group_name> without the GROUP: tag | dont change case
                     groups.add(groupName);
                 }else{
                     permittedGUIDs.add(permList[i]);
@@ -361,9 +363,7 @@ public class MDFSFileCreatorViaRsock {
             List<String> groupGUIDs = groupToGUIDConvert(groups);
 
             //add ALL groupGUIDs to the permitted GUIDs list
-            for(int i=0; i< groupGUIDs.size(); i++){
-                permittedGUIDs.add(groupGUIDs.get(i));
-            }
+            permittedGUIDs.addAll(groupGUIDs);
 
             //get peer guids who are running mdfs from GNS
             List<String> peerGUIDsListfromGNS = GNS.gnsServiceClient.getPeerGUIDs("MDFS", "default");
@@ -439,10 +439,14 @@ public class MDFSFileCreatorViaRsock {
         boolean connected = client.connect();
 
         //check if connection succeeded..if not, return with empty list
+        //dont put in client.putInDTNQueue().
         if(!connected){ return new ArrayList<>();}
 
+        //if connected, set socket read timeout(necessary here as we are expected reply in time)
+        client.setSocketReadTimeout();
+
         //make EdgeKeeper object with cmd = GROUP_TO_GUID_CONV_REQUEST
-        EdgeKeeperMetadata metadataReq = new EdgeKeeperMetadata(EdgeKeeperConstants.GROUP_TO_GUID_CONV_REQUEST, EdgeKeeperConstants.getMyGroupName() , GNS.ownGUID, groups);
+        EdgeKeeperMetadata metadataReq = new EdgeKeeperMetadata(EdgeKeeperConstants.GROUP_TO_GUID_CONV_REQUEST, new Date().getTime(), EdgeKeeperConstants.getMyGroupName() , GNS.ownGUID, groups);
 
         //convert into json string
         String str = metadataReq.toBuffer(metadataReq);
@@ -461,6 +465,9 @@ public class MDFSFileCreatorViaRsock {
 
         //get return
         ByteBuffer recvBuf = client.receive();
+
+        //check if receive value is null or nah(can be null due to timeout)
+        if(recvBuf==null){ return new ArrayList<>();}
 
         //close client socket
         client.close();
@@ -502,19 +509,19 @@ public class MDFSFileCreatorViaRsock {
 
 
 
+    //this function updates own local directory about the created file
+    //and then calls updateEdgeKeeper() to send the updat to edgekeeper
     private void updateDirectory() {
-        //todo: add acl metadata
+
+        //set file creator
         ServiceHelper serviceHelper = ServiceHelper.getInstance();
         fileInfo.setCreator(serviceHelper.getNodeManager().getMyMAC());
-        NewFileUpdate update = new NewFileUpdate(fileInfo);
 
-        //serviceHelper.sendFileUpdate(update);  (commented by mohammad sagor/// reason: no need to update dir..dgekeeper already does that)
-        Logger.w(TAG, "File Id: " + fileInfo.getCreatedTime());
-        // Update my directory as well
+        //NewFileUpdate update = new NewFileUpdate(fileInfo);
+        //serviceHelper.sendFileUpdate(update);  (commented by mohammad sagor/// reason: no need to send update dir commands to other nodes)
+
+        // Update my local directory
         serviceHelper.getDirectory().addFile(fileInfo);
-
-        if(deleteWhenComplete)
-            file.delete();
 
         //now update file metadata to EdgeKeeper
         updateEdgeKeeper();
@@ -522,8 +529,9 @@ public class MDFSFileCreatorViaRsock {
         fileCreatorListener.onComplete("file creation complete",clientID); //notifies handleCreateCommand
     }
 
-    //this function sends the
-    private void updateEdgeKeeper() {  //todo: only report frag that I have
+    //this function sends the update to the edgekeeper
+    //if it cannot connect to the edgekeeper, then it puts the data in DTNQueue
+    private void updateEdgeKeeper() {
 
         //add information of all blocks/fragments that I(file creator) have(file creator has all blocks of all fragments)
         for(int i=0; i< blockCount; i++){
@@ -531,6 +539,9 @@ public class MDFSFileCreatorViaRsock {
                 metadata.addInfo(GNS.ownGUID, Integer.toString(i), Integer.toString(j));
             }
         }
+
+        //add permList to the metadata
+        metadata.setPermission(permList);  ///permList contains WORLD, OWNER, GROUP:<group_name> or GUIDs
 
         //print metadata
         printMetadata(metadata);
@@ -540,8 +551,13 @@ public class MDFSFileCreatorViaRsock {
         boolean connected = client.connect();
 
         if(!connected){
-            //todo: store the metadata locally somewhere to send it to EdgeKeeper later
+            //if couldnt connect to EdgeKeeper, we put in DTN queue
+            client.putInDTNQueue(metadata, 3);
+            return;
         }
+
+        //set socket read timeout(unnecessary here)
+        client.setSocketReadTimeout();
 
         //get json string
         String str= metadata.toBuffer(metadata);

@@ -2,27 +2,30 @@ package edu.tamu.lenss.mdfs.EdgeKeeper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-//data structure used by edgekeeper regarding how to store the file metadata
+//data structure used by edgekeeper to store the file metadata
+//this class object should be written periodically to the disk
 public class DataStore {
 
     //dataStore instance
-    public static DataStore instance;  //todo: write on disk
+    public static DataStore instance;  //todo: write on disk and read from disk before making new instance
 
     //variables and data structures
-    public int longestFileNameLength;  //only used for printing filenames in a pretty format
-    public Map<Long, EdgeKeeperMetadata> fileIDtoMetadataMap;
-    public Map<String, List<String>> GUIDtoGroupNamesMap;
-    //todo: add acl info here
+    public int longestFileNameLength;                           //only used for printing filenames in a pretty format
+    public Map<Long, EdgeKeeperMetadata> fileIDtoMetadataMap;  //contains metadata for each file
+    public Map<String, List<String>> GUIDtoGroupNamesMap;       //cointains group information for each node/GUID | only contains the name doesnt contain GROUP: tag | each name's case is as inputted by user
+    public List<Long> deletedFiles;                             //contains all the ids of deleted files
 
     //private constructors
     private DataStore(){
         this.longestFileNameLength = 0;
         this.fileIDtoMetadataMap = new HashMap<>();
         this.GUIDtoGroupNamesMap = new HashMap<>();
+        this.deletedFiles = new ArrayList<>();
 
         //todo: delete these group testing features
         String[] firstArr = {"ABCD", "EFGH"};
@@ -43,11 +46,11 @@ public class DataStore {
         }else{
             return instance;
         }
-        return instance;  //dummy return, should never reach chere
+        return instance;  //dummy return, should never reach here
     }
 
 
-    //store Edgekeeper object of a file into map
+    //store EdgeKeeper object of a file into map
     public void putFileMetadata(EdgeKeeperMetadata metadata){
         //store metadata without changing command
         fileIDtoMetadataMap.put(metadata.fileID, metadata);
@@ -60,18 +63,24 @@ public class DataStore {
     }
 
     //get EdgeKeeper metadata from map
+    //if metadata doesnt exists, return with cmd = METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST
+    //this function does not check for permission but only checks for existence
     public EdgeKeeperMetadata getFileMetadata(long fileid){
         if(fileIDtoMetadataMap.containsKey(fileid)) {
             System.out.println("edgekeeper datastore success retrieving data for fileid: " + fileid);
-
             //change commands before returning
             EdgeKeeperMetadata metadata = fileIDtoMetadataMap.get(fileid);
             metadata.setCommand(EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_SUCCESS);
             return metadata;
         }else{
-            System.out.println("edgekeeper datastore failed retrieving data for fileid: " + fileid);
-            return new EdgeKeeperMetadata(EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED, new ArrayList<>(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000,"name",  0, (byte)0, (byte)0); //dummy metadata with command FAILED
+            System.out.println("edgekeeper datastore has not metadata for fileID: " + fileid);
+            return new EdgeKeeperMetadata(EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST, new ArrayList<>(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "name",  0, (byte)0, (byte)0); //dummy metadata with command FAILED
         }
+    }
+
+    //remove metadata of a file
+    public void removeFileMetadata(long fileID){
+        fileIDtoMetadataMap.remove(fileID);
     }
 
     //store a list of groups a Node belongs to
@@ -91,5 +100,7 @@ public class DataStore {
             return new ArrayList<>();
         }
     }
+
+
 
 }

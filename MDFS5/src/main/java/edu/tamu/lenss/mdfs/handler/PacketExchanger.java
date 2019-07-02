@@ -32,6 +32,8 @@ import static java.lang.Thread.sleep;
  *
  * @author Jay
  */
+
+//todo: stop all threads created here
 public class PacketExchanger extends Observable {
 	private static final String TAG = PacketExchanger.class.getSimpleName();
 	private TCPConnection tcpConnection;
@@ -76,8 +78,7 @@ public class PacketExchanger extends Observable {
 
 		//check if I am the dummy EdgeKeeper server.
 		if(EdgeKeeperConstants.dummy_EdgeKeeper_ip.equals(EdgeKeeperConstants.my_wifi_ip_temp)){
-			server server = new server(EdgeKeeperConstants.dummy_EdgeKeeper_port);
-			server.start();
+            server server = new server(EdgeKeeperConstants.dummy_EdgeKeeper_port);
 		}
 
 

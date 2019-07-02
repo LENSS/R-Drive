@@ -17,8 +17,11 @@ public class utils {
     //this function checks if the user inputted permission list has valid entries.
     //if "world", then other entries doesnt matter..everyone who is running MDFS will hav r/w/d permission.
     //if "owner", then other entries doesnt matter, only owner of the file will have r/w/d permission.
-    //else, they listed nodes will have permission.
-    //if no other entries are valid the only permission is OWNER
+    //else, the listed nodes will have permission.
+    //returned String[] contains either "WORLD" in uppercase, or
+    //"OWNER" in uppercase, or
+    //GROUP:<group_name> , containing GROUP: tag in uppercase and <group_name> as passed by user
+    //GUIDs which can be either uppercase or lowercase, as got from GNS.
     public static String[] checkPermittedNodes(String[] perm){
         //resultant list
         List<String> permittedList = new ArrayList<>();
@@ -26,7 +29,7 @@ public class utils {
         List<String> permList = Arrays.asList(perm);
         Set<String> permSet = new HashSet<>(permList);
 
-        //if permission list contains owner or world, then other permissions doesnt matter
+        //if permission list contains owner or world, then other permissions dont matter
         if(permSet.contains("OWNER") || permSet.contains("owner")){
             permittedList.add("OWNER");
             return permittedList.toArray(new String[permittedList.size()]);
@@ -36,13 +39,19 @@ public class utils {
         }
 
         //if permittedSet doesnt contain WORLD or OWNER, then the only thing it might have are GUIDs or GROUP:<group_name>
+        //we add group with GROUP: tag along with <group_name>, the GROUP: Tag is uppercase.
+        //we add GUIDs as is , can be either uppercase or lowercase.
         for(int i=0; i< perm.length; i++){
-            if (!perm[i].equals("") && perm[i].toLowerCase().contains("group:") && perm[i].toLowerCase().substring(0,6).equals("group:")) {
-                permittedList.add(perm[i].toUpperCase());  //note: add with GROUP: tag | do uppercase
-            } else if (!perm[i].equals("") && perm[i].toLowerCase().length() == GNSConstants.GUID_LENGTH) {
-                permittedList.add(perm[i]);  //note: dont lowercase or uppercase GUIDs, keep them as is
+            if( (!perm[i].equals("")) && (perm[i].toLowerCase().equals("group:")) && (perm[i].length() == "group:".length())){
+                //user inputted only GROUP: tag without any <group_name> so ignore
+                continue;
+            }else if (!perm[i].equals("") && perm[i].toLowerCase().contains("group:") && perm[i].toLowerCase().substring(0,6).equals("group:")) {
+                String groupVal = "GROUP:" + perm[i].substring("GROUP:".length());  //GROUP: + <group_name>
+                permittedList.add(groupVal);
+            }else if (!perm[i].equals("") && perm[i].length() == GNSConstants.GUID_LENGTH) {
+                permittedList.add(perm[i]);  //GUID, dont change case
             }else{
-                //entry is either empty string, or is not 40 bytes guid, or not Group name and some sort of garbage entry
+                //entry is either empty string, or is not 40 bytes guid, or some sort of garbage entry
                 continue;
             }
         }

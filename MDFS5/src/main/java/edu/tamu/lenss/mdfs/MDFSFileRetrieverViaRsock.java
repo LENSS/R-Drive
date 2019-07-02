@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.Callable;
@@ -52,8 +53,10 @@ public class MDFSFileRetrieverViaRsock {
         fetchFileMetadataFromEdgeKeeper();
 
         //check if metadata is valid
-        if(metadata.command == EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED){
+        if(metadata.command == EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST){
             fileListener.onError("Failed, EdgeKeeper has no metadata for this file.", fileInfo);
+        }else if(metadata.command == EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_PERMISSIONDENIED){
+            fileListener.onError("Failed, File permission denied", fileInfo);
         }else if(metadata.command == EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED){
             fileListener.onError("Failed, could not connect to EdgeKeeper.", fileInfo);
         }else if(metadata.command ==  EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_SUCCESS){
@@ -72,12 +75,16 @@ public class MDFSFileRetrieverViaRsock {
         //if could not connect to edgeKeeper
         if(!connected){
             //return with dummy metadata with cmd = EDGEKEEPER_CONNECTION_FAILED and other dummy information
-            this.metadata = new EdgeKeeperMetadata(EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED, EdgeKeeperConstants.getMyGroupName(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000,"name",  0, (byte)0, (byte)0); //dummy metadata with command f(failed)..otherwise command would be r(return)
+            //dont put it in client.putInDTNQueue() function
+            this.metadata = new EdgeKeeperMetadata(EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED, EdgeKeeperConstants.getMyGroupName(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "name",  0, (byte)0, (byte)0); //dummy metadata
             return;
         }
 
+        //if connected set socket read timeout
+        client.setSocketReadTimeout();
+
         //make request metadata object
-        EdgeKeeperMetadata metadataReq = new EdgeKeeperMetadata(EdgeKeeperConstants.METADATA_WITHDRAW_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, fileInfo.getCreatedTime(), fileInfo.getFileName()); //w = withdraw
+        EdgeKeeperMetadata metadataReq = new EdgeKeeperMetadata(EdgeKeeperConstants.METADATA_WITHDRAW_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, fileInfo.getCreatedTime(), new Date().getTime(), fileInfo.getFileName());
 
         //convert into json string
         String str = metadataReq.toBuffer(metadataReq);
@@ -97,6 +104,13 @@ public class MDFSFileRetrieverViaRsock {
         //get return
         ByteBuffer recvBuf = client.receive();
 
+        //check if receive value is null or nah(can be null due to timeout),
+        //then return dummy object
+        if(recvBuf==null){
+            this.metadata = new EdgeKeeperMetadata(EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED, EdgeKeeperConstants.getMyGroupName(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "name",  0, (byte)0, (byte)0); //dummy metadata
+            return;
+        }
+
         //close client socket
         client.close();
 
@@ -112,6 +126,7 @@ public class MDFSFileRetrieverViaRsock {
 
     }
 
+    //testing purpose
     public void printMetadata(EdgeKeeperMetadata metadata){
         System.out.println("metadataaaa command return: " + metadata.command);
         System.out.println("metadataaaa chosennodes size: " + metadata.getAllUniqueFragmentHolders().size());

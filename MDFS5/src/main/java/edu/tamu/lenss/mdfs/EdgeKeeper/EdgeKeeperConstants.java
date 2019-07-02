@@ -16,6 +16,9 @@ public class EdgeKeeperConstants {
     public static final String dummy_EdgeKeeper_ip = "192.168.0.2";
     public static final int dummy_EdgeKeeper_port = 9995;
 
+    //edgekeeper socket variables
+    public static final long readIntervalInMilliSec = 3000;
+
 
     //depositing metadata BY FILE CREATOR to the EdgeKeeper commmands
     public static int FILE_CREATOR_METADATA_DEPOSIT_REQUEST = 10;
@@ -30,23 +33,24 @@ public class EdgeKeeperConstants {
     //withdrawing metadata from the EdgeKeeper commands
     public static int METADATA_WITHDRAW_REQUEST = 70;
     public static int METADATA_WITHDRAW_REPLY_SUCCESS = 80;
-    public static int METADATA_WITHDRAW_REPLY_FAILED = 90;
+    public static int METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST = 90;
+    public static int METADATA_WITHDRAW_REPLY_FAILED_PERMISSIONDENIED = 100;
 
     //group tp GUID conversion commands
-    public static int GROUP_TO_GUID_CONV_REQUEST = 100;
-    public static int GROUP_TO_GUID_CONV_REPLY_SUCCESS = 110;
-    public static int GROUP_TO_GUID_CONV_REPLY_FAILED = 120;
+    public static int GROUP_TO_GUID_CONV_REQUEST = 110;
+    public static int GROUP_TO_GUID_CONV_REPLY_SUCCESS = 120;
+    public static int GROUP_TO_GUID_CONV_REPLY_FAILED = 130;
 
     //own group information submission commands
-    public static int GROUP_INFO_SUBMISSION_REQUEST = 130;
+    public static int GROUP_INFO_SUBMISSION_REQUEST = 140;
 
     //directory fetch request commands
-    public static int FETCH_ALL_FILES_REQUEST = 140;
-    public static int FETCH_ALL_FILES_REPLY_SUCCESS = 150;
-    public static int FETCH_ALL_FILES_REPLY_FAILED = 160;
+    public static int FETCH_ALL_FILES_REQUEST = 150;
+    public static int FETCH_ALL_FILES_REPLY_SUCCESS = 160;
+    public static int FETCH_ALL_FILES_REPLY_FAILED = 170;
 
     //command if connecting to EdgeKeeper failed
-    public static int EDGEKEEPER_CONNECTION_FAILED = 170;
+    public static int EDGEKEEPER_CONNECTION_FAILED = 180;
 
     //MDFS group info temporarily stored here todo: this needs to be written on disk
     public static List<String> getMyGroupName(){

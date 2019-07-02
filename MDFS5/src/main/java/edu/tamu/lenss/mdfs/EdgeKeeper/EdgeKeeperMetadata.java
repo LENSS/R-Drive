@@ -13,51 +13,59 @@ public class EdgeKeeperMetadata implements Serializable {
     //all variables
     public int command;
     public List<String> ownGroupNames;
+    public String metadataDepositorGUID;
     public String fileCreatorGUID;
     public String metadataRequesterGUID;
     public String groupConversionRequesterGUID;
     public String filename;
     public long fileID;
+    public long timeStamp;
     public int numOfBlocks;
     public byte n2;
     public byte k2;
-    public List<Map<String, Map<String, List<String>>>> chosenNodes;
+    public List<Map<String, Map<String, List<String>>>> chosenNodes;  //the main data structure that holds a list that contains mapping from GUID to blockNUm to FRagmentNum
     public List<String> groupOrGUID;
-    //todo: add acl info here
+    public String[] permissionList;
 
     //empty constructors
     public EdgeKeeperMetadata(){}
 
     //constructor for metadata deposit by file creator with cmd = FILE_CREATOR_METADATA_DEPOSIT_REQUEST (object made by -client, sent to- EdgeKeeper, reason - to deposit metadata after a file creator created a file)
+    //constructor for metadata deposit by fragment receiver with cmd = FRAGMENT_RECEIVER_METADATA_DEPOSIT_REQUEST (object made by -client, sent to- EdgeKeeper, reason - to deposit metadata after a fragment of a file has been received)
     //constructor for metadata withdraw reply with cmd = METADATA_WITHDRAW_REPLY_SUCCESS (object made by EdgeKeeper, sent to - client, reason - success to reply with metadata of a file)
     //constructor for metadata withdraw reply with cmd = METADATA_WITHDRAW_REPLY_FAILED (object made by EdgeKeeper, sent to - client, reason - failed to reply with metadata of a file but no metadata found for this file so dummy metadata sent)
-    public EdgeKeeperMetadata(int cmd, List<String> owngroupnames, String fileCreatorGUID, long fileid, String filename, int numofblocks, byte n2, byte k2){
+    public EdgeKeeperMetadata(int cmd, List<String> owngroupnames, String metadataDepositorGUID, String fileCreatorGUID, long fileid, String[] permList, long timeStamp, String filename, int numofblocks, byte n2, byte k2){
         this.command = cmd;
         this.ownGroupNames = owngroupnames;
+        this.metadataDepositorGUID = metadataDepositorGUID;
         this.fileCreatorGUID = fileCreatorGUID;
+        this.permissionList = permList;
         this.filename = filename;
         this.fileID = fileid;
+        this.timeStamp = timeStamp;
         this. numOfBlocks = numofblocks;
         this.n2 = n2;
         this.k2 = k2;
         this.chosenNodes = new ArrayList<>(); //this list if populated by addInfo() function
     }
 
-    //constructor for metadata withdrawal request with cmd  = METADATA_WITHDRAW_REQUEST (object made by -client, sent to - EdgeKeeper, reason -to ask for metadata for a file)
-    public EdgeKeeperMetadata(int cmd, List<String> owngroupnames, String metadataRequesterGUID, long fileid, String filename){
+    //constructor for metadata withdraw request with cmd  = METADATA_WITHDRAW_REQUEST (object made by -client, sent to - EdgeKeeper, reason -to ask for metadata for a file)
+    public EdgeKeeperMetadata(int cmd, List<String> owngroupnames, String metadataRequesterGUID, long fileid, long timestamp, String filename){
         this.command = cmd;
         this.ownGroupNames = owngroupnames;
         this.metadataRequesterGUID = metadataRequesterGUID;
         this.filename = filename;
         this.fileID = fileid;
+        this.timeStamp = timestamp;
         this.chosenNodes = new ArrayList<>(); //this list if populated by addInfo() function
     }
 
     //constructor for GroupName to GUID conversion requests with cmd = GROUP_TO_GUID_CONV_REQUEST  (object made by -client, sent to -EdgeKeeper, reason - asking for GUIDs who belong to a group name)
     //constructor for GroupName to GUID conversion reply with cmd = GROUP_TO_GUID_CONV_REPLY_SUCCESS  (object made by -EdgeKeeper, sent to -Client, reason - success in replying with GUIDs who belong to a group name)
     //constructor for GroupName to GUID conversion reply with cmd = GROUP_TO_GUID_CONV_REPLY_FAILED  (object made by -EdgeKeeper, sent to -Client, reason - failed in replying with GUIDs who belong to a group name)
-    public EdgeKeeperMetadata(int cmd, List<String> owngroupnames, String groupConversionRequesterGUID, List<String> list){
+    public EdgeKeeperMetadata(int cmd, long timeStamp, List<String> owngroupnames, String groupConversionRequesterGUID, List<String> list){
         this.command = cmd;
+        this.timeStamp = timeStamp;
         this.ownGroupNames = owngroupnames;
         this.groupConversionRequesterGUID = groupConversionRequesterGUID;
         this.groupOrGUID = list;
@@ -76,6 +84,8 @@ public class EdgeKeeperMetadata implements Serializable {
     public void setCommand(int c){
         this.command = c;
     }
+
+    public void setPermission(String[] perm){ this.permissionList = perm; }
 
 
 

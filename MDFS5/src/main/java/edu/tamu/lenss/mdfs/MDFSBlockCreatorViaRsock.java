@@ -48,12 +48,13 @@ public class MDFSBlockCreatorViaRsock {
     private MDFSFileInfo fileInfo;
     private boolean fetchTopology, isEncryptComplete;
     private AtomicInteger fragCounter;
-    List<String> chosenNodes;
+    List<String> chosenNodes;       //list of GUIDs who will receive a fragment
+    String[] permList;              //permission list for the file
     public boolean isFinished = false;
-    String clientID;
+    String clientID;                //client id who made the file creation request
 
 
-    public MDFSBlockCreatorViaRsock(File file, MDFSFileInfo info, byte blockIndex, MDFSBlockCreatorListenerViaRsock lis, List<String> chosenodes, String clientID) {  //RSOCK
+    public MDFSBlockCreatorViaRsock(File file, MDFSFileInfo info, byte blockIndex, MDFSBlockCreatorListenerViaRsock lis, String[] permlist, List<String> chosenodes, String clientID) {  //RSOCK
         this.blockIdx = blockIndex;
         this.blockFile = file;
         this.listener = lis;
@@ -62,6 +63,7 @@ public class MDFSBlockCreatorViaRsock {
         this.k2 = fileInfo.getK2();
         this.n2 = fileInfo.getN2();
         this.fragCounter = new AtomicInteger();
+        this.permList = permlist;
         this.chosenNodes = chosenodes;
         this.clientID = clientID;
     }
@@ -165,7 +167,7 @@ public class MDFSBlockCreatorViaRsock {
                     //t1.start();
 
                     //or, upload via executorservice
-                    ServiceHelper.getInstance().executeRunnableTask(new FragmentUploaderViaRsock(f, fileInfo.getCreatedTime(), destNode, !nodesIter.hasNext()));
+                    ServiceHelper.getInstance().executeRunnableTask(new FragmentUploaderViaRsock(f, fileInfo.getCreatedTime(), permList, destNode, !nodesIter.hasNext()));
 
                 }
             }
@@ -192,11 +194,13 @@ public class MDFSBlockCreatorViaRsock {
         private long fileCreatedTime;
         private byte blockIndex;
         private byte fragmentIndex;
+        private String[] permList;
 
-        public FragmentUploaderViaRsock(File frag, long fileCreationTime, String destGUID, boolean last) {
+        public FragmentUploaderViaRsock(File frag, long fileCreationTime, String[] permlist, String destGUID, boolean last) {
             this.fileFrag = frag;
             this.destGUID = destGUID;
             this.fileCreatedTime = fileCreationTime;
+            this.permList = permlist;
             this.blockIndex = parseBlockNum(frag.getName());
             this.fragmentIndex = parseFragNum(frag.getName());
         }
@@ -238,7 +242,7 @@ public class MDFSBlockCreatorViaRsock {
                 System.out.println("sizeee of bytearray send: " + byteArray.length);
 
                 //make MDFSRsockBlockCreator obj
-                MDFSRsockBlockCreator mdfsrsockblock = new MDFSRsockBlockCreator(header, byteArray, fileInfo.getFileName(), fileFrag.length(), fileCreatedTime, destGUID);
+                MDFSRsockBlockCreator mdfsrsockblock = new MDFSRsockBlockCreator(header, byteArray, fileInfo.getFileName(), fileFrag.length(), fileInfo.getNumberOfBlocks(), fileInfo.getN2(), fileInfo.getK2(), fileCreatedTime, permList, GNS.ownGUID, destGUID);
 
                 //get byteArray and size of the MDFSRsockBlockCreator obj and do send over rsock
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();

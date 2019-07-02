@@ -5,9 +5,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
+import java.util.Date;
 
-import edu.tamu.lenss.mdfs.Constants;
+import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
+import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperMetadata;
+import edu.tamu.lenss.mdfs.EdgeKeeper.client;
 import edu.tamu.lenss.mdfs.GNS.GNS;
 import edu.tamu.lenss.mdfs.MDFSBlockCreator;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
@@ -60,14 +65,20 @@ public class RsockReceiveForFileCreation implements Runnable{
 
                     //convert MDFSRsockBlockCreator obj into FragmentTransferInfo (header), File (fileFrag) etc.
                     FragmentTransferInfo header = (FragmentTransferInfo) mdfsrsockblock.fragTransInfoHeader;
-                    byte[] byteArray = (byte[])mdfsrsockblock.fileFrag;
+                    byte[] byteArray = (byte[]) mdfsrsockblock.fileFrag;
                     long fileFragLength = (long) mdfsrsockblock.fileFragLength;
+                    int numOfBlocks = (int) mdfsrsockblock.blockCount;
+                    byte n2 =  (byte) mdfsrsockblock.n2;
+                    byte k2 =  (byte) mdfsrsockblock.k2;
                     String fileName = (String) mdfsrsockblock.fileName;
                     long fileCreatedTime = (long) mdfsrsockblock.fileCreatedTime;
+                    String[] permList = (String[]) mdfsrsockblock.permList;
+                    String fileCreatorGUID = (String) mdfsrsockblock.fileCreatorGUID;
                     String destGUID = (String) mdfsrsockblock.destGUID;
 
                     //now save the fileFrag
-                    saveTheFileFrag(header, byteArray, destGUID);
+                    saveTheFileFragAndUpdateMetadataToEdgeKeeper(fileName, fileCreatedTime, permList, numOfBlocks, n2, k2, header, byteArray, fileCreatorGUID, destGUID);
+
 
                     try {
                         sleep(1000);
@@ -83,8 +94,9 @@ public class RsockReceiveForFileCreation implements Runnable{
 
     }
 
-    //this function basically copied from FragExchangeHelper.java receiveBlockFragment() function
-    private void saveTheFileFrag(FragmentTransferInfo header, byte[] byteArray, String destGUID) {  //note: destGUID was never used
+    //part of this function basically copied from FragExchangeHelper.java receiveBlockFragment() function
+    //this function does two jobs one: save the filefrag locally in this device, two: submits fragment metadata to EdgeKeeper
+    private void saveTheFileFragAndUpdateMetadataToEdgeKeeper(String filename, long fileCreatedTime, String[] permList, int numOfBlocks, byte n2, byte k2, FragmentTransferInfo header, byte[] byteArray, String fileCreatorGUID, String destGUID) {  //note: destGUID was never used
         //create file
         File tmp0 = null;
         try{
@@ -107,8 +119,45 @@ public class RsockReceiveForFileCreation implements Runnable{
             //update own local directory data
             ServiceHelper.getInstance().getDirectory().addBlockFragment(header.getCreatedTime(), header.getBlockIndex(), header.getFragIndex());
 
-            //todo: make a connection to the edgekeeper and send data to edgeKeeper
+            //update to edgekeeper about the fragments that I just received
+            EdgeKeeperMetadata metadata = new EdgeKeeperMetadata(EdgeKeeperConstants.FRAGMENT_RECEIVER_METADATA_DEPOSIT_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, fileCreatorGUID, fileCreatedTime, permList, new Date().getTime(), filename, numOfBlocks , n2, k2);
 
+            //add info of the fragment I received/have
+            metadata.addInfo(GNS.ownGUID, Integer.toString((int)header.getBlockIndex()), Integer.toString((int)header.getFragIndex()));
+
+            //create client connection and connect
+            client client = new client(EdgeKeeperConstants.dummy_EdgeKeeper_ip, EdgeKeeperConstants.dummy_EdgeKeeper_port);
+            boolean connected = client.connect();
+
+            if(!connected){
+                //if couldnt connect to EdgeKeeper, we put in DTN queue
+                client.putInDTNQueue(metadata, 3);
+                return;
+            }
+
+            //set socket read timeout(unnecessary here)
+            client.setSocketReadTimeout();
+
+            //get json string
+            String str= metadata.toBuffer(metadata);
+
+            //make sendBuf
+            ByteBuffer sendBuf = ByteBuffer.allocate(str.length());
+            sendBuf.order(ByteOrder.LITTLE_ENDIAN);
+            sendBuf.clear();
+
+            //put data in sendBuf
+            sendBuf.put(str.getBytes());
+            sendBuf.flip();
+
+            //send
+            client.send(sendBuf);
+
+            //sleep 1 second
+            try { sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
+
+            //close connection
+            client.close();
 
         }catch(IOException | NullPointerException | SecurityException e){
             e.printStackTrace();

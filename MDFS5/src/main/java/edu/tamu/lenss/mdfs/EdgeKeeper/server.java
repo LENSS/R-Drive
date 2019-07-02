@@ -1,20 +1,24 @@
 package edu.tamu.lenss.mdfs.EdgeKeeper;
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
-public class server extends Thread{
+public class server{
     //tcp variables
     public int port = -1;
     ServerSocketChannel serverSocketChannel;
     SocketChannel socketChannel;
     ByteBuffer recvBuf;
-    DataStore datastore;
+    Thread readerTrd;
 
 
     public server(int port){
@@ -27,124 +31,206 @@ public class server extends Thread{
         try { serverSocketChannel.socket().bind(new InetSocketAddress(port)); } catch (IOException e) { e.printStackTrace(); }
         System.out.println("EdgeKeeper server is running...");
 
-        //create DataStore object
-        this.datastore = DataStore.getInstance();
+        //start server thread
+        this.readerTrd = new Thread(new Runnable() {
+            @Override
+            public void run(){
 
-    }
+                //create/load DataStore object
+                DataStore datastore = DataStore.getInstance();
 
-    public void run(){
-        ByteBuffer sendBuf;
-        while(true){
-            //accept a client
-            //server accepts a client, serves it and then moves on to serve the next client.
-            // this is important to ensure data consistency.
-            try {socketChannel = serverSocketChannel.accept(); } catch (IOException e) { e.printStackTrace(); }
-            System.out.println("EdgeKeeper server accepted a client");
+                try {
+                    ByteBuffer sendBuf;
+                    while (true) {
+                        //server accepts a client, serves it and then moves on to serve the next client.
+                        // this is important to ensure data consistency.
+                        try { socketChannel = serverSocketChannel.accept(); } catch (IOException e) { e.printStackTrace(); }
+                        System.out.println("EdgeKeeper server accepted a client");
 
-            //receive ByteBuffer flipped
-            boolean ret = receive(socketChannel);
+                        //set socket timeout during receive
+                        try { socketChannel.socket().setSoTimeout((int)EdgeKeeperConstants.readIntervalInMilliSec); } catch (SocketException e) { e.printStackTrace(); }
 
-            //check
-            if(ret){
+                        //receive ByteBuffer flipped
+                        boolean ret = receive(socketChannel);
 
-                //make string out of buffer
-                StringBuilder bd = new StringBuilder();
-                while (recvBuf.remaining() > 0)
-                    bd.append((char)recvBuf.get());
-                String str1 = bd.toString();
+                        //check
+                        if (ret) {
+                            //make string out of recvBuf
+                            StringBuilder bd = new StringBuilder();
+                            while (recvBuf.remaining() > 0)
+                                bd.append((char) recvBuf.get());
+                            String str1 = bd.toString();
 
-                //make EdgeKeeperMetadata object by passing flipped ByteBuffer
-                EdgeKeeperMetadata metadataRec = EdgeKeeperMetadata.parse(str1);
+                            //make EdgeKeeperMetadata object by passing flipped ByteBuffer
+                            EdgeKeeperMetadata metadataRec = EdgeKeeperMetadata.parse(str1);
 
-                //check for command
-                if(metadataRec!=null) {
-                    if (metadataRec.command == EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST) {
-                        System.out.println("EdgeKeeper server got metadata Deposit request from file creator");
-                        this.datastore.putFileMetadata(metadataRec);
-                        this.datastore.putGroupNameBYGUID(metadataRec.fileCreatorGUID, metadataRec.ownGroupNames);
+                            //check for command
+                            if (metadataRec != null) {
+                                if((metadataRec.command == EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST) || (metadataRec.command == EdgeKeeperConstants.FRAGMENT_RECEIVER_METADATA_DEPOSIT_REQUEST)){
+                                    System.out.println("EdgeKeeper server got metadata Deposit request from fragment receiver");
+                                    //retrieve the old metadata from DataStore if it even exists
+                                    EdgeKeeperMetadata metadataOld = datastore.getFileMetadata(metadataRec.fileID);
 
-                    }else if(metadataRec.command == EdgeKeeperConstants.METADATA_WITHDRAW_REQUEST) {
-                        System.out.println("EdgeKeeper server got metadata Withdraw request");
+                                    //check if METADATA_WITHDRAW_REPLY_FAILED command returned that means a file doesnt exist
+                                    if(metadataOld.command == EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST){
+                                        //check deleted file list to verify
+                                        if(datastore.deletedFiles.contains(metadataRec.fileID)){
+                                            continue;  //fileID belongs to deletedFiles list, meaning this file has already been deleted. so we ignore metadata
+                                        }else{
+                                            //push the metadata as usual as if a new file
+                                            datastore.putFileMetadata(metadataRec);
 
-                        //first get the GROUP name of this GUID and store this
-                        this.datastore.putGroupNameBYGUID(metadataRec.metadataRequesterGUID, metadataRec.ownGroupNames);
+                                            //store group information
+                                            datastore.putGroupNameBYGUID(metadataRec.metadataDepositorGUID, metadataRec.ownGroupNames);
 
-                        //get the requested metadata from dataStore
-                        EdgeKeeperMetadata metadataRet = datastore.getFileMetadata(metadataRec.fileID);
+                                        }
+                                    }else{
+                                        //retrieve new block and fragment numbers
+                                        String blockNumHeldByThisClient = metadataRec.getBlockNumbersHeldByNode(metadataRec.metadataDepositorGUID).get(0);  //this operation will never fail
+                                        String fragmentNumHeldByThisClient = metadataRec.getFragmentListByNodeAndBlockNumber(metadataRec.metadataDepositorGUID, blockNumHeldByThisClient).get(0);  //this operation will never fail
 
-                        //convert metadata into json string
-                        String str= metadataRet.toBuffer(metadataRet);
+                                        //add new fragment information into the old metadata object
+                                        metadataOld.addInfo(metadataRec.metadataDepositorGUID, blockNumHeldByThisClient, fragmentNumHeldByThisClient);
 
-                        //allocate space for reply
-                        sendBuf = ByteBuffer.allocate(str.length());
-                        sendBuf.order(ByteOrder.LITTLE_ENDIAN);
-                        sendBuf.clear();
+                                        //push the metadata back
+                                        datastore.putFileMetadata(metadataOld);
 
-                        //put data in sendBuf
-                        sendBuf.put(str.getBytes());
-                        sendBuf.flip();
+                                        //store new group information
+                                        datastore.putGroupNameBYGUID(metadataRec.metadataDepositorGUID, metadataRec.ownGroupNames);
 
-                        //send back
-                        send(sendBuf);
-                    }else if(metadataRec.command == EdgeKeeperConstants.GROUP_TO_GUID_CONV_REQUEST){
-                        //first get the GROUP name of this GUID and store this
-                        this.datastore.putGroupNameBYGUID(metadataRec.groupConversionRequesterGUID, metadataRec.ownGroupNames);
+                                        //note: no need to re-store permission information as it already should be there
 
-                        System.out.println("EdgeKeeper server got Group to GUID Conversion request(C)");
-                        List<String> groupnames = metadataRec.groupOrGUID;
+                                    }
 
-                        //make a GUIDList to return
-                        List<String> listofResultantGUIDS =  new ArrayList<>();
 
-                        //get all GUIDs who are member of at least one group
-                        List<String> allGUIDsBelongsToAnyGroup = new ArrayList(datastore.GUIDtoGroupNamesMap.keySet());
+                                }else if (metadataRec.command == EdgeKeeperConstants.METADATA_WITHDRAW_REQUEST) {
+                                    System.out.println("EdgeKeeper server got metadata Withdraw request");
 
-                        //check and find
-                        for(int i=0; i< groupnames.size(); i++){
-                            String groupname = groupnames.get(i);
-                            //trace all GUIDs who belong to this groupname
-                            for(int j=0; j< allGUIDsBelongsToAnyGroup.size(); j++){
-                                String guid = allGUIDsBelongsToAnyGroup.get(j);
-                                if(datastore.GUIDtoGroupNamesMap.get(guid).contains(groupname)){
-                                    listofResultantGUIDS.add(guid);
+                                    //first get the GROUP name of this GUID and store this
+                                    datastore.putGroupNameBYGUID(metadataRec.metadataRequesterGUID, metadataRec.ownGroupNames);
+
+                                    //get the requested metadata from dataStore
+                                    EdgeKeeperMetadata metadataRet = datastore.getFileMetadata(metadataRec.fileID);
+
+                                    //check if the file exists
+                                    if(metadataRet.command!=EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST){
+                                        List<String> permList = Arrays.asList(metadataRet.permissionList);
+                                        List<String> groupsMemberOf = datastore.getGroupNamesbyGUID(metadataRec.metadataRequesterGUID);
+
+                                        //If exists, check if withdraw requester node has permission for this metadata
+                                        boolean authorized = false;
+                                        if(permList.contains("WORLD")){
+                                            authorized = true;
+                                        }else if((permList.contains("OWNER")) && metadataRet.fileCreatorGUID.equals(metadataRec.metadataRequesterGUID)){
+                                            authorized = true;
+                                        }else{
+                                            for(int i=0; i<groupsMemberOf.size(); i++){
+                                                String groupname = groupsMemberOf.get(i);
+                                                for(int j=0; j<permList.size(); j++){
+                                                    if(permList.get(j).equals("GROUP:" + groupname)){
+                                                        authorized = true;
+                                                    }
+
+
+                                                    if(authorized){break;}
+                                                }
+                                                if(authorized){break;}
+                                            }
+
+                                            if(!authorized){
+                                                //we change the command to METADATA_WITHDRAW_REPLY_FAILED_PERMISSIONDENIED of metadata reply
+                                                metadataRet.setCommand(EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_PERMISSIONDENIED);
+                                            }
+                                        }
+
+                                    }else{
+                                        //file/metadata doesnt exists so we send back metadata with command = METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST
+                                    }
+
+                                    //convert metadata into json string
+                                    String str = metadataRet.toBuffer(metadataRet);
+
+                                    //allocate space for reply
+                                    sendBuf = ByteBuffer.allocate(str.length());
+                                    sendBuf.order(ByteOrder.LITTLE_ENDIAN);
+                                    sendBuf.clear();
+
+                                    //put data in sendBuf
+                                    sendBuf.put(str.getBytes());
+                                    sendBuf.flip();
+
+                                    //send back
+                                    send(sendBuf);
+                                } else if (metadataRec.command == EdgeKeeperConstants.GROUP_TO_GUID_CONV_REQUEST) {
+                                    //first get the GROUP name of this GUID and store this
+                                    datastore.putGroupNameBYGUID(metadataRec.groupConversionRequesterGUID, metadataRec.ownGroupNames);
+
+                                    System.out.println("EdgeKeeper server got Group to GUID Conversion request(C)");
+                                    List<String> groupnames = metadataRec.groupOrGUID;
+
+                                    //make a GUIDList to return
+                                    List<String> listofResultantGUIDS = new ArrayList<>();
+
+                                    //get all GUIDs who are member of at least one group
+                                    List<String> allGUIDsBelongsToAnyGroup = new ArrayList(datastore.GUIDtoGroupNamesMap.keySet());
+
+                                    //check and find
+                                    for (int i = 0; i < groupnames.size(); i++) {
+                                        String groupname = groupnames.get(i);
+                                        //trace all GUIDs who belong to this groupname
+                                        for (int j = 0; j < allGUIDsBelongsToAnyGroup.size(); j++) {
+                                            String guid = allGUIDsBelongsToAnyGroup.get(j);
+                                            if (datastore.GUIDtoGroupNamesMap.get(guid).contains(groupname)) {
+                                                listofResultantGUIDS.add(guid);
+                                            }
+                                        }
+                                    }
+
+
+                                    //make reply metadata object
+                                    EdgeKeeperMetadata metadataRet;
+                                    if (listofResultantGUIDS.size() != 0) {
+                                        metadataRet = new EdgeKeeperMetadata(EdgeKeeperConstants.GROUP_TO_GUID_CONV_REPLY_SUCCESS, new Date().getTime(), new ArrayList<>(), metadataRec.groupConversionRequesterGUID, listofResultantGUIDS);
+                                    } else {
+                                        metadataRet = new EdgeKeeperMetadata(EdgeKeeperConstants.GROUP_TO_GUID_CONV_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), metadataRec.groupConversionRequesterGUID, listofResultantGUIDS);
+                                    }
+
+                                    //convert metadata into json string
+                                    String str = metadataRet.toBuffer(metadataRet);
+
+                                    //allocate space for reply
+                                    sendBuf = ByteBuffer.allocate(str.length());
+                                    sendBuf.order(ByteOrder.LITTLE_ENDIAN);
+                                    sendBuf.clear();
+
+                                    //put data in sendBuf
+                                    sendBuf.put(str.getBytes());
+                                    sendBuf.flip();
+
+                                    //send back
+                                    send(sendBuf);
+
+                                    //dummy sleep for interrupt
+                                    Thread.sleep(0);
+
                                 }
                             }
-                        }
 
-
-                        //make reply metadata object
-                        EdgeKeeperMetadata metadataRet;
-                        if(listofResultantGUIDS.size()!=0) {
-                            metadataRet = new EdgeKeeperMetadata(EdgeKeeperConstants.GROUP_TO_GUID_CONV_REPLY_SUCCESS, new ArrayList<>(), metadataRec.groupConversionRequesterGUID, listofResultantGUIDS);
                         }else{
-                            metadataRet = new EdgeKeeperMetadata(EdgeKeeperConstants.GROUP_TO_GUID_CONV_REPLY_FAILED, new ArrayList<>(), metadataRec.groupConversionRequesterGUID, listofResultantGUIDS);
+                            socketChannel.close();
                         }
-
-                        //convert metadata into json string
-                        String str= metadataRet.toBuffer(metadataRet);
-
-                        //allocate space for reply
-                        sendBuf = ByteBuffer.allocate(str.length());
-                        sendBuf.order(ByteOrder.LITTLE_ENDIAN);
-                        sendBuf.clear();
-
-                        //put data in sendBuf
-                        sendBuf.put(str.getBytes());
-                        sendBuf.flip();
-
-                        //send back
-                        send(sendBuf);
 
                     }
+                }catch(InterruptedException | IOException e){
+                    e.printStackTrace();
                 }
 
-
             }
+        });
+        readerTrd.start();
 
-        }
+    }//constructor
 
-
-    }
 
     public void send(ByteBuffer buffer){
 
@@ -178,6 +264,9 @@ public class server extends Thread{
         }
     }
 
+    //receive function
+    //returns true if receive succeeded and populates recvBuf
+    //returns false if receive failed
     public boolean receive(SocketChannel socket){
 
         //first, read only Long.BYTES amount to figure out the total receive size
@@ -190,7 +279,7 @@ public class server extends Thread{
         int iii = 0;
         do{
             int r = 0;
-            try { r = socket.read(size); } catch (IOException e) { e.printStackTrace(); }
+            try { r = socket.read(size); } catch(SocketTimeoutException time){return false;} catch (IOException e) { return false;}
             if(r>0) {
                 iii = iii + r;
             }
@@ -210,7 +299,7 @@ public class server extends Thread{
         int ii = 0;
         do{
             int r = 0;
-            try { r = socket.read(recv); } catch (IOException e) { e.printStackTrace(); }
+            try { r = socket.read(recv); }  catch(SocketTimeoutException time){return false;} catch (IOException e) { return false;}
             if(r>0){
                 ii = ii+ r;
             }
@@ -229,8 +318,20 @@ public class server extends Thread{
         for(int i=0; i< recv.limit(); i++){ recvBuf.put(recv.get(i)); }
         recvBuf.flip();
 
-        //return
-        if(recv.limit()>0){return true;}else{return false;}
+        //return values
+        if(recv.limit()>0){ return true; } else{ return false; }
+
+    }
+
+    public void close(){
+        try {
+            serverSocketChannel.close();
+            socketChannel.close();
+            readerTrd.interrupt();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
 }
