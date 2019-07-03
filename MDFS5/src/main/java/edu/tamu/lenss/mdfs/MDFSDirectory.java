@@ -21,8 +21,6 @@ import java.util.Set;
 
 import android.util.Pair;
 import edu.tamu.lenss.mdfs.handler.PacketExchanger;
-import edu.tamu.lenss.mdfs.handler.ServiceHelper;
-import edu.tamu.lenss.mdfs.models.DeleteFile;
 import edu.tamu.lenss.mdfs.models.JobReq;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.models.NewFileUpdate;
@@ -47,43 +45,36 @@ import edu.tamu.lenss.mdfs.utils.MyPair;
 //So, you must delete the old mdfs directory from SDCARD/MDFS/mdfs_directory and then
 //recompile the application with new mdfs_directory, everytime you bring change in this file.
 public class MDFSDirectory implements Serializable {
+
 	private static final String TAG = MDFSDirectory.class.getSimpleName();
 	private static final long serialVersionUID = 1L;
 
-	// All available files in the Network
-	//map from file id to MDFSFileInfo
-	//fileid = File Creation Time
-	private Map<Long, MDFSFileInfo> fileMap;
+	//all file fileInfo
+	private Map<Long, MDFSFileInfo> fileInfoMap;
 
 	//map from file name to file id
 	private Map<String, Long> nameToIDMap;
 
-
-	/** Files, blocks and fragments cached locally. 
-	 * Map<fileId, Map<BlockIdx, Set<FragIdx>>> */
-	private Map<Long, HashMap<Byte, HashSet<Byte>>> fileBlockFragMap; 
+	//fileID to BlockNum to FragmentNum
+	private Map<Long, HashMap<Byte, HashSet<Byte>>> fileBlockFragMap;
 																		
 
-	// file fragment#
-	private Set<Long> encryptedFileSet; // A set of files that have been
-										// combined, but encrypted.
-	private Set<Long> decryptedFileSet; // A set of files that have been
-										// decrypted temporarily
+	private Set<Long> encryptedFileSet;
+	private Set<Long> decryptedFileSet;
 
-	private LinkedList<MyPair<Long, Long>> recentUpdate; // A list to store the
-															// recently updated
-															// <file ID, Update
-															// Time>
+	private LinkedList<MyPair<Long, Long>> recentUpdate;
 	private LinkedList<MyPair<Long, Long>> recentDelete;
 	
-	private Map<Long, JobReq> jobMap;		// Jobs created on this node
+
+	private Map<Long, JobReq> jobMap;
 	
-	/** blocks that are being downloaded. < filId, Map<BlockIdx, StartTime>> */
+	//fileID to BlockID to StartTime
 	private Map<Long, HashMap<Byte, Long>> downloadingBlocks;
 
 
+	//constructor
 	public MDFSDirectory() {
-		fileMap = new HashMap<Long, MDFSFileInfo>();
+		fileInfoMap = new HashMap<Long, MDFSFileInfo>();
 		nameToIDMap = new HashMap<String, Long>();
 		fileBlockFragMap = new HashMap<Long, HashMap<Byte, HashSet<Byte>>>();
 		encryptedFileSet = new HashSet<Long>();
@@ -94,18 +85,12 @@ public class MDFSDirectory implements Serializable {
 		downloadingBlocks = new HashMap<Long, HashMap<Byte, Long>>();
 	}
 
-	//Return null if the fileId does not exist in the directory
+
+	//get fileInfo
 	public MDFSFileInfo getFileInfo(long fileId) {
-		return fileMap.get(fileId);
+		return fileInfoMap.get(fileId);
 	}
 
-	public synchronized MDFSFileInfo getFileInfo(String fName) {
-		Long fileId = nameToIDMap.get(fName);
-		if (fileId != null)
-			return fileMap.get(fileId);
-		else
-			return null;
-	}
 
 	//Check if this file (fileId) was updated within the past FILE_SYNC_PERIOD
 	public synchronized boolean isRecentUpdated(long fileId) {
@@ -120,8 +105,8 @@ public class MDFSDirectory implements Serializable {
 	//return A List of all available files. The List may be empty
 	public synchronized List<MDFSFileInfo> getFileList() {
 		List<MDFSFileInfo> list;
-		if (!fileMap.isEmpty())
-			list = new ArrayList<MDFSFileInfo>(fileMap.values());
+		if (!fileInfoMap.isEmpty())
+			list = new ArrayList<MDFSFileInfo>(fileInfoMap.values());
 		else
 			list = new ArrayList<MDFSFileInfo>();
 		return list;
@@ -242,7 +227,7 @@ public class MDFSDirectory implements Serializable {
 			}
 		}*/
 
-		fileMap.put(file.getCreatedTime(), file);
+		fileInfoMap.put(file.getCreatedTime(), file);
 		nameToIDMap.put(file.getFileName(), file.getCreatedTime());
 
 		long curTime = System.currentTimeMillis();
@@ -254,7 +239,7 @@ public class MDFSDirectory implements Serializable {
 	}
 
 	/**
-	 * Remove this file from the fileMap. This is just for directory purpose,
+	 * Remove this file from the fileInfoMap. This is just for directory purpose,
 	 * and the actual files in SDCard <Br>
 	 * and other fragment information are NOT removed <Br>
 	 * FileId is just the file created time.
@@ -262,11 +247,11 @@ public class MDFSDirectory implements Serializable {
 	 * @param fileId
 	 */
 	public synchronized void removeFile(long fileId) {
-		if (fileMap.containsKey(fileId)) {
-			String name = fileMap.get(fileId).getFileName();
+		if (fileInfoMap.containsKey(fileId)) {
+			String name = fileInfoMap.get(fileId).getFileName();
 			nameToIDMap.remove(name);
 		}
-		fileMap.remove(fileId);
+		fileInfoMap.remove(fileId);
 	}
 
 
@@ -361,13 +346,6 @@ public class MDFSDirectory implements Serializable {
 		encryptedFileSet.add(fileId);
 	}
 
-	/**
-	 * Not recommend. The fileName may not be available in the directory when
-	 * the fragment is downloaded. <br>
-	 * FileName map is added after receiving the directory update
-	 * 
-	 * @param fileName
-	 */
 	public synchronized void addEncryptedFile(String fileName) {
 		Long fileId = nameToIDMap.get(fileName);
 		if (fileId != null)
@@ -388,13 +366,6 @@ public class MDFSDirectory implements Serializable {
 		decryptedFileSet.add(fileId);
 	}
 
-	/**
-	 * Not recommend. The fileName may not be available in the directory when
-	 * the fragment is downloaded. <br>
-	 * FileName map is added after receiving the directory update
-	 * 
-	 * @param fileName
-	 */
 	public synchronized void addDecryptedFile(String fileName) {
 		Long fileId = nameToIDMap.get(fileName);
 		if (fileId != null)
@@ -422,14 +393,8 @@ public class MDFSDirectory implements Serializable {
 	public void addJob(Long jobId, JobReq jobReq){
 		jobMap.put(jobId, jobReq);
 	}
-	
-	/**
-	 * Return all the jobs that have been created, both completed or incompleted.
-	 * @return
-	 */
-	public Set<Long> getJobList(){
-		return jobMap.keySet();
-	}
+
+	public Set<Long> getJobList(){ return jobMap.keySet(); }
 	
 	public List<JobReq> getJobReqList(){
 		List<JobReq> list;
@@ -440,12 +405,9 @@ public class MDFSDirectory implements Serializable {
 		return list;
 	}
 
-	/**
-	 * Clear the entire directory information and stored files
-	 */
 	public void clearAll() {
 		// Reset the maps
-		fileMap.clear();
+		fileInfoMap.clear();
 		nameToIDMap.clear();
 		fileBlockFragMap.clear();
 		encryptedFileSet.clear();
@@ -466,6 +428,7 @@ public class MDFSDirectory implements Serializable {
 	}
 
 	//periodically called by scheduledTask.java to send out NEW_FILE_UPDATES for each files in the directory
+	//currently turned off from ScheduledTak.java class
 	public void broadcastMyDirectory(){
 		// Remove expired items
 		long curTime = System.currentTimeMillis();
@@ -488,75 +451,9 @@ public class MDFSDirectory implements Serializable {
 			}			
 		}
 	}
-	
-	public synchronized Set<Pair<Long, Byte>> getUncachedBlocks(){
-		// <fileId, blockIndex>
-		Set<Pair<Long, Byte>> uncachedBlocks = new HashSet<Pair<Long, Byte>>();
-		for(MDFSFileInfo fileInfo : fileMap.values()){
-			if(fileBlockFragMap.containsKey(fileInfo.getCreatedTime())){
-				// iterate through the blocks of each file
-				for(byte i=0; i < fileInfo.getNumberOfBlocks(); i++){
-					if(!fileBlockFragMap.get(fileInfo.getCreatedTime()).containsKey(i)){
-						// I do not have this block
-						uncachedBlocks.add(Pair.create(fileInfo.getCreatedTime(), i));
-					}
-					else{
-						// I have cached fragments, but not enough
-						if(fileBlockFragMap.get(fileInfo.getCreatedTime()).get(i).size() < fileInfo.getK2()){
-							uncachedBlocks.add(Pair.create(fileInfo.getCreatedTime(), i));
-						}
-					}
-				}
-			}
-			else{
-				// retrieve all blocks
-				for(byte i=0; i < fileInfo.getNumberOfBlocks(); i++)
-					uncachedBlocks.add(Pair.create(fileInfo.getCreatedTime(), i));
-			}
-		}
-		return uncachedBlocks;		
-	}
-	
-	public synchronized boolean isBlockDownloading(long fileId, byte blockIdx){
-		if(downloadingBlocks.containsKey(fileId)){
-			if(downloadingBlocks.get(fileId).containsKey(blockIdx)){
-				if(downloadingBlocks.get(fileId).get(blockIdx) > System.currentTimeMillis() - Constants.DOWNLOADING_BLOCK_TTL){
-					return true;
-				}
-				else{
-					// remove this downloading task
-					removeDownloadingBlock(fileId, blockIdx);
-				}
-			}
-		}
-		return false;
-	}
-	
-	public synchronized void addDownloadingBlock(long fileId, byte blockIdx){
-		if(!downloadingBlocks.containsKey(fileId))
-			downloadingBlocks.put(fileId, new HashMap<Byte, Long>());
-		
-		downloadingBlocks.get(fileId).put(blockIdx, System.currentTimeMillis());
-	}
-	
-	public synchronized void removeDownloadingBlock(long fileId, byte blockIdx){
-		if(downloadingBlocks.containsKey(fileId)){
-			if(downloadingBlocks.get(fileId).containsKey(blockIdx)){
-				downloadingBlocks.get(fileId).remove(blockIdx);
-				if(downloadingBlocks.get(fileId).isEmpty())
-					downloadingBlocks.remove(fileId);
-			}
-		}
-	}
 
-	/**
-	 * A blocking call. May take some time to delete files. <Br>
-	 * Completely remove this file, including directory, fragments, key, and
-	 * data in the SDCard
-	 * 
-	 * @param fileId
-	 * @param fName
-	 */
+
+	//delete everything of a file from local mdfs directory
 	public void deleteFile(long fileId, String fName) {
 		File rootDir = AndroidIOUtils.getExternalFile(Constants.DIR_ROOT);
 		if (!rootDir.exists())
@@ -573,23 +470,19 @@ public class MDFSDirectory implements Serializable {
 		removeDecryptedFile(fileId);
 		removeEncryptedFile(fileId);
 		removeFile(fileId);
-		// removeFileFragment(fileId);
 		removeFileAndBlock(fileId);
 
 		// Remove Encrypted File
 		File file = new File(rootDir, "encrypted/" + fName);
-		if (file.exists())
-			file.delete();
+		if (file.exists()){ file.delete(); }
 
 		// Remove Decrypted File
 		file = new File(rootDir, "decrypted/" + fName);
-		if (file.exists())
-			file.delete();
+		if (file.exists()){ file.delete();}
 		
-		// Remove Cahced File
+		//Remove Cahced File
 		file = new File(rootDir, "cache/" + "thumb_" + fileId + ".jpg");
-		if (file.exists())
-			file.delete();		
+		if (file.exists()){ file.delete();}
 
 		// Delete File Folder
 		File fileDir = new File(rootDir, MDFSFileInfo.getFileDirName(fName,	fileId));
@@ -605,9 +498,7 @@ public class MDFSDirectory implements Serializable {
 		}
 	}
 
-	/**
-	 * Make sure the directory is synchronized with the physical files
-	 */
+	//sync local mdfs directory and load at the beginning when application booots up
 	public void syncLocal() {
 		File rootDir = AndroidIOUtils.getExternalFile(Constants.DIR_ROOT);
 		if (!rootDir.exists())
@@ -695,11 +586,7 @@ public class MDFSDirectory implements Serializable {
 		}
 	}
 
-	/**
-	 * Save the current MDFSDirectory Object to the SD Card
-	 * 
-	 * @return true if the file is saved successfully
-	 */
+	//save mdfs directory object on local drive periodically
 	public boolean saveDirectory() {
 		File tmp0 = AndroidIOUtils.getExternalFile(Constants.DIR_ROOT);
 		File tmp = IOUtilities.createNewFile(tmp0,
@@ -722,11 +609,7 @@ public class MDFSDirectory implements Serializable {
 		return false;
 	}
 
-	/**
-	 * Read the stored MDFSDirectory and return as an object
-	 * 
-	 * @return Return a new Object if there is no history exist
-	 */
+	//read local mdfs directory and load at the beginning when application booots up
 	public static MDFSDirectory readDirectory() {
 		File tmp = AndroidIOUtils.getExternalFile(Constants.DIR_ROOT + "/"
 				+ Constants.NAME_MDFS_DIRECTORY);
@@ -754,6 +637,5 @@ public class MDFSDirectory implements Serializable {
 		}
 		return new MDFSDirectory();
 	}
-
 
 }

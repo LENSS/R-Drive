@@ -41,12 +41,10 @@ public class MDFSFileRetrieverViaRsock {
     private static final String TAG = MDFSFileRetrieverViaRsock.class.getSimpleName();
     private byte[] decryptKey;
     private MDFSFileInfo fileInfo;
-    private String myIP;
     private EdgeKeeperMetadata metadata;
 
-    public MDFSFileRetrieverViaRsock(MDFSFileInfo fInfo, String myip) {
+    public MDFSFileRetrieverViaRsock(MDFSFileInfo fInfo) {
         this.fileInfo = fInfo;
-        this.myIP = myip;
     }
 
     public void start(){
@@ -107,6 +105,7 @@ public class MDFSFileRetrieverViaRsock {
         //check if receive value is null or nah(can be null due to timeout),
         //then return dummy object
         if(recvBuf==null){
+            client.close();
             this.metadata = new EdgeKeeperMetadata(EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED, EdgeKeeperConstants.getMyGroupName(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "name",  0, (byte)0, (byte)0); //dummy metadata
             return;
         }
@@ -183,6 +182,7 @@ public class MDFSFileRetrieverViaRsock {
     }
 
 
+    //this function calls new MDFSBlockRetrieverViaRsock()
     private void retrieveBlocks(){
         Logger.i(TAG, "Start downloading blocks. Total " + fileInfo.getNumberOfBlocks() + " blocks.");
         fileListener.statusUpdate("Start downloading blocks. Total " + fileInfo.getNumberOfBlocks() + " blocks.");
@@ -201,7 +201,7 @@ public class MDFSFileRetrieverViaRsock {
                 synchronized(downloadQ){
                     while(!downloadQ.isEmpty() && reTryLimit > 0){
                         curBlockIdx = downloadQ.poll();
-                        curBlock = new MDFSBlockRetrieverViaRsock(fileInfo, curBlockIdx, myIP, metadata);  //RSOCK
+                        curBlock = new MDFSBlockRetrieverViaRsock(fileInfo, curBlockIdx, metadata);  //RSOCK
                         curBlock.setListener(blockListener);
                         curBlock.setDecryptKey(decryptKey);
                         curBlock.start();
@@ -216,11 +216,9 @@ public class MDFSFileRetrieverViaRsock {
                 }
             }
 
-            /**
-             * This listener is shared by all MDFSBlockRetrieverViaRsock thread. Need to be synchronized properly to avoid race condition <Br>
-             * downloadQ and curBlock are the shared objects between different threads.
-             * notify() needs to be called from different thread. Make sure this is the case when callback function makes call
-             */
+
+            //This listener is shared by all MDFSBlockRetrieverViaRsock thread. Need to be synchronized properly to avoid race condition <Br>
+            //downloadQ and curBlock are the shared objects between different threads.notify() needs to be called from different thread. Make sure this is the case when callback function makes call
             BlockRetrieverListenerViaRsock blockListener = new BlockRetrieverListenerViaRsock(){
                 private long sleepPeriod = Constants.IDLE_BTW_FAILURE;
                 @Override

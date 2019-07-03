@@ -6,8 +6,8 @@ public class handleHelpCommand {
         String reply =
                 "mdfs help                                           : Show all MDFS commands.<newline>" +
                 "mdfs directory all                                  : Show list of files available in MDFS system.<newline>" +
-                "mdfs direcotry decrypted                            : Show list of decrypted files.<newline>" +
-                "mdfs directory undecrypted                          : Show list of undecrypted files.<newline>" +
+                "mdfs direcotry decrypted                            : Show list of locally available decrypted files.<newline>" +
+                "mdfs directory encrypted                            : Show list of encrypted files.<newline>" +
                 "mdfs set_perm <filename> <permission_list>          : Change permission of a file.<newline>" +
                 "mdfs get_perm <filename>                            : Show permissions of file available in MDFS system.<newline>" +
                 "mdfs get_perm all                                   : Show permission of all files in MDFS system.<newline>" +
@@ -20,7 +20,7 @@ public class handleHelpCommand {
                 "mdfs remove_group <group_name> | <group_name> | ... : Remove this node from a group this node belongs to.<newline>" +
                 "mdfs group_list                                     : Get the list of groups this node belongs to.<newline>" +
                 "<permission_list>                                   : OWNER | WORLD| GUID | GROUP:<group_name>.<newline>" +
-                "<group_name>                                        : Name of a group as any string without space.<newline>";
+                "<group_name>                                        : Name of a group as any string without space.<endgame>";
 
         clientSockets.sendAndClose(uuid, reply);
         return;

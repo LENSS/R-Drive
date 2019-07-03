@@ -11,7 +11,7 @@ import edu.tamu.lenss.mdfs.Constants;
  */
 public class MDFSFileInfo implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private final long createdTime;
+	private final long createdTime;  //fileID
 	private final String fileName;
 	private long fileSize;
 	private long creatorMAC;

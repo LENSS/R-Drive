@@ -37,7 +37,7 @@ class RequestHandler implements Runnable{
     public String fileCreatePath = "/distressnet/MStorm/StreamFDPic/temp/";
 
     //command parsing variables
-    String[] comm = {"directory", "set_perm", "get_perm", "add_group", "remove_group", "group_list", "create", "retrieve", "delete", "help"};
+    String[] comm = {"directory", "set_perm", "get_perm", "add_group", "remove_group", "group_list", "create", "retrieve", "delete", "-help"};
     Set<String> commandNames = new HashSet<>(Arrays.asList(comm));
     String[] subcomm = {"permission"};
     Set<String> subCommandNames = new HashSet<>(Arrays.asList(subcomm));
@@ -61,13 +61,13 @@ class RequestHandler implements Runnable{
             clientSockets socket = new clientSockets(inBuffer, os, cSocket);
 
             //generate random uuid (aka clientID)
-            String uuid = UUID.randomUUID().toString().substring(0,12);
+            String clientID = UUID.randomUUID().toString().substring(0,12);
 
             //put the clientSockets in the static map <clientID, clientSockets>
-            clientSockets.sockets.put(uuid, socket);
+            clientSockets.sockets.put(clientID, socket);
 
             //process req
-            processRequestCpp(uuid, command);
+            processRequestCpp(clientID, command);
 
         }catch (IOException e) {
             System.out.println("CLIII Problem handling client socket in RequestHandler"+ e);
@@ -77,11 +77,11 @@ class RequestHandler implements Runnable{
     }
 
     //this function works as a parser and syntactical analyzer
-    private void processRequestCpp(String uuid, String command) {
+    private void processRequestCpp(String clientID, String command) {
 
         //check if its an empty string
         if(command.equals("")){
-            clientSockets.sendAndClose(uuid, "CLIII Error! No command found...Type \"mdfs help\" for more information.");
+            clientSockets.sendAndClose(clientID, "CLIII Error! No command found...Type \"mdfs help\" for more information.");
             return;
         }
 
@@ -105,8 +105,8 @@ class RequestHandler implements Runnable{
             //check what type of command it is
             if(cmd.length>1 && commandNames.contains(cmd[1].toLowerCase())){
                 //command exists, take action based on command type
-                 if(cmd[1].toLowerCase().equals("help")){
-                     handleHelpCommand.handleHelpCommand(uuid);
+                 if(cmd[1].toLowerCase().equals("-help")){
+                     handleHelpCommand.handleHelpCommand(clientID);
                  }else if(cmd[1].toLowerCase().equals("create")){
                     //check if next entry is a filename
                     if(cmd.length>2){
@@ -126,58 +126,51 @@ class RequestHandler implements Runnable{
                                     //check if the permitted entities are either "owner", "group", "world" or a 40 bytes GUID
                                     perm = utils.checkPermittedNodes(perm);
                                     if(perm.length!=0){
-                                        handleCreateCommand.handleCreateCommand(path, filename, perm, uuid);
+                                        handleCreateCommand.handleCreateCommand(path, filename, perm, clientID);
                                     }else{
-                                        clientSockets.sendAndClose(uuid, "CLIII Error! Permission list invalid or not found.");
+                                        clientSockets.sendAndClose(clientID, "CLIII Error! Permission list invalid or not found.");
                                     }
 
                                 }else{
-                                    clientSockets.sendAndClose(uuid, "CLIII Error! Command not complete, add Permission subcommand.");
+                                    clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, add Permission subcommand.");
                                 }
 
                             }else{
-                                clientSockets.sendAndClose(uuid, "CLIII Error! File must be either .jpg or .mp4 file.");
+                                clientSockets.sendAndClose(clientID, "CLIII Error! File must be either .jpg or .mp4 file.");
                             }
                         }else{
-                            clientSockets.sendAndClose(uuid, "CLIII Error! File does not exist.");
+                            clientSockets.sendAndClose(clientID, "CLIII Error! File does not exist.");
                         }
                     }else{
-                        clientSockets.sendAndClose(uuid, "CLIII Error! Command not complete, mention a filename.");
+                        clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a filename.");
                     }
                  }else if(cmd[1].toLowerCase().equals("retrieve")){
                     if(cmd.length>2){
                         String filename = cmd[2];
-                        //check if the file extension is jpg or mp4
-                        if(filename.contains(".jpg")  || filename.contains(".mp4")){
-                            int numOfFiles = handleRetrieveCommand(filename);   //todo: dont return anything here
-                            if(numOfFiles>0){
-                                clientSockets.sendAndClose(uuid, "CLIII Info! \" + numOfFiles + \" files has been retrieved.");
+                        //check if the file extension is jpg or mp4 or all/ALL
+                        if(!filename.equals("all") || !filename.equals("ALL")){
+                            if(filename.contains(".jpg")  || filename.contains(".mp4")){
+                                handleRetrieveCommand.handleRetrieveCommand(filename, clientID);
                             }else{
-                                clientSockets.sendAndClose(uuid, "CLIII Error! no file has been retrieved.");
+                                clientSockets.sendAndClose(clientID, "CLIII Error! File must be either .jpg or .mp4 file.");
                             }
 
-                        }else if(filename.toLowerCase().equals("all")){
-                            int numOfFiles = handleRetrieveCommand(filename);   //todo: dont return anything here
-                            if(numOfFiles>0){
-                                clientSockets.sendAndClose(uuid, "CLIII Info! \" + numOfFiles + \" files has been retrieved.");
-                            }else{
-                                clientSockets.sendAndClose(uuid, "CLIII Error! no file has been retrieved.");
-                            }
                         }else{
-                            clientSockets.sendAndClose(uuid, "CLIII Error! File must be either .jpg or .mp4 file.");
+                            //retrieve all files this node has permission of
+                            handleRetrieveCommand.handleRetrieveCommand("ALL", clientID);
                         }
                     }else{
-                        clientSockets.sendAndClose(uuid, "CLIII Error! File name not mentioned.");
+                        clientSockets.sendAndClose(clientID, "CLIII Error! File name not mentioned.");
                     }
                  }else if(cmd[1].toLowerCase().equals("directory")){
                      if(cmd.length>2){
                         if(actionNames.contains(cmd[2].toLowerCase())){
-                            handleDirectoryCommand(cmd[2]);  //todo dont return anything here
+                            //handleDirectoryCommand(cmd[2]);  //todo dont return anything here
                         }else{
-                            clientSockets.sendAndClose(uuid, "CLIII Error! Command modifier not valid, mention a valid command modifier- decrypted, undecrypted, or all.");
+                            clientSockets.sendAndClose(clientID, "CLIII Error! Command modifier not valid, mention a valid command modifier- decrypted, undecrypted, or all.");
                         }
                      }else{
-                         clientSockets.sendAndClose(uuid, "CLIII Error! Command not complete, mention a command modifier- decrypted, undecrypted, or all.");
+                         clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a command modifier- decrypted, undecrypted, or all.");
                      }
                  }else if(cmd[1].toLowerCase().equals("delete")){
                      if(cmd.length>2){
@@ -187,7 +180,7 @@ class RequestHandler implements Runnable{
                          }else if(cmd[2].contains(".jpg") || cmd[2].contains(".mp4")){
                             deleted = handleDeleteCommand(cmd[2]);  //todo: dont return anything here
                          }else{
-                             clientSockets.sendAndClose(uuid, "CLIII Error! File must be either .jpg or .mp4 file.");
+                             clientSockets.sendAndClose(clientID, "CLIII Error! File must be either .jpg or .mp4 file.");
                          }
 
                          /*if(deleted!=null){   //todo: use this block somewhere else
@@ -202,7 +195,7 @@ class RequestHandler implements Runnable{
                              return "CLIII Error! Deletion Command failed.";
                          }*/
                      }else{
-                         clientSockets.sendAndClose(uuid, "CLIII Error! Command not complete, mention a command modifier- filename, or all.");
+                         clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a command modifier- filename, or all.");
                      }
                  }else if(cmd[1].toLowerCase().equals("set_perm")){
                      if(cmd.length>2){
@@ -216,22 +209,22 @@ class RequestHandler implements Runnable{
                                     //call handleSetPermCommand function
                                     boolean reply = handleSetPermCommand(filename, perm);  //todo: dont return anything here
                                     if(reply==true){
-                                        clientSockets.sendAndClose(uuid, "CLIII Success! File permission change success.");
+                                        clientSockets.sendAndClose(clientID, "CLIII Success! File permission change success.");
                                     }else{
-                                        clientSockets.sendAndClose(uuid, "CLIII Error! File permission change failure.");
+                                        clientSockets.sendAndClose(clientID, "CLIII Error! File permission change failure.");
                                     }
 
                                 }else{
-                                    clientSockets.sendAndClose(uuid, "CLIII Error! Permission list invalid.");
+                                    clientSockets.sendAndClose(clientID, "CLIII Error! Permission list invalid.");
                                 }
                             }else{
-                                clientSockets.sendAndClose(uuid, "CLIII Error! Permission list not found.");
+                                clientSockets.sendAndClose(clientID, "CLIII Error! Permission list not found.");
                             }
                         }else{
-                            clientSockets.sendAndClose(uuid, "CLIII Error! File must be either .jpg or .mp4 file.");
+                            clientSockets.sendAndClose(clientID, "CLIII Error! File must be either .jpg or .mp4 file.");
                         }
                      }else{
-                         clientSockets.sendAndClose(uuid, "CLIII Error! Command not complete, mention a filename.");
+                         clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a filename.");
                      }
                  }else if(cmd[1].toLowerCase().equals("get_perm")){
                      if(cmd.length>2){
@@ -241,12 +234,12 @@ class RequestHandler implements Runnable{
                              if(cmd[2].contains(".jpg") || cmd[2].contains(".mp4")){
                                  String reply = handleGetPermCommand(cmd[2]);  //todo: dont return anywhere here
                              }else{
-                                 clientSockets.sendAndClose(uuid, "CLIII Error! File must be either .jpg or .mp4 file.");
+                                 clientSockets.sendAndClose(clientID, "CLIII Error! File must be either .jpg or .mp4 file.");
 
                              }
                          }
                      }else{
-                         clientSockets.sendAndClose(uuid, "CLIII Error! Command not complete, mention a command modifier- filename, or all.");
+                         clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a command modifier- filename, or all.");
                      }
                  }else if(cmd[1].toLowerCase().equals("add_group")){
                     //todo
@@ -256,10 +249,10 @@ class RequestHandler implements Runnable{
                      //todo
                  }
             }else{
-                clientSockets.sendAndClose(uuid, "CLIII Error! Command doesnt exist.");
+                clientSockets.sendAndClose(clientID, "CLIII Error! Command doesnt exist.");
             }
         }else{
-            clientSockets.sendAndClose(uuid, "CLIII Error! Not a MDFS command...Type \"mdfs help\" for more information.");
+            clientSockets.sendAndClose(clientID, "CLIII Error! Not a MDFS command...Type \"mdfs help\" for more information.");
 
         }
 
@@ -283,28 +276,6 @@ class RequestHandler implements Runnable{
         return true;
     }
 
-
-
-
-    public int handleRetrieveCommand(String filename){
-        //TODO: retrieve file
-        //send filename, guid to edgekeeper
-        //retrieve metadata for this file from edgekeeper
-        //if metadata has been refused due to file permission, then return 0.
-        //else,list of metadataaa for all the files those this user has permission
-        //exclude the files this node created, aka already has fragments
-        //for each file,
-            //retrieve the file frags;
-            //upon retrieving each file frag, update own directory as done normally(already done)
-        return 100;
-    }
-
-    public String handleDirectoryCommand(String cmdModifier){
-        //TODO: get directory
-        //send directory req
-        //receive directory reply with all files names
-        return "result";
-    }
 
     public int[] handleDeleteCommand(String cmdModifier){
         //mdfs returns a int[a,b] how many has deleted vs how many was not deleted

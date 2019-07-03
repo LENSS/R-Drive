@@ -15,16 +15,7 @@ import edu.tamu.lenss.mdfs.utils.IOUtilities;
 public class handleCreateCommand {
 
     public static void handleCreateCommand(String path, String filename, String[] perm, String clientID) {
-        //TODO: create file
-
         loadFile(path, filename, perm, clientID);
-        //choose the nodes only which passes perm + active to receive
-        //add group feature in edgekeeper
-        //send fragments + send own metadata to edgekeeper
-        //only fragment receivers will update edgekeeper about their newly received fragments.
-        //in updatedirectory(), update own directory but dont send update
-        //in rsockreceiveforfilecreation, update own directory only when you receive a fragment.(already done)
-
     }
 
     private static void loadFile(String path, String filename, String[] perm, String clientID){

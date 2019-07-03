@@ -467,7 +467,7 @@ public class MDFSFileCreatorViaRsock {
         ByteBuffer recvBuf = client.receive();
 
         //check if receive value is null or nah(can be null due to timeout)
-        if(recvBuf==null){ return new ArrayList<>();}
+        if(recvBuf==null){ client.close(); return new ArrayList<>();}
 
         //close client socket
         client.close();

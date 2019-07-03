@@ -54,7 +54,6 @@ public class MDFSBlockRetrieverViaRsock {
     private MDFSFileInfo fileInfo;
     private boolean decoding = false;	// Has the decoding procedure started?
     private final BlockRetrieveLog fileRetLog = new BlockRetrieveLog();
-    private static String myIP;
     private AtomicInteger locFragCounter = new AtomicInteger();
     private int initFileFragsCnt = 0; //dont change it
     private EdgeKeeperMetadata metadata;
@@ -71,10 +70,9 @@ public class MDFSBlockRetrieverViaRsock {
     }
 
 
-    public MDFSBlockRetrieverViaRsock(MDFSFileInfo fInfo, byte blockIndex, String myip, EdgeKeeperMetadata metadata){	//RSOCK
+    public MDFSBlockRetrieverViaRsock(MDFSFileInfo fInfo, byte blockIndex, EdgeKeeperMetadata metadata){	//RSOCK
         this(fInfo.getFileName(), fInfo.getCreatedTime(), blockIndex);
         this.fileInfo = fInfo;
-        this.myIP = myip;
         this.metadata = metadata;
     }
 
@@ -88,7 +86,7 @@ public class MDFSBlockRetrieverViaRsock {
     }
 
     public void start(){
-        serviceHelper.getDirectory().addDownloadingBlock(fileInfo.getCreatedTime(), blockIdx);
+
         // Check if a decrypted file or encrypted file already exists on my device
         // If it is, returns it immediately.
         final List<FragmentInfo> localFrags = getStoredFrags();
@@ -426,8 +424,6 @@ public class MDFSBlockRetrieverViaRsock {
                 listener.onError("Fail to decode the fragments. You may try again", fileInfo);
                 return;
             }
-            //delete the file from the downloading list when decoding finished
-            serviceHelper.getDirectory().removeDownloadingBlock(fileInfo.getCreatedTime(), blockIdx);
         }
     }
 

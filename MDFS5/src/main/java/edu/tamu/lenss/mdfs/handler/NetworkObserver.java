@@ -276,37 +276,10 @@ public class NetworkObserver extends Service implements Observer {
 					showToast("NodeInfo: from " + IOUtilities.long2Ip(info.getSource()));
 					Logger.i(TAG, "NodeInfo: from " + IOUtilities.long2Ip(info.getSource()));
 					break;
-				case MDFSPacketType.NEW_FILE_UPDATE:
+				case MDFSPacketType.NEW_FILE_UPDATE:	//turned off
 					final NewFileUpdate dirUpdate = (NewFileUpdate)msg.getContainedData();
 					final MDFSDirectory dir = ServiceHelper.getInstance().getDirectory();
 					dir.addFile(dirUpdate.getFileInfo());
-					// update directory  //todo: comment this block
-					if(SP.getBoolean("aggressivenode", false)){
-						pool.execute(new Runnable(){
-							@Override
-							public void run() {
-								Set<Pair<Long, Byte>> blocks = dir.getUncachedBlocks();
-								Logger.i(TAG, blocks.size() + " uncached blocks");
-								for(Pair<Long, Byte> pair : blocks){
-									if(dir.isBlockDownloading(pair.first, pair.second))
-										continue;
-									MDFSFileInfo fInfo = dir.getFileInfo(pair.first);
-									if(fInfo == null)
-										continue;
-									MDFSBlockRetriever retriever = new MDFSBlockRetriever(fInfo, pair.second);
-									retriever.setDecryptKey(ServiceHelper.getInstance().getEncryptKey());
-									retriever.start();
-									Logger.i(TAG, "Start downloading uncached blocks");
-									try {
-										long blkSize = (long)((double)fInfo.getFileSize()/fInfo.getNumberOfBlocks());
-										Thread.sleep(blkSize*8); // Assume each byte takes 8 milliseconds. 
-									} catch (InterruptedException e) {
-										e.printStackTrace();
-									}
-								}
-							}
-						});
-					}
 					Logger.i(TAG, "dirUpdate: from " + IOUtilities.long2Ip(dirUpdate.getSource()));
 					break;
 				case MDFSPacketType.BLOCK_REQ:

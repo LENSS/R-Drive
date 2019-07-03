@@ -70,7 +70,6 @@ public class MDFSBlockRetriever {
 	}
 
 	public void start(){
-		serviceHelper.getDirectory().addDownloadingBlock(fileInfo.getCreatedTime(), blockIdx);
 		// Check if a decrypted file or encrypted file already exists on my device
 		// If it is, returns it immediately.
 		final List<FragmentInfo> localFrags = getStoredFrags();
@@ -171,7 +170,6 @@ public class MDFSBlockRetriever {
 					decodeFile();
 				}
 				else{
-					serviceHelper.getDirectory().removeDownloadingBlock(fileInfo.getCreatedTime(), blockIdx);
 					listener.onError("Fail to download file fragments. " +
 							"Only " + (locFragCounter.get()-initFileFragsCnt) +
 							" were successfully downloaded.", fileInfo);
@@ -300,7 +298,7 @@ public class MDFSBlockRetriever {
 			listener.onError("Fail to decode the fragments. You may try again", fileInfo);
 			return;
 		}
-		serviceHelper.getDirectory().removeDownloadingBlock(fileInfo.getCreatedTime(), blockIdx);
+
 	}
 
 	/**

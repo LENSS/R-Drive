@@ -12,6 +12,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import edu.tamu.lenss.mdfs.GNS.GNSConstants;
+
 public class server{
     //tcp variables
     public int port = -1;
@@ -74,31 +76,38 @@ public class server{
                                     //check if METADATA_WITHDRAW_REPLY_FAILED command returned that means a file doesnt exist
                                     if(metadataOld.command == EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST){
                                         //check deleted file list to verify
-                                        if(datastore.deletedFiles.contains(metadataRec.fileID)){
-                                            continue;  //fileID belongs to deletedFiles list, meaning this file has already been deleted. so we ignore metadata
-                                        }else{
+                                        if(!datastore.deletedFiles.contains(metadataRec.fileID)){
+                                            //coming here means its a completely new file metadata
+                                            //in this case, we add all information in all data structures
+
                                             //push the metadata as usual as if a new file
                                             datastore.putFileMetadata(metadataRec);
 
-                                            //store group information
-                                            datastore.putGroupNameBYGUID(metadataRec.metadataDepositorGUID, metadataRec.ownGroupNames);
+                                            //push fileName to fileID mapping
+                                            datastore.putFileNameToFileIDMap(metadataRec.filename, metadataRec.fileID);
 
+                                            //push group information
+                                            datastore.putGroupNameBYGUID(metadataRec.metadataDepositorGUID, metadataRec.ownGroupNames);
+                                        }else{
+                                            continue;  //fileID belongs to deletedFiles list, meaning this file has already been deleted. so we ignore metadata
                                         }
                                     }else{
+                                        //coming here means its a metadata for an old existing file
+                                        //in this case we dont change anything, only add the new fragment info into the metadata
+
                                         //retrieve new block and fragment numbers
-                                        String blockNumHeldByThisClient = metadataRec.getBlockNumbersHeldByNode(metadataRec.metadataDepositorGUID).get(0);  //this operation will never fail
+                                        String blockNumHeldByThisClient = metadataRec.getBlockNumbersHeldByNode(metadataRec.metadataDepositorGUID).get(0);                                          //this operation will never fail
                                         String fragmentNumHeldByThisClient = metadataRec.getFragmentListByNodeAndBlockNumber(metadataRec.metadataDepositorGUID, blockNumHeldByThisClient).get(0);  //this operation will never fail
 
-                                        //add new fragment information into the old metadata object
+                                        //add new block and fragment information into the old metadata object
                                         metadataOld.addInfo(metadataRec.metadataDepositorGUID, blockNumHeldByThisClient, fragmentNumHeldByThisClient);
 
-                                        //push the metadata back
+                                        //push the old metadata object back
                                         datastore.putFileMetadata(metadataOld);
 
-                                        //store new group information
+                                        //push new group information
                                         datastore.putGroupNameBYGUID(metadataRec.metadataDepositorGUID, metadataRec.ownGroupNames);
 
-                                        //note: no need to re-store permission information as it already should be there
 
                                     }
 
@@ -106,13 +115,13 @@ public class server{
                                 }else if (metadataRec.command == EdgeKeeperConstants.METADATA_WITHDRAW_REQUEST) {
                                     System.out.println("EdgeKeeper server got metadata Withdraw request");
 
-                                    //first get the GROUP name of this GUID and store this
+                                    //first push group information
                                     datastore.putGroupNameBYGUID(metadataRec.metadataRequesterGUID, metadataRec.ownGroupNames);
 
                                     //get the requested metadata from dataStore
                                     EdgeKeeperMetadata metadataRet = datastore.getFileMetadata(metadataRec.fileID);
 
-                                    //check if the file exists
+                                    //if file exists
                                     if(metadataRet.command!=EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST){
                                         List<String> permList = Arrays.asList(metadataRet.permissionList);
                                         List<String> groupsMemberOf = datastore.getGroupNamesbyGUID(metadataRec.metadataRequesterGUID);
@@ -127,10 +136,16 @@ public class server{
                                             for(int i=0; i<groupsMemberOf.size(); i++){
                                                 String groupname = groupsMemberOf.get(i);
                                                 for(int j=0; j<permList.size(); j++){
+
+                                                    //check for GROUP membership
                                                     if(permList.get(j).equals("GROUP:" + groupname)){
                                                         authorized = true;
                                                     }
 
+                                                    //check if its a GUID and matches with metadata requester
+                                                    if( (permList.get(j).length()== GNSConstants.GUID_LENGTH) && (permList.get(j).equals(metadataRec.metadataRequesterGUID))){
+                                                        authorized = true;
+                                                    }
 
                                                     if(authorized){break;}
                                                 }
@@ -145,6 +160,7 @@ public class server{
 
                                     }else{
                                         //file/metadata doesnt exists so we send back metadata with command = METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST
+                                        continue;
                                     }
 
                                     //convert metadata into json string
@@ -162,11 +178,12 @@ public class server{
                                     //send back
                                     send(sendBuf);
                                 } else if (metadataRec.command == EdgeKeeperConstants.GROUP_TO_GUID_CONV_REQUEST) {
-                                    //first get the GROUP name of this GUID and store this
-                                    datastore.putGroupNameBYGUID(metadataRec.groupConversionRequesterGUID, metadataRec.ownGroupNames);
 
                                     System.out.println("EdgeKeeper server got Group to GUID Conversion request(C)");
                                     List<String> groupnames = metadataRec.groupOrGUID;
+
+                                    //first push group information
+                                    datastore.putGroupNameBYGUID(metadataRec.groupConversionRequesterGUID, metadataRec.ownGroupNames);
 
                                     //make a GUIDList to return
                                     List<String> listofResultantGUIDS = new ArrayList<>();
@@ -232,6 +249,8 @@ public class server{
     }//constructor
 
 
+    //this function takes an already flipped byteBuffer and sends
+    //the input buffer must be LITTLE_ENDIAN
     public void send(ByteBuffer buffer){
 
         //first, allocate the packet
@@ -266,7 +285,9 @@ public class server{
 
     //receive function
     //returns true if receive succeeded and populates recvBuf
-    //returns false if receive failed
+    //returns false if receive failed.
+    //this function already flipps the buffer
+    //the output buffer is LITTLE_ENDIAN
     public boolean receive(SocketChannel socket){
 
         //first, read only Long.BYTES amount to figure out the total receive size

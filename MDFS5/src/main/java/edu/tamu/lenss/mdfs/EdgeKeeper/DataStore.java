@@ -18,6 +18,7 @@ public class DataStore {
     public int longestFileNameLength;                           //only used for printing filenames in a pretty format
     public Map<Long, EdgeKeeperMetadata> fileIDtoMetadataMap;  //contains metadata for each file
     public Map<String, List<String>> GUIDtoGroupNamesMap;       //cointains group information for each node/GUID | only contains the name doesnt contain GROUP: tag | each name's case is as inputted by user
+    private Map<String ,Long> FileNameToFileIDMap;               //contains file name to fileID map
     public List<Long> deletedFiles;                             //contains all the ids of deleted files
 
     //private constructors
@@ -25,6 +26,7 @@ public class DataStore {
         this.longestFileNameLength = 0;
         this.fileIDtoMetadataMap = new HashMap<>();
         this.GUIDtoGroupNamesMap = new HashMap<>();
+        this.FileNameToFileIDMap = new HashMap<>();
         this.deletedFiles = new ArrayList<>();
 
         //todo: delete these group testing features
@@ -102,5 +104,19 @@ public class DataStore {
     }
 
 
+    public Long getFileIDByName(String name) {
+        if(FileNameToFileIDMap.containsKey(name)) {
+            return FileNameToFileIDMap.get(name);
+        }else{
+            return null;
+        }
+    }
 
+    public void putFileNameToFileIDMap(String name, Long fileID) {
+        FileNameToFileIDMap.put(name, fileID);
+    }
+
+    public void removeFileNameToIDMapping(String name){
+        FileNameToFileIDMap.remove(name);
+    }
 }

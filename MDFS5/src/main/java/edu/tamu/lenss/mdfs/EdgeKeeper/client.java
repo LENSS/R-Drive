@@ -58,6 +58,8 @@ public class client{
         try { socket.close(); System.out.println("EdgeKeeper client Socket is closed"); } catch (IOException e) { e.printStackTrace(); }
     }
 
+    //this function already takes a flipped buffer and sends them
+    //this input buffer must be LITTLE_ENDIAN
     public void send(ByteBuffer buffer){
         //first, allocate the packet
         ByteBuffer packet = ByteBuffer.allocate(Long.BYTES + buffer.limit());
@@ -89,10 +91,13 @@ public class client{
         }
     }
 
-    //receive data from server
-    //if succeed, returns a bytebuffer
-    //if fails, returns null
+    //receive data from server.
+    //if succeed, returns a bytebuffer.
+    //if fails, returns null.
+    //this function already flips the buffer, if a buffer is being returned.
+    //the output buffer is LITTLE_ENDIAN.
     public <T> ByteBuffer receive(){
+
         //first, read only Long.BYTES amount to figure out the total receive size
         System.out.println("EdgeKeeper client waiting for reply");
         long size_of_recv = 0;
