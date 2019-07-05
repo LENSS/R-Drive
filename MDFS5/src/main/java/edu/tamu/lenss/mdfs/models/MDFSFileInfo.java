@@ -27,7 +27,7 @@ public class MDFSFileInfo implements Serializable {
 		this.numberOfBlocks = numberOfBlocks;
 	}
 
-	//filename   fileid
+	//filename fileid
 	public MDFSFileInfo(String fileName, long createdTime){
 		this.fileName = fileName;
 		this.createdTime = createdTime;
