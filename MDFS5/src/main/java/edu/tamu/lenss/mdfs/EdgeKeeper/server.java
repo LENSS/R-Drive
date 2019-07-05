@@ -64,21 +64,23 @@ public class server{
                             String str1 = bd.toString();
 
                             //make EdgeKeeperMetadata object by passing flipped ByteBuffer
-                            EdgeKeeperMetadata metadataRec = EdgeKeeperMetadata.parse(str1);
+                            FileMetadata metadataRec = FileMetadata.parse(str1);
 
                             //check for command
                             if (metadataRec != null) {
                                 if((metadataRec.command == EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST) || (metadataRec.command == EdgeKeeperConstants.FRAGMENT_RECEIVER_METADATA_DEPOSIT_REQUEST)){
                                     System.out.println("EdgeKeeper server got metadata Deposit request from fragment receiver");
+
                                     //retrieve the old metadata from DataStore if it even exists
-                                    EdgeKeeperMetadata metadataOld = datastore.getFileMetadata(metadataRec.fileID);
+                                    FileMetadata metadataOld = datastore.getFileMetadata(metadataRec.fileID);
 
                                     //check if METADATA_WITHDRAW_REPLY_FAILED command returned that means a file doesnt exist
                                     if(metadataOld.command == EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST){
                                         //check deleted file list to verify
                                         if(!datastore.deletedFiles.contains(metadataRec.fileID)){
-                                            //coming here means its a completely new file metadata
+                                            //coming here means its a completely new file metadata.
                                             //in this case, we add all information in all data structures
+                                            //in DataStore.
 
                                             //push the metadata as usual as if a new file
                                             datastore.putFileMetadata(metadataRec);
@@ -86,8 +88,12 @@ public class server{
                                             //push fileName to fileID mapping
                                             datastore.putFileNameToFileIDMap(metadataRec.filename, metadataRec.fileID);
 
+                                            //todo: push fileID to directory mapping information
+
                                             //push group information
                                             datastore.putGroupNameBYGUID(metadataRec.metadataDepositorGUID, metadataRec.ownGroupNames);
+
+                                            //todo: update MDFS GLOBAL DIRECTORY
                                         }else{
                                             continue;  //fileID belongs to deletedFiles list, meaning this file has already been deleted. so we ignore metadata
                                         }
@@ -105,8 +111,12 @@ public class server{
                                         //push the old metadata object back
                                         datastore.putFileMetadata(metadataOld);
 
+                                        //todo: push fileID to directory mapping information
+
                                         //push new group information
                                         datastore.putGroupNameBYGUID(metadataRec.metadataDepositorGUID, metadataRec.ownGroupNames);
+
+                                        ////todo: update MDFS GLOBAL DIRECTORY
 
 
                                     }
@@ -119,7 +129,7 @@ public class server{
                                     datastore.putGroupNameBYGUID(metadataRec.metadataRequesterGUID, metadataRec.ownGroupNames);
 
                                     //get the requested metadata from dataStore
-                                    EdgeKeeperMetadata metadataRet = datastore.getFileMetadata(metadataRec.fileID);
+                                    FileMetadata metadataRet = datastore.getFileMetadata(metadataRec.fileID);
 
                                     //if file exists
                                     if(metadataRet.command!=EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST){
@@ -205,11 +215,11 @@ public class server{
 
 
                                     //make reply metadata object
-                                    EdgeKeeperMetadata metadataRet;
+                                    FileMetadata metadataRet;
                                     if (listofResultantGUIDS.size() != 0) {
-                                        metadataRet = new EdgeKeeperMetadata(EdgeKeeperConstants.GROUP_TO_GUID_CONV_REPLY_SUCCESS, new Date().getTime(), new ArrayList<>(), metadataRec.groupConversionRequesterGUID, listofResultantGUIDS);
+                                        metadataRet = new FileMetadata(EdgeKeeperConstants.GROUP_TO_GUID_CONV_REPLY_SUCCESS, new Date().getTime(), new ArrayList<>(), metadataRec.groupConversionRequesterGUID, listofResultantGUIDS);
                                     } else {
-                                        metadataRet = new EdgeKeeperMetadata(EdgeKeeperConstants.GROUP_TO_GUID_CONV_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), metadataRec.groupConversionRequesterGUID, listofResultantGUIDS);
+                                        metadataRet = new FileMetadata(EdgeKeeperConstants.GROUP_TO_GUID_CONV_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), metadataRec.groupConversionRequesterGUID, listofResultantGUIDS);
                                     }
 
                                     //convert metadata into json string

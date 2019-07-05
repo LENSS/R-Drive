@@ -17,7 +17,7 @@ import com.google.common.io.Files;
 import android.os.Environment;
 
 import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
-import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperMetadata;
+import edu.tamu.lenss.mdfs.EdgeKeeper.FileMetadata;
 import edu.tamu.lenss.mdfs.EdgeKeeper.client;
 import edu.tamu.lenss.mdfs.GNS.GNS;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
@@ -41,7 +41,7 @@ public class MDFSFileRetrieverViaRsock {
     private static final String TAG = MDFSFileRetrieverViaRsock.class.getSimpleName();
     private byte[] decryptKey;
     private MDFSFileInfo fileInfo;
-    private EdgeKeeperMetadata metadata;
+    private FileMetadata metadata;
 
     public MDFSFileRetrieverViaRsock(MDFSFileInfo fInfo) {
         this.fileInfo = fInfo;
@@ -74,7 +74,7 @@ public class MDFSFileRetrieverViaRsock {
         if(!connected){
             //return with dummy metadata with cmd = EDGEKEEPER_CONNECTION_FAILED and other dummy information
             //dont put it in client.putInDTNQueue() function
-            this.metadata = new EdgeKeeperMetadata(EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED, EdgeKeeperConstants.getMyGroupName(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "name",  0, (byte)0, (byte)0); //dummy metadata
+            this.metadata = new FileMetadata(EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED, EdgeKeeperConstants.getMyGroupName(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "filename", "filePathMDFS",  0, (byte)0, (byte)0); //dummy metadata
             return;
         }
 
@@ -82,7 +82,7 @@ public class MDFSFileRetrieverViaRsock {
         client.setSocketReadTimeout();
 
         //make request metadata object
-        EdgeKeeperMetadata metadataReq = new EdgeKeeperMetadata(EdgeKeeperConstants.METADATA_WITHDRAW_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, fileInfo.getCreatedTime(), new Date().getTime(), fileInfo.getFileName());
+        FileMetadata metadataReq = new FileMetadata(EdgeKeeperConstants.METADATA_WITHDRAW_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, fileInfo.getCreatedTime(), new Date().getTime(), fileInfo.getFileName());
 
         //convert into json string
         String str = metadataReq.toBuffer(metadataReq);
@@ -106,7 +106,7 @@ public class MDFSFileRetrieverViaRsock {
         //then return dummy object
         if(recvBuf==null){
             client.close();
-            this.metadata = new EdgeKeeperMetadata(EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED, EdgeKeeperConstants.getMyGroupName(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "name",  0, (byte)0, (byte)0); //dummy metadata
+            this.metadata = new FileMetadata(EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED, EdgeKeeperConstants.getMyGroupName(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "filename",  "filePathMDFS",0, (byte)0, (byte)0); //dummy metadata
             return;
         }
 
@@ -119,14 +119,14 @@ public class MDFSFileRetrieverViaRsock {
         String str1 = bd.toString();
 
         //make metadata from str1
-        this.metadata = EdgeKeeperMetadata.parse(str1);
+        this.metadata = FileMetadata.parse(str1);
 
         printMetadata(metadata);
 
     }
 
     //testing purpose
-    public void printMetadata(EdgeKeeperMetadata metadata){
+    public void printMetadata(FileMetadata metadata){
         System.out.println("metadataaaa command return: " + metadata.command);
         System.out.println("metadataaaa chosennodes size: " + metadata.getAllUniqueFragmentHolders().size());
 

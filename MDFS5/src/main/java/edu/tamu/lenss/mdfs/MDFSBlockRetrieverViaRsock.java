@@ -20,7 +20,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperMetadata;
+import edu.tamu.lenss.mdfs.EdgeKeeper.FileMetadata;
 import edu.tamu.lenss.mdfs.GNS.GNS;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.crypto.FragmentInfo;
@@ -56,7 +56,7 @@ public class MDFSBlockRetrieverViaRsock {
     private final BlockRetrieveLog fileRetLog = new BlockRetrieveLog();
     private AtomicInteger locFragCounter = new AtomicInteger();
     private int initFileFragsCnt = 0; //dont change it
-    private EdgeKeeperMetadata metadata;
+    private FileMetadata metadata;
     private boolean isFinished = false;
 
 
@@ -70,7 +70,7 @@ public class MDFSBlockRetrieverViaRsock {
     }
 
 
-    public MDFSBlockRetrieverViaRsock(MDFSFileInfo fInfo, byte blockIndex, EdgeKeeperMetadata metadata){	//RSOCK
+    public MDFSBlockRetrieverViaRsock(MDFSFileInfo fInfo, byte blockIndex, FileMetadata metadata){	//RSOCK
         this(fInfo.getFileName(), fInfo.getCreatedTime(), blockIndex);
         this.fileInfo = fInfo;
         this.metadata = metadata;

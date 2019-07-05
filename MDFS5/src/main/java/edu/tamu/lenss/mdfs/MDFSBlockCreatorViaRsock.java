@@ -52,9 +52,9 @@ public class MDFSBlockCreatorViaRsock {
     String[] permList;              //permission list for the file
     public boolean isFinished = false;
     String clientID;                //client id who made the file creation request
+    String filePathMDFS;            //mdfs directory in which the file will be virtulally stored
 
-
-    public MDFSBlockCreatorViaRsock(File file, MDFSFileInfo info, byte blockIndex, MDFSBlockCreatorListenerViaRsock lis, String[] permlist, List<String> chosenodes, String clientID) {  //RSOCK
+    public MDFSBlockCreatorViaRsock(File file, String filePathMDFS, MDFSFileInfo info, byte blockIndex, MDFSBlockCreatorListenerViaRsock lis, String[] permlist, List<String> chosenodes, String clientID) {  //RSOCK
         this.blockIdx = blockIndex;
         this.blockFile = file;
         this.listener = lis;
@@ -66,6 +66,7 @@ public class MDFSBlockCreatorViaRsock {
         this.permList = permlist;
         this.chosenNodes = chosenodes;
         this.clientID = clientID;
+        this.filePathMDFS = filePathMDFS;
     }
 
 
@@ -167,7 +168,7 @@ public class MDFSBlockCreatorViaRsock {
                     //t1.start();
 
                     //or, upload via executorservice
-                    ServiceHelper.getInstance().executeRunnableTask(new FragmentUploaderViaRsock(f, fileInfo.getCreatedTime(), permList, destNode, !nodesIter.hasNext()));
+                    ServiceHelper.getInstance().executeRunnableTask(new FragmentUploaderViaRsock(f, filePathMDFS, fileInfo.getCreatedTime(), permList, destNode, !nodesIter.hasNext()));
 
                 }
             }
@@ -195,14 +196,16 @@ public class MDFSBlockCreatorViaRsock {
         private byte blockIndex;
         private byte fragmentIndex;
         private String[] permList;
+        private String filePathMDFS;
 
-        public FragmentUploaderViaRsock(File frag, long fileCreationTime, String[] permlist, String destGUID, boolean last) {
+        public FragmentUploaderViaRsock(File frag, String filePathMDFS, long fileCreationTime, String[] permlist, String destGUID, boolean last) {
             this.fileFrag = frag;
             this.destGUID = destGUID;
             this.fileCreatedTime = fileCreationTime;
             this.permList = permlist;
             this.blockIndex = parseBlockNum(frag.getName());
             this.fragmentIndex = parseFragNum(frag.getName());
+            this.filePathMDFS = filePathMDFS;
         }
 
         private byte parseBlockNum(String fName){
@@ -242,7 +245,7 @@ public class MDFSBlockCreatorViaRsock {
                 System.out.println("sizeee of bytearray send: " + byteArray.length);
 
                 //make MDFSRsockBlockCreator obj
-                MDFSRsockBlockCreator mdfsrsockblock = new MDFSRsockBlockCreator(header, byteArray, fileInfo.getFileName(), fileFrag.length(), fileInfo.getNumberOfBlocks(), fileInfo.getN2(), fileInfo.getK2(), fileCreatedTime, permList, GNS.ownGUID, destGUID);
+                MDFSRsockBlockCreator mdfsrsockblock = new MDFSRsockBlockCreator(header, byteArray, fileInfo.getFileName(), filePathMDFS, fileFrag.length(), fileInfo.getNumberOfBlocks(), fileInfo.getN2(), fileInfo.getK2(), fileCreatedTime, permList, GNS.ownGUID, destGUID);
 
                 //get byteArray and size of the MDFSRsockBlockCreator obj and do send over rsock
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();

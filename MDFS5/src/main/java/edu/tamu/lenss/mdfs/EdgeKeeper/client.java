@@ -1,7 +1,5 @@
 package edu.tamu.lenss.mdfs.EdgeKeeper;
 
-import android.text.method.NumberKeyListener;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
@@ -9,10 +7,6 @@ import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 
 import static java.lang.Thread.sleep;
 
@@ -158,7 +152,7 @@ public class client{
     //this function should only be used when manually connecting to the endgekeeper fails
     //this function only handles EdgeKeeperMetadata of command types FILE_CREATOR_METADATA_DEPOSIT_REQUEST, FRAGMENT_RECEIVER_METADATA_DEPOSIT_REQUEST, GROUP_INFO_SUBMISSION_REQUEST.
     //this function should only be used for one way data sending(that is from client to EdgeKeeper) and only when a return is not expected.
-    public static void putInDTNQueue(EdgeKeeperMetadata metadata, int minutesInterval){
+    public static void putInDTNQueue(FileMetadata metadata, int minutesInterval){
         if(metadata.command==EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST ||
                 metadata.command==EdgeKeeperConstants.FRAGMENT_RECEIVER_METADATA_DEPOSIT_REQUEST  ||
                 metadata.command==EdgeKeeperConstants.GROUP_INFO_SUBMISSION_REQUEST ){
@@ -168,11 +162,11 @@ public class client{
     }
 
     private static class DTN extends Thread{
-        EdgeKeeperMetadata metadata;
+        FileMetadata metadata;
         long intervalInMilliSeconds;
         long interval;
 
-        public DTN(EdgeKeeperMetadata metadata, int intervalInMinutes){
+        public DTN(FileMetadata metadata, int intervalInMinutes){
             this.metadata = metadata;
             this.intervalInMilliSeconds = intervalInMinutes * 60 * 1000;
             this.interval = 500;

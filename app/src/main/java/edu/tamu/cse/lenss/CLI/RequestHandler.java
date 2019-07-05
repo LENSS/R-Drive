@@ -33,16 +33,10 @@ class RequestHandler implements Runnable{
     private Socket cSocket;
     Context appContext;
 
-    //filepath
-    public String fileCreatePath = "/distressnet/MStorm/StreamFDPic/temp/";
 
-    //command parsing variables
-    String[] comm = {"directory", "set_perm", "get_perm", "add_group", "remove_group", "group_list", "create", "retrieve", "delete", "-help"};
+    //commands
+    String[] comm = { "-help", "-ls", "-list", "-mkdir", "-rm", "-setfacl", "-getfacl", "-put", "-get"};
     Set<String> commandNames = new HashSet<>(Arrays.asList(comm));
-    String[] subcomm = {"permission"};
-    Set<String> subCommandNames = new HashSet<>(Arrays.asList(subcomm));
-    String[] action = {"all", "decrypted", "undecrypted"};
-    Set<String> actionNames = new HashSet<>(Arrays.asList(action));
 
     public RequestHandler( Socket cSocket, Context con) {
         this.cSocket = cSocket;
@@ -101,50 +95,58 @@ class RequestHandler implements Runnable{
         //for(int i=0; i<cmd.length; i++){ System.out.println("tokens: " + cmd[i]); }
 
         //check if the first token is "mdfs"
-        if(cmd.length>0 && cmd[0].toLowerCase().equals("mdfs")){
-            //check what type of command it is
+        if(cmd.length>0 && cmd[0].equals("mdfs")){
+            //check what type of command the second token is
             if(cmd.length>1 && commandNames.contains(cmd[1].toLowerCase())){
                 //command exists, take action based on command type
-                 if(cmd[1].toLowerCase().equals("-help")){
-                     handleHelpCommand.handleHelpCommand(clientID);
-                 }else if(cmd[1].toLowerCase().equals("create")){
-                    //check if next entry is a filename
+                if(cmd[1].toLowerCase().equals("-help")){
+                    handleHelpCommand.handleHelpCommand(clientID);
+                }else if(cmd[1].toLowerCase().equals("-put")){
+                    //check if third token exists which is <local_filepath>
                     if(cmd.length>2){
-                        String filename = cmd[2];
+                        String fileNameWithFullLocalPath = cmd[2];
+
+                        //get filename and filepath
+                        String filename = "";
+                        String filepathLocal = "";
+                        for(int i=fileNameWithFullLocalPath.length()-1; i>=0; i--){
+                            if(fileNameWithFullLocalPath.charAt(i)!='/'){
+                                filename = filename + fileNameWithFullLocalPath.charAt(i);
+                            }else{
+                                filename = new StringBuilder(filename).reverse().toString();
+                                filepathLocal = fileNameWithFullLocalPath.replace(filename,"");
+                                break;
+                            }
+                        }
+
                         //check if this file exists
-                        String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/distressnet/MStorm/StreamFDPic/temp/";
-                        File[] listoffiles = new File(path).listFiles();
+                        File[] listoffiles = new File(filepathLocal).listFiles();
                         boolean fileExists = false;
                         for(int i=0; i< listoffiles.length; i++){ if(listoffiles[i].getName().equals(filename)){fileExists = true; break;} }
+
+                        //file exists
                         if(fileExists){
-                            //check if the file extension is jpg or mp4
-                            if(filename.contains(".jpg")  || filename.contains(".mp4")){
-                                //check if command came with any permission
-                                if(cmd.length>3 && subCommandNames.contains(cmd[3].toLowerCase()) && cmd[3].toLowerCase().equals("permission")){
-                                    //"permission" subcommand exists get the permitted entities
-                                    String[] perm = Arrays.asList(cmd).subList(4, cmd.length-1 + 1).toArray(new String[0]);
-                                    //check if the permitted entities are either "owner", "group", "world" or a 40 bytes GUID
-                                    perm = utils.checkPermittedNodes(perm);
-                                    if(perm.length!=0){
-                                        handleCreateCommand.handleCreateCommand(path, filename, perm, clientID);
-                                    }else{
-                                        clientSockets.sendAndClose(clientID, "CLIII Error! Permission list invalid or not found.");
-                                    }
+                            //check if the file extension is jpg or mp4 or txt or pdf etc
+                            if(utils.checkFileExtension(filename)){
 
+                                //check if fourth token exists and is <mdfs_filepath>
+                                if(cmd.length>3){
+                                    String filePathMDFS = cmd[3];
+                                    String[] perm = utils.checkPermittedNodes("WORLD");
+                                    handleCreateCommand.handleCreateCommand(filepathLocal, filePathMDFS, filename, perm, clientID);
                                 }else{
-                                    clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, add Permission subcommand.");
+                                    clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a filepath in MDFS where the file will be stored.");
                                 }
-
                             }else{
-                                clientSockets.sendAndClose(clientID, "CLIII Error! File must be either .jpg or .mp4 file.");
+                                clientSockets.sendAndClose(clientID, "CLIII Error! File Extension not supported.");
                             }
                         }else{
-                            clientSockets.sendAndClose(clientID, "CLIII Error! File does not exist.");
+                            clientSockets.sendAndClose(clientID, "CLIII Error! Directory/file does not exist.");
                         }
                     }else{
-                        clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a filename.");
+                        clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a filename with absolute path..ex:/storage/emulated/0/.../test.jpg ");
                     }
-                 }else if(cmd[1].toLowerCase().equals("retrieve")){
+                }else if(cmd[1].toLowerCase().equals("retrieve")){
                     if(cmd.length>2){
                         String filename = cmd[2];
                         //check if the file extension is jpg or mp4 or all/ALL
@@ -162,17 +164,13 @@ class RequestHandler implements Runnable{
                     }else{
                         clientSockets.sendAndClose(clientID, "CLIII Error! File name not mentioned.");
                     }
-                 }else if(cmd[1].toLowerCase().equals("directory")){
+                }else if(cmd[1].toLowerCase().equals("directory")){
                      if(cmd.length>2){
-                        if(actionNames.contains(cmd[2].toLowerCase())){
-                            //handleDirectoryCommand(cmd[2]);  //todo dont return anything here
-                        }else{
-                            clientSockets.sendAndClose(clientID, "CLIII Error! Command modifier not valid, mention a valid command modifier- decrypted, undecrypted, or all.");
-                        }
+
                      }else{
                          clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a command modifier- decrypted, undecrypted, or all.");
                      }
-                 }else if(cmd[1].toLowerCase().equals("delete")){
+                }else if(cmd[1].toLowerCase().equals("delete")){
                      if(cmd.length>2){
                          int[] deleted = null;
                          if((cmd[2].toLowerCase().equals("all"))){
@@ -197,7 +195,7 @@ class RequestHandler implements Runnable{
                      }else{
                          clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a command modifier- filename, or all.");
                      }
-                 }else if(cmd[1].toLowerCase().equals("set_perm")){
+                }else if(cmd[1].toLowerCase().equals("set_perm")){
                      if(cmd.length>2){
                         String filename = cmd[2];
                         if(filename.contains(".jpg") || filename.contains(".mp4")){
@@ -226,7 +224,7 @@ class RequestHandler implements Runnable{
                      }else{
                          clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a filename.");
                      }
-                 }else if(cmd[1].toLowerCase().equals("get_perm")){
+                }else if(cmd[1].toLowerCase().equals("get_perm")){
                      if(cmd.length>2){
                          if(cmd[2].toLowerCase().equals("all")){
                             String reply = handleGetPermCommand(cmd[2]);  //todo: dont return anywhere here
@@ -241,18 +239,18 @@ class RequestHandler implements Runnable{
                      }else{
                          clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a command modifier- filename, or all.");
                      }
-                 }else if(cmd[1].toLowerCase().equals("add_group")){
+                }else if(cmd[1].toLowerCase().equals("add_group")){
                     //todo
-                 }else if(cmd[1].toLowerCase().equals("remove_group")){
+                }else if(cmd[1].toLowerCase().equals("remove_group")){
                      //todo
-                 }else if(cmd[1].toLowerCase().equals("group_list")){
+                }else if(cmd[1].toLowerCase().equals("group_list")){
                      //todo
                  }
             }else{
-                clientSockets.sendAndClose(clientID, "CLIII Error! Command doesnt exist.");
+                clientSockets.sendAndClose(clientID, "CLIII Error! Command incomplete.");
             }
         }else{
-            clientSockets.sendAndClose(clientID, "CLIII Error! Not a MDFS command...Type \"mdfs help\" for more information.");
+            clientSockets.sendAndClose(clientID, "CLIII Error! Not a MDFS command...Type \"mdfs -help\" for more information.");
 
         }
 

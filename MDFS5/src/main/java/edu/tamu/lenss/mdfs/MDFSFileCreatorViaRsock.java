@@ -25,13 +25,12 @@ import android.os.Environment;
 import com.google.common.io.Files;
 
 import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
-import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperMetadata;
+import edu.tamu.lenss.mdfs.EdgeKeeper.FileMetadata;
 import edu.tamu.lenss.mdfs.EdgeKeeper.client;
 import edu.tamu.lenss.mdfs.GNS.GNS;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
-import edu.tamu.lenss.mdfs.models.NewFileUpdate;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 import edu.tamu.lenss.mdfs.utils.CallableTask;
 import edu.tamu.lenss.mdfs.utils.CallableTask.CallableCallback;
@@ -62,21 +61,22 @@ public class MDFSFileCreatorViaRsock {
     private boolean isSending = false;
     List<String> chosenNodes;
     String[] permList;              //permList contains entries like WORLD, OWNER, GROUP:<group_name> or GUIDs
-    EdgeKeeperMetadata metadata;    //metadata object for this file
+    FileMetadata metadata;    //metadata object for this file
     String clientID;                //the client who is making this request
-
+    String filePathMDFS;            //virtuall directory path in MDFS in which the file will be saved
 
 
     //this constructor is called from the application side HomeScreen.java class
-    public MDFSFileCreatorViaRsock(File f, long maxBlockSize, double encodingRatio, String[] permList, String clientID) {  //RSOCK
+    public MDFSFileCreatorViaRsock(File f, String filePathMDFS, long maxBlockSize, double encodingRatio, String[] permList, String clientID) {  //RSOCK
         this.file = f;
+        this.filePathMDFS = filePathMDFS;
         this.encodingRatio = encodingRatio;
         this.blockCount = (int)Math.ceil((double)file.length()/maxBlockSize);
         this.fileInfo = new MDFSFileInfo(file.getName(), file.lastModified());
         this.fileInfo.setFileSize(file.length());
         this.fileInfo.setNumberOfBlocks((byte)blockCount);
         Logger.w(TAG, "Split file " + f.getName() + " to " + blockCount + " blocks");
-        this.metadata = new EdgeKeeperMetadata(EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, GNS.ownGUID, fileInfo.getCreatedTime(), new String[1], new Date().getTime(), fileInfo.getFileName(), blockCount, (byte)0,(byte) 0);
+        this.metadata = new FileMetadata(EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, GNS.ownGUID, fileInfo.getCreatedTime(), new String[1], new Date().getTime(), fileInfo.getFileName(), filePathMDFS ,blockCount, (byte)0,(byte) 0);
         this.permList = permList;
         this.clientID = clientID;
         this.chosenNodes = new ArrayList<>();
@@ -204,7 +204,7 @@ public class MDFSFileCreatorViaRsock {
                 for(File blockF : blocks){
                     fName = blockF.getName();
                     byte idx = Byte.parseByte(fName.substring((fName.lastIndexOf("_")+1)));   //idx = block number
-                    uploadQ.add(new MDFSBlockCreatorViaRsock(blockF, fileInfo, idx, blockListener, permList, chosenNodes, clientID));
+                    uploadQ.add(new MDFSBlockCreatorViaRsock(blockF, filePathMDFS, fileInfo, idx, blockListener, permList, chosenNodes, clientID));
                 }
             }
 
@@ -446,7 +446,7 @@ public class MDFSFileCreatorViaRsock {
         client.setSocketReadTimeout();
 
         //make EdgeKeeper object with cmd = GROUP_TO_GUID_CONV_REQUEST
-        EdgeKeeperMetadata metadataReq = new EdgeKeeperMetadata(EdgeKeeperConstants.GROUP_TO_GUID_CONV_REQUEST, new Date().getTime(), EdgeKeeperConstants.getMyGroupName() , GNS.ownGUID, groups);
+        FileMetadata metadataReq = new FileMetadata(EdgeKeeperConstants.GROUP_TO_GUID_CONV_REQUEST, new Date().getTime(), EdgeKeeperConstants.getMyGroupName() , GNS.ownGUID, groups);
 
         //convert into json string
         String str = metadataReq.toBuffer(metadataReq);
@@ -478,7 +478,7 @@ public class MDFSFileCreatorViaRsock {
         String str1 = bd.toString();
 
         //make metadata from str1
-        EdgeKeeperMetadata metadataRet = EdgeKeeperMetadata.parse(str1);
+        FileMetadata metadataRet = FileMetadata.parse(str1);
 
         //check cmd = GROUP_TO_GUID_CONV_REPLY_SUCCESS, then success)
         if(metadataRet.command == EdgeKeeperConstants.GROUP_TO_GUID_CONV_REPLY_SUCCESS){
@@ -581,7 +581,7 @@ public class MDFSFileCreatorViaRsock {
         client.close();
     }
 
-    public void printMetadata(EdgeKeeperMetadata metadata){
+    public void printMetadata(FileMetadata metadata){
         System.out.println("metadataaaa command return: " + metadata.command);
         System.out.println("metadataaaa chosennodes size: " + metadata.getAllUniqueFragmentHolders().size());
 

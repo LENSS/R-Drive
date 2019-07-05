@@ -15,8 +15,9 @@ public class utils {
 
 
     //this function checks if the user inputted permission list has valid entries.
-    //if "world", then other entries doesnt matter..everyone who is running MDFS will hav r/w/d permission.
-    //if "owner", then other entries doesnt matter, only owner of the file will have r/w/d permission.
+    //the input array is expected to have four types of entry "WORLD", "OWNER", GUID, or GROUP:<group_name>.
+    //if "WORLD", then other entries doesnt matter..everyone who is running MDFS will hav r/w/d permission.
+    //if "OWNER", then other entries doesnt matter, only owner of the file will have r/w/d permission.
     //else, the listed nodes will have permission.
     //returned String[] contains either "WORLD" in uppercase, or
     //"OWNER" in uppercase, or
@@ -58,6 +59,23 @@ public class utils {
 
         //note: all entries in this list are upper case
         return permittedList.toArray(new String[permittedList.size()]);
+    }
+
+    //this is a dummy checkPermittedNodes() function.
+    //the only permission it returns is WORLD.
+    public static String[] checkPermittedNodes(String world){
+        String[] ret = {"WORLD"};
+        return ret;
+    }
+
+
+    ///takes a filename and checks if the filename contains the desired file extension
+    public static boolean checkFileExtension(String filename){
+        if(filename.contains(".jpg")  || filename.contains(".mp4") || filename.contains(".txt")){
+            return true;
+        }else{
+            return false;
+        }
     }
 
 }

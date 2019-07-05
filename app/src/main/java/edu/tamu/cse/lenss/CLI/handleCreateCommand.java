@@ -14,13 +14,13 @@ import edu.tamu.lenss.mdfs.utils.IOUtilities;
 
 public class handleCreateCommand {
 
-    public static void handleCreateCommand(String path, String filename, String[] perm, String clientID) {
-        loadFile(path, filename, perm, clientID);
+    public static void handleCreateCommand(String filePathLocal, String filePathMDFS, String filename, String[] perm, String clientID) {
+        loadFile(filePathLocal, filePathMDFS, filename, perm, clientID);
     }
 
-    private static void loadFile(String path, String filename, String[] perm, String clientID){
+    private static void loadFile(String filePathLocal, String filePathMDFS, String filename, String[] perm, String clientID){
 
-        File[] listofFiles = new File(path).listFiles();
+        File[] listofFiles = new File(filePathLocal).listFiles();
         int index = -1;
         boolean fileExists = false;
         for(int i=0; i< listofFiles.length; i++){
@@ -33,7 +33,7 @@ public class handleCreateCommand {
 
         if(fileExists){
             File file = listofFiles[index];
-            compressAndsendFile(file, null, false, perm, clientID);
+            compressAndsendFile(file, filePathMDFS,null, false, perm, clientID);
 
         }else{
             clientSockets.sendAndClose(clientID, "file not found.");
@@ -41,8 +41,8 @@ public class handleCreateCommand {
         }
     }
 
-    private static void compressAndsendFile(final File orgiginalFile, final String newFileName, final boolean compressed, String[] perm, String clientID){
-        final File renamedFile;
+    private static void compressAndsendFile(File orgiginalFile, String filePathMDFS, String newFileName, boolean compressed, String[] perm, String clientID){
+        File renamedFile;
         if(newFileName != null){
             renamedFile = new File(orgiginalFile.getParent()+ File.separator + newFileName);
             orgiginalFile.renameTo(renamedFile);
@@ -58,21 +58,21 @@ public class handleCreateCommand {
                 FileOutputStream out = new FileOutputStream(compressedFile);
                 AndroidIOUtils.decodeSampledBitmapFromFile(renamedFile.getAbsolutePath(), Constants.COMMON_DEVICE_WIDTH, Constants.COMMON_DEVICE_HEIGHT).compress(Bitmap.CompressFormat.JPEG, 85, out);
                 renamedFile.delete();
-                sendFile(compressedFile, perm, clientID);
+                sendFile(compressedFile, filePathMDFS, perm, clientID);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
         else{
-            sendFile(renamedFile, perm, clientID);
+            sendFile(renamedFile, filePathMDFS, perm, clientID);
         }
 
     }
 
-    private static void sendFile(final File file, String[] perm, String clientID){
+    private static void sendFile(final File file, String filePathMDFS, String[] perm, String clientID){
         //check whether file creation via rsock or tcp
         if(Constants.file_creation_via_rsock_or_tcp.equals("rsock")){  //RSOCK
-            MDFSFileCreatorViaRsock creator = new MDFSFileCreatorViaRsock(file, Constants.MAX_BLOCK_SIZE, Constants.K_N_RATIO, perm, clientID);
+            MDFSFileCreatorViaRsock creator = new MDFSFileCreatorViaRsock(file, filePathMDFS, Constants.MAX_BLOCK_SIZE, Constants.K_N_RATIO, perm, clientID);
             creator.setEncryptKey(ServiceHelper.getInstance().getEncryptKey());
             creator.setListener(fileCreatorListenerviarsock);
             creator.start();

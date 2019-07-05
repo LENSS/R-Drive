@@ -8,10 +8,12 @@ import java.io.Serializable;
 import java.util.*;
 
 //This class is used to send and requests and receive reply from edgeKeeper.
-public class EdgeKeeperMetadata implements Serializable {
+//also used as the file metadata object
+public class FileMetadata implements Serializable {
 
     //all variables
     public int command;
+    public String filePathMDFS;                                     //directory in MDFS in which the file is virtually stored
     public List<String> ownGroupNames;
     public String metadataDepositorGUID;
     public String fileCreatorGUID;
@@ -23,24 +25,25 @@ public class EdgeKeeperMetadata implements Serializable {
     public int numOfBlocks;
     public byte n2;
     public byte k2;
-    public List<Map<String, Map<String, List<String>>>> chosenNodes;  //the main data structure that holds a list that contains mapping from GUID to blockNUm to FRagmentNum
+    public List<Map<String, Map<String, List<String>>>> chosenNodes;  //the main data structure that holds a list that contains mapping from GUID to blockNUm to FragmentNum
     public List<String> groupOrGUID;
     public String[] permissionList;
 
     //empty constructors
-    public EdgeKeeperMetadata(){}
+    public FileMetadata(){}
 
     //constructor for metadata deposit by file creator with cmd = FILE_CREATOR_METADATA_DEPOSIT_REQUEST (object made by -client, sent to- EdgeKeeper, reason - to deposit metadata after a file creator created a file)
     //constructor for metadata deposit by fragment receiver with cmd = FRAGMENT_RECEIVER_METADATA_DEPOSIT_REQUEST (object made by -client, sent to- EdgeKeeper, reason - to deposit metadata after a fragment of a file has been received)
     //constructor for metadata withdraw reply with cmd = METADATA_WITHDRAW_REPLY_SUCCESS (object made by EdgeKeeper, sent to - client, reason - success to reply with metadata of a file)
     //constructor for metadata withdraw reply with cmd = METADATA_WITHDRAW_REPLY_FAILED (object made by EdgeKeeper, sent to - client, reason - failed to reply with metadata of a file but no metadata found for this file so dummy metadata sent)
-    public EdgeKeeperMetadata(int cmd, List<String> owngroupnames, String metadataDepositorGUID, String fileCreatorGUID, long fileid, String[] permList, long timeStamp, String filename, int numofblocks, byte n2, byte k2){
+    public FileMetadata(int cmd, List<String> owngroupnames, String metadataDepositorGUID, String fileCreatorGUID, long fileid, String[] permList, long timeStamp, String filename, String filePathMDFS, int numofblocks, byte n2, byte k2){
         this.command = cmd;
         this.ownGroupNames = owngroupnames;
         this.metadataDepositorGUID = metadataDepositorGUID;
         this.fileCreatorGUID = fileCreatorGUID;
         this.permissionList = permList;
         this.filename = filename;
+        this.filePathMDFS = filePathMDFS;
         this.fileID = fileid;
         this.timeStamp = timeStamp;
         this. numOfBlocks = numofblocks;
@@ -50,7 +53,7 @@ public class EdgeKeeperMetadata implements Serializable {
     }
 
     //constructor for metadata withdraw request with cmd  = METADATA_WITHDRAW_REQUEST (object made by -client, sent to - EdgeKeeper, reason -to ask for metadata for a file)
-    public EdgeKeeperMetadata(int cmd, List<String> owngroupnames, String metadataRequesterGUID, long fileid, long timestamp, String filename){
+    public FileMetadata(int cmd, List<String> owngroupnames, String metadataRequesterGUID, long fileid, long timestamp, String filename){
         this.command = cmd;
         this.ownGroupNames = owngroupnames;
         this.metadataRequesterGUID = metadataRequesterGUID;
@@ -63,7 +66,7 @@ public class EdgeKeeperMetadata implements Serializable {
     //constructor for GroupName to GUID conversion requests with cmd = GROUP_TO_GUID_CONV_REQUEST  (object made by -client, sent to -EdgeKeeper, reason - asking for GUIDs who belong to a group name)
     //constructor for GroupName to GUID conversion reply with cmd = GROUP_TO_GUID_CONV_REPLY_SUCCESS  (object made by -EdgeKeeper, sent to -Client, reason - success in replying with GUIDs who belong to a group name)
     //constructor for GroupName to GUID conversion reply with cmd = GROUP_TO_GUID_CONV_REPLY_FAILED  (object made by -EdgeKeeper, sent to -Client, reason - failed in replying with GUIDs who belong to a group name)
-    public EdgeKeeperMetadata(int cmd, long timeStamp, List<String> owngroupnames, String groupConversionRequesterGUID, List<String> list){
+    public FileMetadata(int cmd, long timeStamp, List<String> owngroupnames, String groupConversionRequesterGUID, List<String> list){
         this.command = cmd;
         this.timeStamp = timeStamp;
         this.ownGroupNames = owngroupnames;
@@ -89,8 +92,8 @@ public class EdgeKeeperMetadata implements Serializable {
 
 
 
-    //conversion of EdgeKeeper object to json String
-    public String toBuffer(EdgeKeeperMetadata metadata){
+    //conversion of metadata object to json String
+    public String toBuffer(FileMetadata metadata){
         //convert class to json to string
         ObjectMapper Obj = new ObjectMapper();
         String jsonStr = null;
@@ -98,11 +101,11 @@ public class EdgeKeeperMetadata implements Serializable {
         return jsonStr;
     }
 
-    //convertion of json string to EdgeKeeper object
-    public static EdgeKeeperMetadata parse(String incoming){
+    //convertion of json string to metadata object
+    public static FileMetadata parse(String incoming){
         ObjectMapper Obj = new ObjectMapper();
-        EdgeKeeperMetadata metadata = null;
-        try { metadata = Obj.readValue(incoming, EdgeKeeperMetadata.class); } catch (IOException e) { e.printStackTrace(); }
+        FileMetadata metadata = null;
+        try { metadata = Obj.readValue(incoming, FileMetadata.class); } catch (IOException e) { e.printStackTrace(); }
         return metadata;
     }
 

@@ -16,7 +16,7 @@ public class DataStore {
 
     //variables and data structures
     public int longestFileNameLength;                           //only used for printing filenames in a pretty format
-    public Map<Long, EdgeKeeperMetadata> fileIDtoMetadataMap;  //contains metadata for each file
+    public Map<Long, FileMetadata> fileIDtoMetadataMap;  //contains metadata for each file
     public Map<String, List<String>> GUIDtoGroupNamesMap;       //cointains group information for each node/GUID | only contains the name doesnt contain GROUP: tag | each name's case is as inputted by user
     private Map<String ,Long> FileNameToFileIDMap;               //contains file name to fileID map
     public List<Long> deletedFiles;                             //contains all the ids of deleted files
@@ -53,7 +53,7 @@ public class DataStore {
 
 
     //store EdgeKeeper object of a file into map
-    public void putFileMetadata(EdgeKeeperMetadata metadata){
+    public void putFileMetadata(FileMetadata metadata){
         //store metadata without changing command
         fileIDtoMetadataMap.put(metadata.fileID, metadata);
         System.out.println("edgekeeper datastore putting data for fileid: " + metadata.fileID);
@@ -67,16 +67,16 @@ public class DataStore {
     //get EdgeKeeper metadata from map
     //if metadata doesnt exists, return with cmd = METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST
     //this function does not check for permission but only checks for existence
-    public EdgeKeeperMetadata getFileMetadata(long fileid){
+    public FileMetadata getFileMetadata(long fileid){
         if(fileIDtoMetadataMap.containsKey(fileid)) {
             System.out.println("edgekeeper datastore success retrieving data for fileid: " + fileid);
             //change commands before returning
-            EdgeKeeperMetadata metadata = fileIDtoMetadataMap.get(fileid);
+            FileMetadata metadata = fileIDtoMetadataMap.get(fileid);
             metadata.setCommand(EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_SUCCESS);
             return metadata;
         }else{
             System.out.println("edgekeeper datastore has not metadata for fileID: " + fileid);
-            return new EdgeKeeperMetadata(EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST, new ArrayList<>(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "name",  0, (byte)0, (byte)0); //dummy metadata with command FAILED
+            return new FileMetadata(EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST, new ArrayList<>(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "filename", "filePathMDFS", 0, (byte)0, (byte)0); //dummy metadata with command FAILED
         }
     }
 
