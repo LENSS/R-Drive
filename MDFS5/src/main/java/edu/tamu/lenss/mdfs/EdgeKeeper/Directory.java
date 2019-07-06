@@ -304,9 +304,51 @@ public class Directory {
     }
 
     //remove a directory and its contents from directory
-    /*public boolean removeDirectory(String dir){
+    //if an input is /A/B/C Or /A/B/C/ then we remove /C
+    //and everything in it.
+    public boolean removeDirectory(String dir){
+        //check if the directory is "/" then cannot delete it
+        if(dir.equals("/")){return false; }
 
-    }*/
+        //check if dir first char is "/"
+        if(dir.charAt(0)!='/'){return false;}
+
+        //check if directory exists to begin with
+        if(!dirExists(dir)){ return false; }
+
+        //remove the last "/" symbol from dir if it exists
+        //note: unnecessary
+        if(dir.charAt(dir.length()-1)=='/'){
+            dir = dir.substring(0,dir.length()-1);
+        }
+
+        //parse the directory by tokens
+        String[] dirTokens = dir.split("/");
+
+        //check if the dirTokens has at least one entry
+        SubDirectory subDir;
+        if(dirTokens.length!=0){
+            //get the first subDir in root
+            subDir = rootDir.getSubDirectoryFromRoot(dirTokens[0]);
+        }else{
+            //for some reason dirToken length is 0, this shouldnt be.
+            return false;
+        }
+
+        //iterate the following directories and load them
+        if(dirTokens.length>1) {
+            for (int i = 1; i < dirTokens.length-1; i++) {
+                subDir = subDir.getSubDirectoryFromSubDir(dirTokens[i]);
+            }
+        }
+
+        //now delete the dirToken[last] element from subDir
+        subDir.removeSubDirectoryFromSubDir(dirTokens[dirTokens.length-1]);
+
+        //check if directory still exists
+        if(dirExists(dir)){return false;}
+        else{return true;}
+    }
 
 
 
