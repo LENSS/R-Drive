@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import edu.tamu.lenss.mdfs.GNS.GNS;
 import edu.tamu.lenss.mdfs.GNS.GNSConstants;
 
 public class server{
@@ -38,8 +39,8 @@ public class server{
             @Override
             public void run(){
 
-                //create/load DataStore object
-                DataStore datastore = DataStore.getInstance();
+                //create/load Directory object
+                Directory directory = Directory.getInstance();
 
                 try {
                     ByteBuffer sendBuf;
@@ -66,113 +67,124 @@ public class server{
                             //make EdgeKeeperMetadata object by passing flipped ByteBuffer
                             FileMetadata metadataRec = FileMetadata.parse(str1);
 
-                            //check for command
+                            //check if null
                             if (metadataRec != null) {
+
+                                //check for command
                                 if((metadataRec.command == EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST) || (metadataRec.command == EdgeKeeperConstants.FRAGMENT_RECEIVER_METADATA_DEPOSIT_REQUEST)){
                                     System.out.println("EdgeKeeper server got metadata Deposit request from fragment receiver");
 
-                                    //retrieve the old metadata from DataStore if it even exists
-                                    FileMetadata metadataOld = datastore.getFileMetadata(metadataRec.fileID);
+                                    //first check if the metadataRec reqUniqueID belongs to deleted files,
+                                    //that means the file has been deleted
+                                    if(directory.deletedFiles.contains(metadataRec.uniqueReqID)){
+                                        continue;   //the file has already been deleted so we ignore this metadata
 
-                                    //check if METADATA_WITHDRAW_REPLY_FAILED command returned that means a file doesnt exist
-                                    if(metadataOld.command == EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST){
-                                        //check deleted file list to verify
-                                        if(!datastore.deletedFiles.contains(metadataRec.fileID)){
-                                            //coming here means its a completely new file metadata.
-                                            //in this case, we add all information in all data structures
-                                            //in DataStore.
+                                    } else {
 
-                                            //push the metadata as usual as if a new file
-                                            datastore.putFileMetadata(metadataRec);
+                                        //if file not deleted then check if file exists already or nah
+                                        if (directory.fileExists(metadataRec.filename, metadataRec.filePathMDFS) && directory.getFileMetadata(metadataRec.filename, metadataRec.filePathMDFS).filePathMDFS.equals(metadataRec.filePathMDFS)) {
 
-                                            //push fileName to fileID mapping
-                                            datastore.putFileNameToFileIDMap(metadataRec.filename, metadataRec.fileID);
+                                            //coming here means a file metadata for this file already exists
+                                            //fetch the old file metadata
+                                            FileMetadata metadataOld = directory.getFileMetadata(metadataRec.filename, metadataRec.filePathMDFS);
 
-                                            //todo: push fileID to directory mapping information
+                                            //retrieve new block and fragment numbers
+                                            String blockNumHeldByThisClient = metadataRec.getBlockNumbersHeldByNode(metadataRec.metadataDepositorGUID).get(0);                                          //this operation will never fail
+                                            String fragmentNumHeldByThisClient = metadataRec.getFragmentListByNodeAndBlockNumber(metadataRec.metadataDepositorGUID, blockNumHeldByThisClient).get(0);  //this operation will never fail
 
-                                            //push group information
-                                            datastore.putGroupNameBYGUID(metadataRec.metadataDepositorGUID, metadataRec.ownGroupNames);
+                                            //add new block and fragment information into the old metadata object
+                                            metadataOld.addInfo(metadataRec.metadataDepositorGUID, blockNumHeldByThisClient, fragmentNumHeldByThisClient);
 
-                                            //todo: update MDFS GLOBAL DIRECTORY
-                                        }else{
-                                            continue;  //fileID belongs to deletedFiles list, meaning this file has already been deleted. so we ignore metadata
+                                            //remove old file metadata from directory
+                                            directory.removefileMetadata(metadataRec.filename, metadataRec.filePathMDFS);
+
+                                            //push the old metadata object back
+                                            directory.putFileMetadata(metadataOld, metadataOld.filename, metadataOld.filePathMDFS);
+
+
+                                        } else {
+
+                                            //coming here means this is a totally new file metadata
+                                            //put file metadata as usual
+                                            directory.putFileMetadata(metadataRec, metadataRec.filename, metadataRec.filePathMDFS);
+
                                         }
-                                    }else{
-                                        //coming here means its a metadata for an old existing file
-                                        //in this case we dont change anything, only add the new fragment info into the metadata
-
-                                        //retrieve new block and fragment numbers
-                                        String blockNumHeldByThisClient = metadataRec.getBlockNumbersHeldByNode(metadataRec.metadataDepositorGUID).get(0);                                          //this operation will never fail
-                                        String fragmentNumHeldByThisClient = metadataRec.getFragmentListByNodeAndBlockNumber(metadataRec.metadataDepositorGUID, blockNumHeldByThisClient).get(0);  //this operation will never fail
-
-                                        //add new block and fragment information into the old metadata object
-                                        metadataOld.addInfo(metadataRec.metadataDepositorGUID, blockNumHeldByThisClient, fragmentNumHeldByThisClient);
-
-                                        //push the old metadata object back
-                                        datastore.putFileMetadata(metadataOld);
-
-                                        //todo: push fileID to directory mapping information
-
-                                        //push new group information
-                                        datastore.putGroupNameBYGUID(metadataRec.metadataDepositorGUID, metadataRec.ownGroupNames);
-
-                                        ////todo: update MDFS GLOBAL DIRECTORY
-
-
                                     }
 
 
                                 }else if (metadataRec.command == EdgeKeeperConstants.METADATA_WITHDRAW_REQUEST) {
                                     System.out.println("EdgeKeeper server got metadata Withdraw request");
 
-                                    //first push group information
-                                    datastore.putGroupNameBYGUID(metadataRec.metadataRequesterGUID, metadataRec.ownGroupNames);
+                                }else if(metadataRec.command==EdgeKeeperConstants.CREATE_MDFS_DIR_REQUEST){
 
-                                    //get the requested metadata from dataStore
-                                    FileMetadata metadataRet = datastore.getFileMetadata(metadataRec.fileID);
+                                    //reply object
+                                    FileMetadata metadataRet;
 
-                                    //if file exists
-                                    if(metadataRet.command!=EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST){
-                                        List<String> permList = Arrays.asList(metadataRet.permissionList);
-                                        List<String> groupsMemberOf = datastore.getGroupNamesbyGUID(metadataRec.metadataRequesterGUID);
+                                    //check if the requested directory already exists
+                                    if(directory.dirExists(metadataRec.filePathMDFS)){
 
-                                        //If exists, check if withdraw requester node has permission for this metadata
-                                        boolean authorized = false;
-                                        if(permList.contains("WORLD")){
-                                            authorized = true;
-                                        }else if((permList.contains("OWNER")) && metadataRet.fileCreatorGUID.equals(metadataRec.metadataRequesterGUID)){
-                                            authorized = true;
+                                        //directory already exists, create dummy obj with command = CREATE_MDFS_DIR_REPLY_FAILED
+                                        metadataRet = new FileMetadata(EdgeKeeperConstants.CREATE_MDFS_DIR_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID, metadataRec.filePathMDFS, " MDFS directory already exists.");
+
+                                    }else{
+
+                                        //directory doesnt exists so we create it
+                                        boolean result = directory.addDirectory(metadataRec.filePathMDFS);
+
+                                        //create obj with command = CREATE_MDFS_DIR_REPLY_SUCCESS
+                                        if(result) {
+                                            metadataRet = new FileMetadata(EdgeKeeperConstants.CREATE_MDFS_DIR_REPLY_SUCCESS, new Date().getTime(), new ArrayList<>(), metadataRec.mdfsdirectorycreatorGUID, metadataRec.filePathMDFS, "success");
                                         }else{
-                                            for(int i=0; i<groupsMemberOf.size(); i++){
-                                                String groupname = groupsMemberOf.get(i);
-                                                for(int j=0; j<permList.size(); j++){
+                                            //directory creation failed for some reason, create dummy obj with command = CREATE_MDFS_DIR_REPLY_FAILED
+                                            metadataRet = new FileMetadata(EdgeKeeperConstants.CREATE_MDFS_DIR_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID, metadataRec.filePathMDFS, "arbitrary error.");
+                                        }
+                                    }
 
-                                                    //check for GROUP membership
-                                                    if(permList.get(j).equals("GROUP:" + groupname)){
-                                                        authorized = true;
-                                                    }
+                                    //send back the reply
+                                    //convert metadata into json string
+                                    String str = metadataRet.toBuffer(metadataRet);
 
-                                                    //check if its a GUID and matches with metadata requester
-                                                    if( (permList.get(j).length()== GNSConstants.GUID_LENGTH) && (permList.get(j).equals(metadataRec.metadataRequesterGUID))){
-                                                        authorized = true;
-                                                    }
+                                    //allocate space for reply
+                                    sendBuf = ByteBuffer.allocate(str.length());
+                                    sendBuf.order(ByteOrder.LITTLE_ENDIAN);
+                                    sendBuf.clear();
 
-                                                    if(authorized){break;}
-                                                }
-                                                if(authorized){break;}
-                                            }
+                                    //put data in sendBuf
+                                    sendBuf.put(str.getBytes());
+                                    sendBuf.flip();
 
-                                            if(!authorized){
-                                                //we change the command to METADATA_WITHDRAW_REPLY_FAILED_PERMISSIONDENIED of metadata reply
-                                                metadataRet.setCommand(EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_PERMISSIONDENIED);
-                                            }
+                                    //send back
+                                    send(sendBuf);
+                                }else if(metadataRec.command == EdgeKeeperConstants.REMOVE_MDFS_DIR_REQUEST){
+                                    System.out.println("EdgeKeeper server got remove directory request");
+
+                                    //reply object
+                                    FileMetadata metadataRet;
+
+                                    //check if the dir already exists or nah
+                                    if(directory.dirExists(metadataRec.filePathMDFS)){
+
+                                        //if dir exists, delete it
+                                        boolean result = directory.removeDirectory(metadataRec.filePathMDFS);
+
+                                        if(result){
+
+                                            //dir deletion success
+                                            metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_SUCCESS, new Date().getTime(), new ArrayList<>(), metadataRec.removeRequesterGUID ,  metadataRec.filePathMDFS, metadataRec.filename, "success" );
+                                        }else{
+                                            //dir deletion failed for some reason
+                                            metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID , "dummy", "dummy", "arbitrary error." );
+
                                         }
 
                                     }else{
-                                        //file/metadata doesnt exists so we send back metadata with command = METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST
-                                        continue;
+
+                                        //dir doesnt even exist
+                                        metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID , "dummy", "dummy", "MDFS directory doesnt exist." );
+
                                     }
 
+                                    //send back the reply
                                     //convert metadata into json string
                                     String str = metadataRet.toBuffer(metadataRet);
 
@@ -187,41 +199,42 @@ public class server{
 
                                     //send back
                                     send(sendBuf);
-                                } else if (metadataRec.command == EdgeKeeperConstants.GROUP_TO_GUID_CONV_REQUEST) {
 
-                                    System.out.println("EdgeKeeper server got Group to GUID Conversion request(C)");
-                                    List<String> groupnames = metadataRec.groupOrGUID;
+                                }else if(metadataRec.command == EdgeKeeperConstants.REMOVE_MDFS_FILE_REQUEST){
+                                    System.out.println("EdgeKeeper server got remove file request");
 
-                                    //first push group information
-                                    datastore.putGroupNameBYGUID(metadataRec.groupConversionRequesterGUID, metadataRec.ownGroupNames);
-
-                                    //make a GUIDList to return
-                                    List<String> listofResultantGUIDS = new ArrayList<>();
-
-                                    //get all GUIDs who are member of at least one group
-                                    List<String> allGUIDsBelongsToAnyGroup = new ArrayList(datastore.GUIDtoGroupNamesMap.keySet());
-
-                                    //check and find
-                                    for (int i = 0; i < groupnames.size(); i++) {
-                                        String groupname = groupnames.get(i);
-                                        //trace all GUIDs who belong to this groupname
-                                        for (int j = 0; j < allGUIDsBelongsToAnyGroup.size(); j++) {
-                                            String guid = allGUIDsBelongsToAnyGroup.get(j);
-                                            if (datastore.GUIDtoGroupNamesMap.get(guid).contains(groupname)) {
-                                                listofResultantGUIDS.add(guid);
-                                            }
-                                        }
-                                    }
-
-
-                                    //make reply metadata object
+                                    //reply object
                                     FileMetadata metadataRet;
-                                    if (listofResultantGUIDS.size() != 0) {
-                                        metadataRet = new FileMetadata(EdgeKeeperConstants.GROUP_TO_GUID_CONV_REPLY_SUCCESS, new Date().getTime(), new ArrayList<>(), metadataRec.groupConversionRequesterGUID, listofResultantGUIDS);
-                                    } else {
-                                        metadataRet = new FileMetadata(EdgeKeeperConstants.GROUP_TO_GUID_CONV_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), metadataRec.groupConversionRequesterGUID, listofResultantGUIDS);
+
+                                    //check if dir already exists or nah
+                                    if(directory.dirExists(metadataRec.filePathMDFS)){
+
+                                        //check if file in the dir exists
+                                        if(directory.fileExists(metadataRec.filename, metadataRec.filePathMDFS)){
+
+                                            //delete the file
+                                            boolean result = directory.removefileMetadata(metadataRec.filename, metadataRec.filePathMDFS);
+
+                                            if(result){
+                                                //file deletion success
+                                                metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_FILE_REPLY_SUCCESS, new Date().getTime(), new ArrayList<>(), metadataRec.removeRequesterGUID ,  metadataRec.filePathMDFS, metadataRec.filename, "success" );
+
+                                            }else{
+                                                //for some reason file deletion failed
+                                                metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_FILE_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID , "dummy", "dummy", "arbitrary error." );
+                                            }
+
+                                        }else{
+                                            //dir exists but file doesnt
+                                            metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_FILE_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID , "dummy", "dummy", "MDFS directory exists but file doesnt exist." );
+                                        }
+
+                                    }else{
+                                        //dir doest even exist
+                                        metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_FILE_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID , "dummy", "dummy", "MDFS directory doesnt exist." );
                                     }
 
+                                    //send back the reply
                                     //convert metadata into json string
                                     String str = metadataRet.toBuffer(metadataRet);
 
@@ -237,17 +250,19 @@ public class server{
                                     //send back
                                     send(sendBuf);
 
-                                    //dummy sleep for interrupt
-                                    Thread.sleep(0);
 
                                 }
+
                             }
 
                         }else{
                             socketChannel.close();
                         }
 
+                        //dummy sleep for interrupt
+                        Thread.sleep(0);
                     }
+
                 }catch(InterruptedException | IOException e){
                     e.printStackTrace();
                 }

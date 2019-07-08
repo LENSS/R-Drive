@@ -13,21 +13,25 @@ public class FileMetadata implements Serializable {
 
     //all variables
     public int command;
+    public String message;
     public String filePathMDFS;                                     //directory in MDFS in which the file is virtually stored
-    public List<String> ownGroupNames;
-    public String metadataDepositorGUID;
-    public String fileCreatorGUID;
-    public String metadataRequesterGUID;
-    public String groupConversionRequesterGUID;
-    public String filename;
-    public long fileID;
-    public long timeStamp;
-    public int numOfBlocks;
-    public byte n2;
-    public byte k2;
+    public List<String> ownGroupNames;                              //list of groups a GUID belongs to
+    public String metadataDepositorGUID;                            //the GUID/node who deposits metadata. This can be either the file creator, or a fragment receiver.
+    public String fileCreatorGUID;                                  //the GUID/node who created the file ins MDFS
+    public String metadataRequesterGUID;                            //the GUID who requested a metadata of a file
+    public String mdfsdirectorycreatorGUID;                         //the GUID that is creating a directory in MDFS
+    public String removeRequesterGUID;                              //the GUID that requested for removing a dir or file
+    public String groupConversionRequesterGUID;                     //the GUID who requested for group to GUID conversion.
+    public String filename;                                         //file name
+    public long fileID;                                             //file id is at what time file was created on the local drive. this has nothing to do with MDFS fie creation time (timestamp variable).
+    public long timeStamp;                                          //the time file was created in MDFS
+    public String uniqueReqID;                                      //metadataUniqueID. used for file creation, for each file creation request a unique req id is used. this is used for checking if the file has been deleted.
+    public int numOfBlocks;                                         //number of blocks in a file
+    public byte n2;                                                 //number of fragments in a block
+    public byte k2;                                                 //number of frgaments needed to recreate a block
     public List<Map<String, Map<String, List<String>>>> chosenNodes;  //the main data structure that holds a list that contains mapping from GUID to blockNUm to FragmentNum
-    public List<String> groupOrGUID;
-    public String[] permissionList;
+    public List<String> groupOrGUID;                                //this structure carries a list of group from client to EdgeKeeper, and returns a list of GUID from EdgeKeeper to client
+    public String[] permissionList;                                 //used for file creatiotokens that defines who has permission on a file.
 
     //empty constructors
     public FileMetadata(){}
@@ -36,7 +40,7 @@ public class FileMetadata implements Serializable {
     //constructor for metadata deposit by fragment receiver with cmd = FRAGMENT_RECEIVER_METADATA_DEPOSIT_REQUEST (object made by -client, sent to- EdgeKeeper, reason - to deposit metadata after a fragment of a file has been received)
     //constructor for metadata withdraw reply with cmd = METADATA_WITHDRAW_REPLY_SUCCESS (object made by EdgeKeeper, sent to - client, reason - success to reply with metadata of a file)
     //constructor for metadata withdraw reply with cmd = METADATA_WITHDRAW_REPLY_FAILED (object made by EdgeKeeper, sent to - client, reason - failed to reply with metadata of a file but no metadata found for this file so dummy metadata sent)
-    public FileMetadata(int cmd, List<String> owngroupnames, String metadataDepositorGUID, String fileCreatorGUID, long fileid, String[] permList, long timeStamp, String filename, String filePathMDFS, int numofblocks, byte n2, byte k2){
+    public FileMetadata(int cmd, List<String> owngroupnames, String metadataDepositorGUID, String fileCreatorGUID, long fileid, String[] permList, long timeStamp, String uniquereqid, String filename, String filePathMDFS, int numofblocks, byte n2, byte k2){
         this.command = cmd;
         this.ownGroupNames = owngroupnames;
         this.metadataDepositorGUID = metadataDepositorGUID;
@@ -46,6 +50,7 @@ public class FileMetadata implements Serializable {
         this.filePathMDFS = filePathMDFS;
         this.fileID = fileid;
         this.timeStamp = timeStamp;
+        this.uniqueReqID = uniquereqid;
         this. numOfBlocks = numofblocks;
         this.n2 = n2;
         this.k2 = k2;
@@ -72,6 +77,36 @@ public class FileMetadata implements Serializable {
         this.ownGroupNames = owngroupnames;
         this.groupConversionRequesterGUID = groupConversionRequesterGUID;
         this.groupOrGUID = list;
+        this.chosenNodes = new ArrayList<>(); //this list if populated by addInfo() function
+    }
+
+    //constructor for creating a directory in MDFS with cmd = CREATE_MDFS_DIR_REQUEST (object made by - client, sent to -EdgeKeeper, reason - asking to create a directory in MDFS)
+    //constructor for replying after creating a directory in MDFS with cmd = CREATE_MDFS_DIR_REPLY_SUCCESS (object made by - EdgeKeeper, sent to -client, reason - replying with success after creating a dir in MDFS)
+    //constructor for replying after creating a directory in MDFS with cmd = CREATE_MDFS_DIR_REPLY_FAILED (object made by - EdgeKeeper, sent to -client, reason - replying with failure after creating a dir in MDFS)
+    public FileMetadata(int cmd, long timeStamp, List<String> owngroupnames, String mdfsdirectorycreatorGUID, String mdfsDir, String message){
+        this.command = cmd;
+        this.timeStamp = timeStamp;
+        this.ownGroupNames = owngroupnames;
+        this.mdfsdirectorycreatorGUID = mdfsdirectorycreatorGUID;
+        this.filePathMDFS = mdfsDir;
+        this.message = message;
+        this.chosenNodes = new ArrayList<>(); //this list if populated by addInfo() function
+    }
+
+    //contructor for removing a dir wmd = REMOVE_MDFS_DIR_REQUEST (object created by -client, sent to - EdgeKeeper, reason: to remove a dir from mdfs)
+    //contructor for removing a dir wmd = REMOVE_MDFS_DIR_REPLY_SUCCESS (object created by -EdgeKeeper, sent to - client, reason: reply if mdfs dir remove success)
+    //contructor for removing a dir wmd = REMOVE_MDFS_DIR_REPLY_FAILED (object created by -EdgeKeeper, sent to - client, reason: reply if mdfs dir remove failed)
+    //contructor for removing a file wmd = REMOVE_MDFS_FILE_REQUEST (object created by -client, sent to - EdgeKeeper, reason: to remove a file from mdfs)
+    //contructor for removing a file wmd = REMOVE_MDFS_FILE_REPLY_SUCCESS (object created by -EdgeKeeper, sent to - client, reason: reply if mdfs file remove success)
+    //contructor for removing a file wmd = REMOVE_MDFS_FILE_REPLY_FAILED (object created by -EdgeKeeper, sent to - client, reason: reply if mdfs file remove failed)
+    public FileMetadata(int cmd, long timeStamp, List<String> owngroupnames, String removeRequesterGUID, String mdfsDir, String filename, String message){
+        this.command = cmd;
+        this.timeStamp = timeStamp;
+        this.ownGroupNames = owngroupnames;
+        this.removeRequesterGUID = removeRequesterGUID;
+        this.filePathMDFS = mdfsDir;
+        this.filename = filename;
+        this.message = message;
         this.chosenNodes = new ArrayList<>(); //this list if populated by addInfo() function
     }
 

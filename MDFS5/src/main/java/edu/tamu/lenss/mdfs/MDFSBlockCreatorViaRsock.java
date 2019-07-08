@@ -50,11 +50,12 @@ public class MDFSBlockCreatorViaRsock {
     private AtomicInteger fragCounter;
     List<String> chosenNodes;       //list of GUIDs who will receive a fragment
     String[] permList;              //permission list for the file
+    String uniqueReqID;             //unique req id fr file creation job
     public boolean isFinished = false;
     String clientID;                //client id who made the file creation request
     String filePathMDFS;            //mdfs directory in which the file will be virtulally stored
 
-    public MDFSBlockCreatorViaRsock(File file, String filePathMDFS, MDFSFileInfo info, byte blockIndex, MDFSBlockCreatorListenerViaRsock lis, String[] permlist, List<String> chosenodes, String clientID) {  //RSOCK
+    public MDFSBlockCreatorViaRsock(File file, String filePathMDFS, MDFSFileInfo info, byte blockIndex, MDFSBlockCreatorListenerViaRsock lis, String[] permlist, String uniquereqid, List<String> chosenodes, String clientID) {  //RSOCK
         this.blockIdx = blockIndex;
         this.blockFile = file;
         this.listener = lis;
@@ -64,6 +65,7 @@ public class MDFSBlockCreatorViaRsock {
         this.n2 = fileInfo.getN2();
         this.fragCounter = new AtomicInteger();
         this.permList = permlist;
+        this.uniqueReqID = uniquereqid;
         this.chosenNodes = chosenodes;
         this.clientID = clientID;
         this.filePathMDFS = filePathMDFS;
@@ -245,7 +247,7 @@ public class MDFSBlockCreatorViaRsock {
                 System.out.println("sizeee of bytearray send: " + byteArray.length);
 
                 //make MDFSRsockBlockCreator obj
-                MDFSRsockBlockCreator mdfsrsockblock = new MDFSRsockBlockCreator(header, byteArray, fileInfo.getFileName(), filePathMDFS, fileFrag.length(), fileInfo.getNumberOfBlocks(), fileInfo.getN2(), fileInfo.getK2(), fileCreatedTime, permList, GNS.ownGUID, destGUID);
+                MDFSRsockBlockCreator mdfsrsockblock = new MDFSRsockBlockCreator(header, byteArray, fileInfo.getFileName(), filePathMDFS, fileFrag.length(), fileInfo.getNumberOfBlocks(), fileInfo.getN2(), fileInfo.getK2(), fileCreatedTime, permList, uniqueReqID,  GNS.ownGUID, destGUID);
 
                 //get byteArray and size of the MDFSRsockBlockCreator obj and do send over rsock
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();

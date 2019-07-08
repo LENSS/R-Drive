@@ -12,7 +12,7 @@ import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
 
-public class handleCreateCommand {
+public class handlePutCommand {
 
     public static void handleCreateCommand(String filePathLocal, String filePathMDFS, String filename, String[] perm, String clientID) {
         loadFile(filePathLocal, filePathMDFS, filename, perm, clientID);

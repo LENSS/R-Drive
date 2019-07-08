@@ -35,8 +35,6 @@ public class clientSockets {
             e.printStackTrace();
         }
 
-        //rmeove the entry from the map
-        sockets.remove(clientID);
     }
 
     private static void send(String clientID, String reply){
@@ -56,5 +54,7 @@ public class clientSockets {
     public static void sendAndClose(String clientID, String reply){
         send(clientID, reply);
         close(clientID);
+        //remeove the entry from the map
+        sockets.remove(clientID);
     }
 }

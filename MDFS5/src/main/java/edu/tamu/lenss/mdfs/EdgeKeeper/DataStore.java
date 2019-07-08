@@ -12,7 +12,7 @@ import java.util.Map;
 public class DataStore {
 
     //dataStore instance
-    public static DataStore instance;  //todo: write on disk and read from disk before making new instance
+    public static DataStore instance;
 
     //variables and data structures
     public int longestFileNameLength;                           //only used for printing filenames in a pretty format
@@ -29,16 +29,6 @@ public class DataStore {
         this.FileNameToFileIDMap = new HashMap<>();
         this.deletedFiles = new ArrayList<>();
 
-        //todo: delete these group testing features
-        String[] firstArr = {"ABCD", "EFGH"};
-        List<String> first = Arrays.asList(firstArr);
-        this.GUIDtoGroupNamesMap.put("1BC657F8971A53E9BD90C285EB17C9080EC3EB8E", first);
-        String[] secondArr = {"EFGH", "IJKL"};
-        List<String> second = Arrays.asList(secondArr);
-        this.GUIDtoGroupNamesMap.put("8877417A2CBA0D19636B44702E7DB497B5834559", second);
-        String[] thirdArr = {"IJKL", "ABCD"};
-        List<String> third = Arrays.asList(thirdArr);
-        this.GUIDtoGroupNamesMap.put("D9C6D170C3C5E6032D0C06D8C495C4E0BB769278", third);
     }
 
     //instance getter function
@@ -76,7 +66,7 @@ public class DataStore {
             return metadata;
         }else{
             System.out.println("edgekeeper datastore has not metadata for fileID: " + fileid);
-            return new FileMetadata(EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST, new ArrayList<>(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "filename", "filePathMDFS", 0, (byte)0, (byte)0); //dummy metadata with command FAILED
+            return new FileMetadata(EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST, new ArrayList<>(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "dummyuniqueid","filename", "filePathMDFS", 0, (byte)0, (byte)0); //dummy metadata with command FAILED
         }
     }
 

@@ -15,6 +15,8 @@ public class EdgeKeeperConstants {
     public static String my_wifi_ip_temp = "";
     public static final String dummy_EdgeKeeper_ip = "192.168.0.2";
     public static final int dummy_EdgeKeeper_port = 9995;
+    public static String dummyGUID = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+    public static int GUID_LENGTH = 40;
 
     //edgekeeper socket variables
     public static final long readIntervalInMilliSec = 3000;
@@ -44,13 +46,22 @@ public class EdgeKeeperConstants {
     //own group information submission commands
     public static int GROUP_INFO_SUBMISSION_REQUEST = 140;
 
-    //directory fetch request commands
-    public static int FETCH_ALL_FILES_REQUEST = 150;
-    public static int FETCH_ALL_FILES_REPLY_SUCCESS = 160;
-    public static int FETCH_ALL_FILES_REPLY_FAILED = 170;
+    //directory request commands
+    public static int CREATE_MDFS_DIR_REQUEST = 150;
+    public static int CREATE_MDFS_DIR_REPLY_SUCCESS = 160;
+    public static int CREATE_MDFS_DIR_REPLY_FAILED= 170;
+
+    //remove direcotyr or file commands
+    public static int REMOVE_MDFS_DIR_REQUEST = 180;
+    public static int REMOVE_MDFS_DIR_REPLY_SUCCESS = 190;
+    public static int REMOVE_MDFS_DIR_REPLY_FAILED = 200;
+
+    public static int REMOVE_MDFS_FILE_REQUEST = 210;
+    public static int REMOVE_MDFS_FILE_REPLY_SUCCESS = 220;
+    public static int REMOVE_MDFS_FILE_REPLY_FAILED = 230;
 
     //command if connecting to EdgeKeeper failed
-    public static int EDGEKEEPER_CONNECTION_FAILED = 180;
+    public static int EDGEKEEPER_CONNECTION_FAILED = 240;
 
     //MDFS group info temporarily stored here todo: this needs to be written on disk
     public static List<String> getMyGroupName(){

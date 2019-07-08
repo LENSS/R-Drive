@@ -74,7 +74,7 @@ public class MDFSFileRetrieverViaRsock {
         if(!connected){
             //return with dummy metadata with cmd = EDGEKEEPER_CONNECTION_FAILED and other dummy information
             //dont put it in client.putInDTNQueue() function
-            this.metadata = new FileMetadata(EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED, EdgeKeeperConstants.getMyGroupName(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "filename", "filePathMDFS",  0, (byte)0, (byte)0); //dummy metadata
+            this.metadata = new FileMetadata(EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED, EdgeKeeperConstants.getMyGroupName(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "dummyuniqueid", "filename", "filePathMDFS",  0, (byte)0, (byte)0); //dummy metadata
             return;
         }
 
@@ -106,7 +106,7 @@ public class MDFSFileRetrieverViaRsock {
         //then return dummy object
         if(recvBuf==null){
             client.close();
-            this.metadata = new FileMetadata(EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED, EdgeKeeperConstants.getMyGroupName(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "filename",  "filePathMDFS",0, (byte)0, (byte)0); //dummy metadata
+            this.metadata = new FileMetadata(EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED, EdgeKeeperConstants.getMyGroupName(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "dummyuniqueid" ,"filename",  "filePathMDFS",0, (byte)0, (byte)0); //dummy metadata
             return;
         }
 

@@ -19,9 +19,10 @@ public class MDFSRsockBlockCreator implements Serializable {  				//RSOCK
 	public byte n2;					//n2
 	public byte k2;					//k2
 	public String[] permList;		//permission list for this file
+	public String uniqueReqID;
 
 
-	public MDFSRsockBlockCreator(FragmentTransferInfo fragtransinfo, byte[] file, String name, String filePathMDFS,  long filelength, byte blockcount, byte n2, byte k2, long filecreatedtime, String[] permlist, String fileCreatorGUID, String destGUID){
+	public MDFSRsockBlockCreator(FragmentTransferInfo fragtransinfo, byte[] file, String name, String filePathMDFS,  long filelength, byte blockcount, byte n2, byte k2, long filecreatedtime, String[] permlist, String uniquereqid, String fileCreatorGUID, String destGUID){
 		this.fragTransInfoHeader = fragtransinfo;
 		this.fileName = name;
 		this.filePathMDFS = filePathMDFS;
@@ -34,6 +35,7 @@ public class MDFSRsockBlockCreator implements Serializable {  				//RSOCK
 		this.n2 = n2;
 		this.k2 = k2;
 		this.permList = permlist;
+		this.uniqueReqID = uniquereqid;
 
 	}
 

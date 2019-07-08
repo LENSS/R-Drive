@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -61,9 +62,10 @@ public class MDFSFileCreatorViaRsock {
     private boolean isSending = false;
     List<String> chosenNodes;
     String[] permList;              //permList contains entries like WORLD, OWNER, GROUP:<group_name> or GUIDs
-    FileMetadata metadata;    //metadata object for this file
+    FileMetadata metadata;          //metadata object for this file
     String clientID;                //the client who is making this request
     String filePathMDFS;            //virtuall directory path in MDFS in which the file will be saved
+    String uniqueReqID;             //unique id for file creation req
 
 
     //this constructor is called from the application side HomeScreen.java class
@@ -75,8 +77,8 @@ public class MDFSFileCreatorViaRsock {
         this.fileInfo = new MDFSFileInfo(file.getName(), file.lastModified());
         this.fileInfo.setFileSize(file.length());
         this.fileInfo.setNumberOfBlocks((byte)blockCount);
-        Logger.w(TAG, "Split file " + f.getName() + " to " + blockCount + " blocks");
-        this.metadata = new FileMetadata(EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, GNS.ownGUID, fileInfo.getCreatedTime(), new String[1], new Date().getTime(), fileInfo.getFileName(), filePathMDFS ,blockCount, (byte)0,(byte) 0);
+        this.uniqueReqID = UUID.randomUUID().toString().substring(0,12);
+        this.metadata = new FileMetadata(EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, GNS.ownGUID, fileInfo.getCreatedTime(), new String[1], new Date().getTime(), uniqueReqID, fileInfo.getFileName(), filePathMDFS ,blockCount, (byte)0,(byte) 0);
         this.permList = permList;
         this.clientID = clientID;
         this.chosenNodes = new ArrayList<>();
@@ -204,7 +206,7 @@ public class MDFSFileCreatorViaRsock {
                 for(File blockF : blocks){
                     fName = blockF.getName();
                     byte idx = Byte.parseByte(fName.substring((fName.lastIndexOf("_")+1)));   //idx = block number
-                    uploadQ.add(new MDFSBlockCreatorViaRsock(blockF, filePathMDFS, fileInfo, idx, blockListener, permList, chosenNodes, clientID));
+                    uploadQ.add(new MDFSBlockCreatorViaRsock(blockF, filePathMDFS, fileInfo, idx, blockListener, permList, uniqueReqID, chosenNodes, clientID));
                 }
             }
 

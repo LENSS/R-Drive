@@ -49,7 +49,7 @@ public class utils {
             }else if (!perm[i].equals("") && perm[i].toLowerCase().contains("group:") && perm[i].toLowerCase().substring(0,6).equals("group:")) {
                 String groupVal = "GROUP:" + perm[i].substring("GROUP:".length());  //GROUP: + <group_name>
                 permittedList.add(groupVal);
-            }else if (!perm[i].equals("") && perm[i].length() == GNSConstants.GUID_LENGTH) {
+            }else if (!perm[i].equals("") && perm[i].length() == CLIConstants.GUID_LENGTH) {
                 permittedList.add(perm[i]);  //GUID, dont change case
             }else{
                 //entry is either empty string, or is not 40 bytes guid, or some sort of garbage entry
@@ -71,11 +71,37 @@ public class utils {
 
     ///takes a filename and checks if the filename contains the desired file extension
     public static boolean checkFileExtension(String filename){
-        if(filename.contains(".jpg")  || filename.contains(".mp4") || filename.contains(".txt")){
+        if(filename.contains(".jpg")  || filename.contains(".mp4") || filename.contains(".txt") || filename.contains(".pdf")){
             return true;
         }else{
             return false;
         }
+    }
+
+    //check if a MDFS dir is valid
+    //returns "OK" if correct,
+    //else returns the reason why the dir is invalid.
+    public static String isValidMDFSDir(String dir){
+
+        //check if dir is empty string
+        if(dir.equals("")){return "dir is empty";}
+
+        //check if dir is just root
+        if(dir.equals("/")){return "OK";}
+
+        //check if the dir starts with "/"
+        if(dir.charAt(0)!='/'){ return "dir must start with root /";}
+
+        //check for more than one subsequent slash
+        if(dir.length()>1){
+            for(int i=0; i< dir.length()-1; i++){
+                if(dir.charAt(i)=='/' && (dir.charAt(i)==dir.charAt(i+1))){
+                    return "dir contains more that one subsequent slashes /";
+                }
+            }
+        }
+
+        return "OK";
     }
 
 }

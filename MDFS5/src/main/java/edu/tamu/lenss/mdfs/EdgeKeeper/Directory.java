@@ -8,27 +8,31 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+//TODO: this needs to be written on disk
 public class Directory {
 
     //Directory variables
-    private Directory directory;
+    private static Directory directory;
     private Root rootDir;
     public static String[] PERMISSION  = {"WORLD"};
+    public List<String> deletedFiles;           //contains the uniqueReqID of each deleted file
 
     //private constructors
     private Directory(){
-        rootDir = new Root();
+
+        this.deletedFiles = new ArrayList<>();
+        this.rootDir = new Root();
     }
 
-    //Diretory getter function
-    public Directory getInstance(){
+    //Directory getter function
+    public static Directory getInstance(){
         if(directory==null){
             directory = new Directory();
         }
         return directory;
     }
 
-    //check if a directory in root/subDir exists in MDFS
+    //check if a directory exists in MDFS
     //input is /A/B/C/D/ or /A/B/C/D
     //output is boolean if dir exists or nah
     public boolean dirExists(String dir){
@@ -42,6 +46,9 @@ public class Directory {
         //first separate them in tokens by "/"
         String[] dirTokens = dir.split("/");
 
+        //remove all empty string
+        dirTokens = Directory.delEmptyStr(dirTokens);
+
         //check if this dir has at least one token
         if(dirTokens.length==0){return false;}
 
@@ -51,35 +58,34 @@ public class Directory {
         if(rootDir.listOfSubdirectories==null){ return false;}
 
         //check if root subDirectory list contains the first token.
-        //if not, that means other tokens also doesnt exists
+        //if not, that means other tokens also doesnt exist
         if(!rootDir.getAllSubDirNames().contains(dirTokens[0])){
             return false;
         }
 
-        //coming here means first subdirectory A, inside root exists.
-        //check for subdirectories B/C/D/ inside that first subDirectory.
+        //coming here means first subdirectory A, inside root exists, load it
+        SubDirectory subDir = rootDir.getSubDirectoryFromRoot(dirTokens[0]);
         if(dirTokens.length>1){
-            return subDirExists(rootDir.getSubDirectoryFromRoot(dirTokens[0]), dirTokens, 1, true);
+            //iterate through
+            for(int i=1; i<dirTokens.length-1; i++){
+                if(i!=dirTokens.length-1 && subDir.listOfSubdirectories==null){
+                    return false;
+                }else{
+                    subDir = subDir.getSubDirectoryFromSubDir(dirTokens[i]);
+                }
+            }
+
         }else{
-            //coming here means input was something like "/A/",
-            //and folder A exists we already checked.
+            //we already checked the first token exists at root.
             return true;
         }
-    }
-
-    //helper for dirExists()
-    private boolean subDirExists(SubDirectory subDir, String[] dirTokens, int index, boolean prevDirExists){
-        if(index<dirTokens.length){
-            if(subDir.listOfSubdirectories!= null && subDir.getAllSubDirNames().contains(dirTokens[index])){
-                return subDirExists(subDir, dirTokens, index++, true);
-            }else{
-                return false;
-            }
+        if(subDir.listOfSubdirectories!=null && subDir.getAllSubDirNames().contains(dirTokens[dirTokens.length-1])){
+            return true;
         }else{
-            return prevDirExists;
+            return false;
         }
-    }
 
+    }
 
     //returns a file metadata if it exists.
     //input is filename such as xyz.jpg, and dir such as /A/B/C/ or /A/B/C.
@@ -102,6 +108,9 @@ public class Directory {
             }else{
                 //separate the dir in tokens
                 String[] dirTokens = dir.split("/");
+
+                //remove all empty string
+                dirTokens = Directory.delEmptyStr(dirTokens);
 
                 //check if this dir has atleast one token
                 if(dirTokens.length==0){return null;}
@@ -155,12 +164,17 @@ public class Directory {
                 //check if the root directory has any file at all,
                 //if it does then delete.
                 if(rootDir.listOfFiles!=null && rootDir.getAllFileNames().contains(filename)){
+                    String metadataUniqueID = rootDir.getFileMetadataFromRoot(filename).uniqueReqID;
                     rootDir.removeFileFromRoot(filename);
+                    deletedFiles.add(metadataUniqueID);
                     return true;
                 }
             }else{
                 //separate the dir in tokens
                 String[] dirTokens = dir.split("/");
+
+                //remove all empty string
+                dirTokens = Directory.delEmptyStr(dirTokens);
 
                 //check if the dirTokens has at least oen token
                 if(dirTokens.length>0) {
@@ -170,15 +184,25 @@ public class Directory {
                         //this is the first subDir after root
                         //check if subDir has the file
                         if (subDir.listOfFiles != null && subDir.getAllFileNames().contains(filename)) {
+                            String metadataUniqueID = subDir.getFileMetadataFromSubDir(filename).uniqueReqID;
                             subDir.removeFileFromSubDir(filename);
+                            deletedFiles.add(metadataUniqueID);
                             return true;
+                        }else{
+                            //subdir maybe null or doesnt contain the file i want to delete
+                            return false;
                         }
                     } else {
                         for (int i = 1; i < dirTokens.length; i++) {
                             subDir = subDir.getSubDirectoryFromSubDir(dirTokens[i]);
                         }
-                        subDir.removeFileFromSubDir(filename);
-                        return true;
+                        if(subDir.listOfFiles!=null && subDir.getAllFileNames().contains(filename)){
+                            subDir.removeFileFromSubDir(filename);
+                            return true;
+                        }else{
+                            //subDir doenst have any file so remove didnt happen
+                            return false;
+                        }
                     }
                 }
             }
@@ -192,6 +216,7 @@ public class Directory {
 
     //get all filenames in a given directory
     //output is arrayList which can be empty.
+    //this function is mostly used for -list or -ls command.
     public List<String> getAllFileNames(String dir){
         //first check if the dir exists
         if(dirExists(dir)){
@@ -207,44 +232,160 @@ public class Directory {
                 //separate the dir in tokens
                 String[] dirTokens = dir.split("/");
 
+                //remove all empty string
+                dirTokens = Directory.delEmptyStr(dirTokens);
+
                 //check if this dir has atleast one token
-                if(dirTokens.length==0){return new ArrayList<>();}
+                SubDirectory subDir;
+                if(dirTokens.length>0){
+                    //load the first subDir at root
+                    subDir = rootDir.getSubDirectoryFromRoot(dirTokens[0]);
 
-                //iterate to the correct subDir
-                SubDirectory subDir = rootDir.getSubDirectoryFromRoot(dirTokens[0]);
-                if(dirTokens.length==1){
-                    //this is the first subDir after root
-                    //check if subDir has any file at all
-                    if(subDir.listOfFiles==null){return new ArrayList<>();}
+                    //check if dirToken[] has more tokens
+                    if(dirTokens.length>1){
+                        //iterate
+                        for(int i=1; i< dirTokens.length; i++){
+                            subDir = subDir.getSubDirectoryFromSubDir(dirTokens[i]);
+                        }
 
-                    //otherwise, get all the file names and send
-                    return new ArrayList<>(subDir.getAllFileNames());
-                }else{
-                    for(int i=1; i< dirTokens.length; i++){
-                        subDir = subDir.getSubDirectoryFromSubDir(dirTokens[i]);
+                        //check if this dir has any file at all
+                        if(subDir.listOfFiles!=null){
+                            //get the filenames and return
+                            return new ArrayList<>(subDir.getAllFileNames());
+                        }else{
+                            //subDir has not file
+                            return new ArrayList<>();
+                        }
+
+                    }else{
+                        //if check this directory has the file
+                        if(subDir.listOfFiles!=null){
+                            //get the filenames and return
+                            return new ArrayList<>(subDir.getAllFileNames());
+                        }else{
+                            //subDir has not file
+                            return new ArrayList<>();
+                        }
                     }
-                    //check if the subDir has any file at all
-                    if(subDir.listOfFiles==null){ return new ArrayList<>();}
-
-                    //if not, return all the filenames in this dir
-                    new ArrayList<>(subDir.getAllFileNames());
+                }else{
+                    //this shouldnt be
+                    return new ArrayList<>();
                 }
-
             }
-
-        }else{
-            //the directory doesnt exists to begin with,
-            //so there is no file.
-            return new ArrayList<>();
         }
-
         return new ArrayList<>();
     }
 
+    //get the subDirectory names in a given dir.
+    //if a dir structure A/B/C/ , /A/D/E/ , /A/F/G/ exists,
+    // and input dir ==/A/, then output is,
+    //[B,D,F] as they all are part of dir /A/
+    public List<String> getAllDirNames(String dir){
+        //first check if the dir is root
+        if(dir.equals("/")){
+            //check if root even has any subDir
+            if(rootDir.listOfSubdirectories!=null){
+                return new ArrayList<>(rootDir.getAllSubDirNames());
+            }else{
+                //root doesnt have any subDir yet
+                return new ArrayList<>();
+            }
+        }
+
+        //otherwise dir is one of more tokens
+        String[] dirTokens = dir.split("/");
+
+        //remove empty strings
+        dirTokens = Directory.delEmptyStr(dirTokens);
+
+        //check if there is at least one token
+        if(dirTokens.length==0){
+            //for some reason dirToken len is 0, this shouldnt be at this point
+            return new ArrayList<>();
+        }
+
+        //check if the rootDir contains the first token
+        SubDirectory subDir;
+        if(rootDir.listOfSubdirectories!=null && rootDir.getAllSubDirNames().contains(dirTokens[0])){
+            //load the first subDir in root
+            subDir = rootDir.getSubDirectoryFromRoot(dirTokens[0]);
+
+            //check if dirTokens[] has more than one token
+            if(dirTokens.length>1){
+                //iterate
+                for(int i=1; i< dirTokens.length; i++){
+                    subDir = subDir.getSubDirectoryFromSubDir(dirTokens[i]);
+                }
+
+            }else{
+                //dirToken had only one token,
+                //and we loaded that dir from root.
+            }
+
+            //now check and get the list of subDir in this location
+            if(subDir.listOfSubdirectories!=null){
+                //get the list of subDir
+                return new ArrayList<>(subDir.getAllSubDirNames());
+
+            }else{
+                //final dir doesnt have any subDir
+                return new ArrayList<>();
+            }
+
+        }else{
+            //root dir is null so other dir doesnt even exist
+            return new ArrayList<>();
+        }
+
+    }
+
+
     //put a file metadata in directory
+    //input dir is /A/B/C/ or /A/B/C.
+    //file will be created as /A/B/C/file.jpg
     //if the directory doesnt exists then create it
-    public void putFileMetadata(){
-        //first parse the directories int
+    public boolean putFileMetadata(FileMetadata file, String filename, String dir){
+        //check if it is "/", then create file in root
+        if(dir.equals("/")){
+            rootDir.addFileInRoot(filename, file);
+            return true;
+        }
+
+        //if not the root that means there must be more tokens
+        //first create the dir.
+        directory.addDirectory(dir);
+
+        //then separate by tokens
+        String[] dirTokens = dir.split("/");
+
+        //delete empty string tokens
+        dirTokens = Directory.delEmptyStr(dirTokens);
+
+        SubDirectory subDir;
+        //check if at least one token exists
+        if(dirTokens.length>0){
+            //load the first subdir from root
+            subDir = rootDir.getSubDirectoryFromRoot(dirTokens[0]);
+
+            //check if dirTokens have more than one entry
+            if(dirTokens.length>1){
+                //iterate
+                for(int i=1; i< dirTokens.length; i++){
+                    subDir = subDir.getSubDirectoryFromSubDir(dirTokens[i]);
+                }
+                //add the file to this location
+                subDir.addFileInSubDirectory(filename, file);
+                return true;
+            }else{
+                //there is no other subDir to iterate.
+                subDir.addFileInSubDirectory(filename, file);
+                return true;
+            }
+        }else{
+            //for some reason dirTokens have no tokens this shouldnt happen
+            return false;
+        }
+
     }
 
     //create a directory recursively
@@ -254,6 +395,9 @@ public class Directory {
 
         //parse the dir into tokens
         String[] dirTokens = dir.split("/");
+
+        //remove all empty string
+        dirTokens = Directory.delEmptyStr(dirTokens);
 
         //check if dirTokens has at least one entry
         if(dirTokens.length==0){ return false;}
@@ -280,7 +424,7 @@ public class Directory {
         if(dirTokens.length>1){
             for(int i=1; i< dirTokens.length; i++){
                 //check if subDir contains any dir at all
-                if(subDir!=null){
+                if(subDir.listOfSubdirectories!=null){
                     //check if subdirectory contains the dirToken[i]
                     if(subDir.getAllSubDirNames().contains(dirTokens[i])){
                         //do nothing, just load the subDir for next iteration
@@ -325,25 +469,31 @@ public class Directory {
         //parse the directory by tokens
         String[] dirTokens = dir.split("/");
 
+        //remove all empty string
+        dirTokens = Directory.delEmptyStr(dirTokens);
+
         //check if the dirTokens has at least one entry
         SubDirectory subDir;
-        if(dirTokens.length!=0){
+        if(dirTokens.length>0){
             //get the first subDir in root
             subDir = rootDir.getSubDirectoryFromRoot(dirTokens[0]);
         }else{
-            //for some reason dirToken length is 0, this shouldnt be.
+            //for some reason dirToken length is 0, this shouldn't be.
             return false;
         }
 
         //iterate the following directories and load them
         if(dirTokens.length>1) {
+            //iterate
             for (int i = 1; i < dirTokens.length-1; i++) {
                 subDir = subDir.getSubDirectoryFromSubDir(dirTokens[i]);
             }
+            //now delete the dirToken[last] element from subDir
+            subDir.removeSubDirectoryFromSubDir(dirTokens[dirTokens.length-1]);
+        }else{
+            //delete the first token from root dir
+            rootDir.removeSubDirectoryFromRoot(dirTokens[0]);
         }
-
-        //now delete the dirToken[last] element from subDir
-        subDir.removeSubDirectoryFromSubDir(dirTokens[dirTokens.length-1]);
 
         //check if directory still exists
         if(dirExists(dir)){return false;}
@@ -497,5 +647,25 @@ public class Directory {
 
     }
 
+    //eliminates empty string tokens
+    public static String[] delEmptyStr(String[] tokens){
+        List<String> newTokens = new ArrayList<>();
+        for(String token: tokens){
+            if(!token.equals("")){
+                newTokens.add(token);
+            }
+        }
+
+        return newTokens.toArray(new String[0]);
+    }
+
+    //check if a dir is valid
+    public static boolean isValidDir(String dir){
+        return true;
+    }
+
+
 
 }
+
+
