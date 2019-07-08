@@ -8,12 +8,8 @@ import java.nio.ByteOrder;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-
-import edu.tamu.lenss.mdfs.GNS.GNS;
-import edu.tamu.lenss.mdfs.GNS.GNSConstants;
 
 public class server{
     //tcp variables
@@ -133,7 +129,7 @@ public class server{
 
                                         //create obj with command = CREATE_MDFS_DIR_REPLY_SUCCESS
                                         if(result) {
-                                            metadataRet = new FileMetadata(EdgeKeeperConstants.CREATE_MDFS_DIR_REPLY_SUCCESS, new Date().getTime(), new ArrayList<>(), metadataRec.mdfsdirectorycreatorGUID, metadataRec.filePathMDFS, "success");
+                                            metadataRet = new FileMetadata(EdgeKeeperConstants.CREATE_MDFS_DIR_REPLY_SUCCESS, new Date().getTime(), new ArrayList<>(), metadataRec.mdfsdirectoryJObREquesterGUID, metadataRec.filePathMDFS, "success");
                                         }else{
                                             //directory creation failed for some reason, create dummy obj with command = CREATE_MDFS_DIR_REPLY_FAILED
                                             metadataRet = new FileMetadata(EdgeKeeperConstants.CREATE_MDFS_DIR_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID, metadataRec.filePathMDFS, "arbitrary error.");
@@ -250,6 +246,51 @@ public class server{
                                     //send back
                                     send(sendBuf);
 
+
+                                }else if(metadataRec.command == EdgeKeeperConstants.GET_MDFS_FILES_AND_DIR_REQUEST){
+                                    System.out.println("EdgeKeeper server got list files and folders request");
+
+                                    //reply object
+                                    FileMetadata metadataRet;
+
+                                    //check if dir even exists or nah
+                                    if(directory.dirExists(metadataRec.filePathMDFS)){
+
+                                        //ge the files and folders in a String
+                                        String result= "///<newline><newline>" ;
+                                        List<String> files = directory.getAllFileNames(metadataRec.filePathMDFS);
+                                        List<String> folders = directory.getAllDirNames(metadataRec.filePathMDFS);
+
+                                        for(int i=0; i<files.size(); i++){
+                                            result = result + "file:   " + files.get(i) + "<newline>";
+                                        }
+
+                                        for(int i=0; i<folders.size(); i++){
+                                            result = result + "folder: " + folders.get(i) + "<newline>";
+                                        }
+                                        result = result + "<newline>///";
+
+                                        metadataRet = new FileMetadata(EdgeKeeperConstants.GET_MDFS_FILES_AND_DIR_REPLY_SUCCESS, new Date().getTime(), new ArrayList<>(), metadataRec.mdfsdirectoryJObREquesterGUID, metadataRec.filePathMDFS, result);
+
+                                    }else{
+                                        metadataRet = new FileMetadata(EdgeKeeperConstants.GET_MDFS_FILES_AND_DIR_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID, "dummyDir", " MDFS directory doesnt exist.");
+                                    }
+
+                                    //send back the reply
+                                    //convert metadata into json string
+                                    String str = metadataRet.toBuffer(metadataRet);
+
+                                    //allocate space for reply
+                                    sendBuf = ByteBuffer.allocate(str.length());
+                                    sendBuf.order(ByteOrder.LITTLE_ENDIAN);
+                                    sendBuf.clear();
+
+                                    //put data in sendBuf
+                                    sendBuf.put(str.getBytes());
+                                    sendBuf.flip();
+
+                                    //send back
+                                    send(sendBuf);
 
                                 }
 

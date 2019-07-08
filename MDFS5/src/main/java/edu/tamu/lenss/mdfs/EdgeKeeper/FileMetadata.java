@@ -19,7 +19,7 @@ public class FileMetadata implements Serializable {
     public String metadataDepositorGUID;                            //the GUID/node who deposits metadata. This can be either the file creator, or a fragment receiver.
     public String fileCreatorGUID;                                  //the GUID/node who created the file ins MDFS
     public String metadataRequesterGUID;                            //the GUID who requested a metadata of a file
-    public String mdfsdirectorycreatorGUID;                         //the GUID that is creating a directory in MDFS
+    public String mdfsdirectoryJObREquesterGUID;                    //the GUID that is creating a directory in MDFS, or fetching a list of files and folders in mdfs
     public String removeRequesterGUID;                              //the GUID that requested for removing a dir or file
     public String groupConversionRequesterGUID;                     //the GUID who requested for group to GUID conversion.
     public String filename;                                         //file name
@@ -80,25 +80,28 @@ public class FileMetadata implements Serializable {
         this.chosenNodes = new ArrayList<>(); //this list if populated by addInfo() function
     }
 
-    //constructor for creating a directory in MDFS with cmd = CREATE_MDFS_DIR_REQUEST (object made by - client, sent to -EdgeKeeper, reason - asking to create a directory in MDFS)
-    //constructor for replying after creating a directory in MDFS with cmd = CREATE_MDFS_DIR_REPLY_SUCCESS (object made by - EdgeKeeper, sent to -client, reason - replying with success after creating a dir in MDFS)
-    //constructor for replying after creating a directory in MDFS with cmd = CREATE_MDFS_DIR_REPLY_FAILED (object made by - EdgeKeeper, sent to -client, reason - replying with failure after creating a dir in MDFS)
+    //constructor for mkdir command creating a directory in MDFS with cmd = CREATE_MDFS_DIR_REQUEST (object made by - client, sent to -EdgeKeeper, reason - asking to create a directory in MDFS)
+    //constructor for mkdir command replying after creating a directory in MDFS with cmd = CREATE_MDFS_DIR_REPLY_SUCCESS (object made by - EdgeKeeper, sent to -client, reason - replying with success after creating a dir in MDFS)
+    //constructor for mkdir command replying after creating a directory in MDFS with cmd = CREATE_MDFS_DIR_REPLY_FAILED (object made by - EdgeKeeper, sent to -client, reason - replying with failure after creating a dir in MDFS)
+    //constructor for ls command for getting a list of files and dir with cmd = GET_MDFS_FILES_AND_DIR_REQUEST(object created by-client, sent to -edgekeeper, reason: to fetch files and an folders in a MDFS dir)
+    //constructor for ls command for getting a list of files and dir with cmd = GET_MDFS_FILES_AND_DIR_REPLY_FAILED(object created by-edgekeeper, sent to -client, reason: to reply to -ls command with failure)
+    //constructor for ls command for getting a list of files and dir with cmd = GET_MDFS_FILES_AND_DIR_SUCCESS(object created by-edgekeeper, sent to -client, reason: to reply to -ls command with success
     public FileMetadata(int cmd, long timeStamp, List<String> owngroupnames, String mdfsdirectorycreatorGUID, String mdfsDir, String message){
         this.command = cmd;
         this.timeStamp = timeStamp;
         this.ownGroupNames = owngroupnames;
-        this.mdfsdirectorycreatorGUID = mdfsdirectorycreatorGUID;
+        this.mdfsdirectoryJObREquesterGUID = mdfsdirectorycreatorGUID;
         this.filePathMDFS = mdfsDir;
         this.message = message;
         this.chosenNodes = new ArrayList<>(); //this list if populated by addInfo() function
     }
 
-    //contructor for removing a dir wmd = REMOVE_MDFS_DIR_REQUEST (object created by -client, sent to - EdgeKeeper, reason: to remove a dir from mdfs)
-    //contructor for removing a dir wmd = REMOVE_MDFS_DIR_REPLY_SUCCESS (object created by -EdgeKeeper, sent to - client, reason: reply if mdfs dir remove success)
-    //contructor for removing a dir wmd = REMOVE_MDFS_DIR_REPLY_FAILED (object created by -EdgeKeeper, sent to - client, reason: reply if mdfs dir remove failed)
-    //contructor for removing a file wmd = REMOVE_MDFS_FILE_REQUEST (object created by -client, sent to - EdgeKeeper, reason: to remove a file from mdfs)
-    //contructor for removing a file wmd = REMOVE_MDFS_FILE_REPLY_SUCCESS (object created by -EdgeKeeper, sent to - client, reason: reply if mdfs file remove success)
-    //contructor for removing a file wmd = REMOVE_MDFS_FILE_REPLY_FAILED (object created by -EdgeKeeper, sent to - client, reason: reply if mdfs file remove failed)
+    //contructor for removing a dir cmd = REMOVE_MDFS_DIR_REQUEST (object created by -client, sent to - EdgeKeeper, reason: to remove a dir from mdfs)
+    //contructor for removing a dir cmd = REMOVE_MDFS_DIR_REPLY_SUCCESS (object created by -EdgeKeeper, sent to - client, reason: reply if mdfs dir remove success)
+    //contructor for removing a dir cmd = REMOVE_MDFS_DIR_REPLY_FAILED (object created by -EdgeKeeper, sent to - client, reason: reply if mdfs dir remove failed)
+    //contructor for removing a file cmd = REMOVE_MDFS_FILE_REQUEST (object created by -client, sent to - EdgeKeeper, reason: to remove a file from mdfs)
+    //contructor for removing a file cmd = REMOVE_MDFS_FILE_REPLY_SUCCESS (object created by -EdgeKeeper, sent to - client, reason: reply if mdfs file remove success)
+    //contructor for removing a file cmd = REMOVE_MDFS_FILE_REPLY_FAILED (object created by -EdgeKeeper, sent to - client, reason: reply if mdfs file remove failed)
     public FileMetadata(int cmd, long timeStamp, List<String> owngroupnames, String removeRequesterGUID, String mdfsDir, String filename, String message){
         this.command = cmd;
         this.timeStamp = timeStamp;
@@ -109,6 +112,7 @@ public class FileMetadata implements Serializable {
         this.message = message;
         this.chosenNodes = new ArrayList<>(); //this list if populated by addInfo() function
     }
+
 
 
     public void setn2(byte n2){

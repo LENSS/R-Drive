@@ -13,7 +13,7 @@ public class EdgeKeeperConstants {
 
     //EdgeKeeper variables
     public static String my_wifi_ip_temp = "";
-    public static final String dummy_EdgeKeeper_ip = "192.168.0.2";
+    public static final String dummy_EdgeKeeper_ip = "192.168.0.3";
     public static final int dummy_EdgeKeeper_port = 9995;
     public static String dummyGUID = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
     public static int GUID_LENGTH = 40;
@@ -59,6 +59,11 @@ public class EdgeKeeperConstants {
     public static int REMOVE_MDFS_FILE_REQUEST = 210;
     public static int REMOVE_MDFS_FILE_REPLY_SUCCESS = 220;
     public static int REMOVE_MDFS_FILE_REPLY_FAILED = 230;
+
+    public static int GET_MDFS_FILES_AND_DIR_REQUEST = 240;
+    public static int GET_MDFS_FILES_AND_DIR_REPLY_SUCCESS = 250;
+    public static int GET_MDFS_FILES_AND_DIR_REPLY_FAILED = 260;
+
 
     //command if connecting to EdgeKeeper failed
     public static int EDGEKEEPER_CONNECTION_FAILED = 240;

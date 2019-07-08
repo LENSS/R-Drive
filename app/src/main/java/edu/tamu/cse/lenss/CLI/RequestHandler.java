@@ -1,6 +1,8 @@
 package edu.tamu.cse.lenss.CLI;
 
 import android.content.Context;
+import android.icu.util.UniversalTimeScale;
+import android.webkit.URLUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -149,7 +151,7 @@ class RequestHandler implements Runnable{
                                             handlePutCommand.handleCreateCommand(filepathLocal, filePathMDFS, filename, perm, clientID);
 
                                         } else {
-                                            clientSockets.sendAndClose(clientID, "CLIII Error! " + dirValidCheck);
+                                            clientSockets.sendAndClose(clientID, "CLIII Error! " + "MDFS" + dirValidCheck);
                                         }
 
                                     } else {
@@ -214,6 +216,29 @@ class RequestHandler implements Runnable{
 
                         }else{
                             clientSockets.sendAndClose(clientID, "CLIII Error! Mention a MDFS directory or a MDFS filepath with file name to delete.");
+                        }
+                    }else if(cmd[1].equals("-ls")){
+
+                        //check if next token exists
+                        if(cmd.length>2){
+
+                            //get the next token
+                            //next token is a MDFS dir
+                            String mdfsDir  = cmd[2];
+
+                            //check if the dir is valid
+                            String isDirValid = utils.isValidMDFSDir(mdfsDir);
+
+                            if(isDirValid.equals("OK")){
+
+                                //do the job
+                                handleLScommand.handleLScommand(clientID, mdfsDir);
+
+                            }else{
+                                clientSockets.sendAndClose(clientID, "CLIII Error! MDFS " + isDirValid);
+                            }
+                        }else{
+                            clientSockets.sendAndClose(clientID, "CLIII Error! Mention a MDFS directory to list files and folders.");
                         }
                     }else{
                         clientSockets.sendAndClose(clientID, "CLIII Error! Command has not been implemented yet.");
