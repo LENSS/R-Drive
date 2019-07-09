@@ -1,3 +1,4 @@
+/*
 package edu.tamu.lenss.mdfs;
 
 import java.io.File;
@@ -372,10 +373,12 @@ public class MDFSFileRetrieverViaRsock {
         ServiceHelper.getInstance().submitCallableTask(new CallableTask<Boolean>(mergeJob, callback));
     }
 
-    /**
+    */
+/**
      * Return the file path to the final storage location of the decrypted file. File may not exist yet
      * @return
-     */
+     *//*
+
     private String getDecryptedFilePath(){
         return Environment.getExternalStorageDirectory().getAbsolutePath()
                 + File.separator + Constants.DIR_DECRYPTED
@@ -398,9 +401,11 @@ public class MDFSFileRetrieverViaRsock {
             f.delete();
     }
 
-    /*
+    */
+/*
      * Default FileRetrieverListener. Do nothing.
-     */
+     *//*
+
     private BlockRetrieverListenerViaRsock fileListener = new BlockRetrieverListenerViaRsock(){
         @Override
         public void onError(String error, MDFSFileInfo fInfo) {
@@ -413,3 +418,4 @@ public class MDFSFileRetrieverViaRsock {
         }
     };
 }
+*/

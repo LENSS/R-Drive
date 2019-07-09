@@ -113,11 +113,11 @@ public class utils {
         if(dir.length()<"/storage/emulated/0/".length()){ return "local directory path must start with /storage/emulated/0/";}
 
         //check if dir starts with /storage/emulated/0/
-        if(!dir.substring(0, new StringBuilder("/storage/emulated/0/").toString().length()).equals("/storage/emulated/0/")){
+        else if(!dir.substring(0, new StringBuilder("/storage/emulated/0/").toString().length()).equals("/storage/emulated/0/")){
             return "local directory path must start with /storage/emulated/0/";
         }
 
-        return "OK";
+        else{ return "OK"; }
     }
 
 }

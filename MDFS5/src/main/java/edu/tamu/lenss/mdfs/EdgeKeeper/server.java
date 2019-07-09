@@ -47,7 +47,7 @@ public class server{
                         System.out.println("EdgeKeeper server accepted a client");
 
                         //set socket timeout during receive
-                        try { socketChannel.socket().setSoTimeout((int)EdgeKeeperConstants.readIntervalInMilliSec); } catch (SocketException e) { e.printStackTrace(); }
+                        //try { socketChannel.socket().setSoTimeout((int)EdgeKeeperConstants.readIntervalInMilliSec); } catch (SocketException e) { e.printStackTrace(); }
 
                         //receive ByteBuffer flipped
                         boolean ret = receive(socketChannel);
@@ -153,31 +153,53 @@ public class server{
                                     send(sendBuf);
                                 }else if(metadataRec.command == EdgeKeeperConstants.REMOVE_MDFS_DIR_REQUEST){
                                     System.out.println("EdgeKeeper server got remove directory request");
+                                    //note: a dir deletion means all of both files and folders to be deleted
 
                                     //reply object
-                                    FileMetadata metadataRet;
+                                    FileMetadata metadataRet= null;
 
-                                    //check if the dir already exists or nah
-                                    if(directory.dirExists(metadataRec.filePathMDFS)){
+                                    //check if the dir is /*
+                                    if(metadataRec.filePathMDFS.equals("/*")){
 
-                                        //if dir exists, delete it
-                                        boolean result = directory.removeDirectory(metadataRec.filePathMDFS);
+                                        //request for deleting all the files and folders in root dir
+                                       boolean result = directory.removeDirectory(metadataRec.filePathMDFS);
 
-                                        if(result){
+                                        if (result) {
 
-                                            //dir deletion success
-                                            metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_SUCCESS, new Date().getTime(), new ArrayList<>(), metadataRec.removeRequesterGUID ,  metadataRec.filePathMDFS, metadataRec.filename, "success" );
-                                        }else{
-                                            //dir deletion failed for some reason
-                                            metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID , "dummy", "dummy", "arbitrary error." );
+                                            //files and folders deletion at root success
+                                            metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_SUCCESS, new Date().getTime(), new ArrayList<>(), metadataRec.removeRequesterGUID, metadataRec.filePathMDFS, metadataRec.filename, "success");
+                                        } else {
+
+                                            //file and folder at root deletion failed for some reason
+                                            metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID, "dummy", "dummy", "arbitrary error.");
 
                                         }
 
-                                    }else{
+                                    }else {
 
-                                        //dir doesnt even exist
-                                        metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID , "dummy", "dummy", "MDFS directory doesnt exist." );
+                                        //request for deleting any of the subDir
+                                        //check if the dir already exists or nah
+                                        if (directory.dirExists(metadataRec.filePathMDFS)) {
 
+                                            //if dir exists, delete it
+                                            boolean result = directory.removeDirectory(metadataRec.filePathMDFS);
+
+                                            if (result) {
+
+                                                //dir deletion success
+                                                metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_SUCCESS, new Date().getTime(), new ArrayList<>(), metadataRec.removeRequesterGUID, metadataRec.filePathMDFS, metadataRec.filename, "success");
+                                            } else {
+                                                //dir deletion failed for some reason
+                                                metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID, "dummy", "dummy", "arbitrary error.");
+
+                                            }
+
+                                        } else {
+
+                                            //dir doesnt even exist
+                                            metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID, "dummy", "dummy", "MDFS directory doesnt exist.");
+
+                                        }
                                     }
 
                                     //send back the reply
@@ -198,6 +220,7 @@ public class server{
 
                                 }else if(metadataRec.command == EdgeKeeperConstants.REMOVE_MDFS_FILE_REQUEST){
                                     System.out.println("EdgeKeeper server got remove file request");
+                                    //note: a file deletion means only that file to be deleted, but nothing else in that dir.
 
                                     //reply object
                                     FileMetadata metadataRet;
@@ -292,6 +315,8 @@ public class server{
                                     //send back
                                     send(sendBuf);
 
+                                }else if(metadataRec.command == EdgeKeeperConstants.METADATA_WITHDRAW_REQUEST){
+                                    //do nothing yet
                                 }
 
                             }
@@ -366,7 +391,7 @@ public class server{
         int iii = 0;
         do{
             int r = 0;
-            try { r = socket.read(size); } catch(SocketTimeoutException time){return false;} catch (IOException e) { return false;}
+            try { r = socket.read(size); } catch(SocketTimeoutException time){time.printStackTrace(); return false;} catch (IOException e) { return false;}
             if(r>0) {
                 iii = iii + r;
             }
@@ -386,7 +411,7 @@ public class server{
         int ii = 0;
         do{
             int r = 0;
-            try { r = socket.read(recv); }  catch(SocketTimeoutException time){return false;} catch (IOException e) { return false;}
+            try { r = socket.read(recv); }  catch(SocketTimeoutException time){time.printStackTrace(); return false;} catch (IOException e) { return false;}
             if(r>0){
                 ii = ii+ r;
             }

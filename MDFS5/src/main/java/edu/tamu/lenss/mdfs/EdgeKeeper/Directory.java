@@ -451,8 +451,16 @@ public class Directory {
     //if an input is /A/B/C Or /A/B/C/ then we remove /C
     //and everything in it.
     public boolean removeDirectory(String dir){
-        //check if the directory is "/" then cannot delete it
-        if(dir.equals("/")){return false; }
+
+        //check if the directory is "/*" then we manually delete them
+        //and return immediately.
+        if(dir.equals("/*")){
+            if(rootDir.removeAllFoldersFromRoot() && rootDir.removeAllFilesFromRoot()){
+                return true;
+            }else{
+                return false;
+            }
+        }
 
         //check if dir first char is "/"
         if(dir.charAt(0)!='/'){return false;}
@@ -572,6 +580,42 @@ public class Directory {
         public Set<String> getAllFileNames(){
             return listOfFiles.keySet();
         }
+
+        //removes all files from rootDIr
+        public boolean removeAllFilesFromRoot(){
+            if(this.listOfFiles!=null) {
+                this.listOfFiles.clear();
+            }
+
+            //must set null
+            this.listOfFiles = null;
+
+            //check
+            if(this.listOfFiles==null){
+                return true;
+            }else{
+                return false;
+            }
+        }
+
+        //remove all subDirs from rootDir
+        public boolean removeAllFoldersFromRoot(){
+            if(this.listOfSubdirectories!=null) {
+                this.listOfSubdirectories.clear();
+            }
+
+            //must set null
+            this.listOfSubdirectories = null;
+
+            //check
+            if(this.listOfSubdirectories == null){
+                return true;
+            }else{
+                return false;
+            }
+        }
+
+
 
     }
 

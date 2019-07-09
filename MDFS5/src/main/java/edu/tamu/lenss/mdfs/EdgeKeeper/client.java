@@ -52,7 +52,7 @@ public class client{
         try { socket.close(); System.out.println("EdgeKeeper client Socket is closed"); } catch (IOException e) { e.printStackTrace(); }
     }
 
-    //this function already takes a flipped buffer and sends them
+    //this function takes a already flipped buffer and sends them
     //this input buffer must be LITTLE_ENDIAN
     public void send(ByteBuffer buffer){
         //first, allocate the packet
@@ -103,7 +103,7 @@ public class client{
         int iii = 0;
         do{
             int r = 0;
-            try { r = socket.read(size); } catch(SocketTimeoutException time){return null;} catch (IOException e) { return null;}
+            try { r = socket.read(size); } catch(SocketTimeoutException time){time.printStackTrace(); return null;} catch (IOException e) { return null;}
             if(r>0) {
                 iii = iii + r;
             }
@@ -125,7 +125,7 @@ public class client{
         int ii = 0;
         do{
             int r = 0;
-            try { r = socket.read(recv); } catch(SocketTimeoutException time){return null;} catch (IOException e) { return null;}
+            try { r = socket.read(recv); } catch(SocketTimeoutException time){time.printStackTrace(); return null;} catch (IOException e) { return null;}
             if(r>0){
                 ii = ii+ r;
             }
@@ -149,7 +149,7 @@ public class client{
         return recvBuf;
     }
 
-    //this function should only be used when manually connecting to the endgekeeper fails
+    //this function should only be used when manually connecting to the edgekeeper fails
     //this function only handles EdgeKeeperMetadata of command types FILE_CREATOR_METADATA_DEPOSIT_REQUEST, FRAGMENT_RECEIVER_METADATA_DEPOSIT_REQUEST, GROUP_INFO_SUBMISSION_REQUEST.
     //this function should only be used for one way data sending(that is from client to EdgeKeeper) and only when a return is not expected.
     public static void putInDTNQueue(FileMetadata metadata, int minutesInterval){

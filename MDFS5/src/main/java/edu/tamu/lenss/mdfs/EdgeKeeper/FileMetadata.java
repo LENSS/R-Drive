@@ -62,12 +62,12 @@ public class FileMetadata implements Serializable {
     }
 
     //constructor for metadata withdraw request with cmd  = METADATA_WITHDRAW_REQUEST (object made by -client, sent to - EdgeKeeper, reason -to ask for metadata for a file)
-    public FileMetadata(int cmd, List<String> owngroupnames, String metadataRequesterGUID, long fileid, long timestamp, String filename){
+    public FileMetadata(int cmd, List<String> owngroupnames, String metadataRequesterGUID, long timestamp, String filename, String mdfsDir){
         this.command = cmd;
         this.ownGroupNames = owngroupnames;
         this.metadataRequesterGUID = metadataRequesterGUID;
         this.filename = filename;
-        this.fileID = fileid;
+        this.filePathMDFS = mdfsDir;
         this.timeStamp = timestamp;
         this.chosenNodes = new ArrayList<>(); //this list if populated by addInfo() function
     }

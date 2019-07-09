@@ -96,11 +96,11 @@ public class MDFSFileCreatorViaRsock {
         //then convert permList[] into GUIDs and populates chosenNodes list
         fetchTopologyAndChooseNodes();
 
-        /*//check if for some reason fetchtop failed
+        //check if for some reason fetchtop failed
         if(!isTopComplete){
             this.metadata.addInfo(GNS.ownGUID, "-1", "-1");
             updateEdgeKeeper();
-        }*/
+        }
 
         if(blockCount > 1){
             partition();

@@ -222,7 +222,9 @@ class RequestHandler implements Runnable{
 
                                             if(locDirValid.equals("OK")){
 
-                                                //do the job todo
+                                                //do the job
+                                                handleGETrequest.handleGETrequest(clientID, filename, mdfsDir, locDir);
+
 
                                             }else{
                                                 clientSockets.sendAndClose(clientID, "CLIII Error! Invalid local directory, " + locDirValid);
@@ -277,22 +279,37 @@ class RequestHandler implements Runnable{
                             //next token can be just a MDFS dir or a dir with filename
                             String dir = cmd[2];
 
-                            //check if its a dir deletion request or a file deletion request
-                            //split the dir in tokens
-                            String[] dirTokens = dir.split("/");
+                            //check if the dir is just root
+                            if(dir.equals("/")){
 
-                            //remove empty strings
-                            dirTokens = Directory.delEmptyStr(dirTokens);
+                                //cannot delete root
+                                clientSockets.sendAndClose(clientID, "CLIII Error! Cannot delete / directory.");
 
-                            //check if the last elem is file or dir
-                            if(dirTokens[dirTokens.length-1].contains(".jpg") || dirTokens[dirTokens.length-1].contains(".mp4") || dirTokens[dirTokens.length-1].contains(".txt") || dirTokens[dirTokens.length-1].contains(".pdf")){
+                            }else if(dir.equals("/*")){
 
-                                //this is a file deletion request
-                                handleRMcommand.handleRMcommand(clientID, dir, dirTokens, "del_file");
-                            }else{
+                                //delete all files and folders in the root
+                                handleRMcommand.handleRMcommand(clientID, dir, new String[0], "del_file_n_dir");
 
-                                //this is a directory deletion request
-                                handleRMcommand.handleRMcommand(clientID, dir, dirTokens, "del_dir");
+                            }else {
+
+                                //check if its a subDir deletion request or a file deletion request
+                                //split the dir in tokens
+                                String[] dirTokens = dir.split("/");
+
+                                //remove empty strings
+                                dirTokens = Directory.delEmptyStr(dirTokens);
+
+
+                                //check if the last elem is file or dir
+                                if (dirTokens[dirTokens.length - 1].contains(".jpg") || dirTokens[dirTokens.length - 1].contains(".mp4") || dirTokens[dirTokens.length - 1].contains(".txt") || dirTokens[dirTokens.length - 1].contains(".pdf")) {
+
+                                    //this is a file deletion request
+                                    handleRMcommand.handleRMcommand(clientID, dir, dirTokens, "del_file");
+                                } else {
+
+                                    //this is a directory deletion request
+                                    handleRMcommand.handleRMcommand(clientID, dir, dirTokens, "del_dir");
+                                }
                             }
 
                         }else{

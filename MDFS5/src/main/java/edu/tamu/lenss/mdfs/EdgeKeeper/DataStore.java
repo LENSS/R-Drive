@@ -66,7 +66,8 @@ public class DataStore {
             return metadata;
         }else{
             System.out.println("edgekeeper datastore has not metadata for fileID: " + fileid);
-            return new FileMetadata(EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST, new ArrayList<>(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "dummyuniqueid","filename", "filePathMDFS", 0, (byte)0, (byte)0); //dummy metadata with command FAILED
+            //return new FileMetadata(EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST, new ArrayList<>(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "dummyuniqueid","filename", "filePathMDFS", 0, (byte)0, (byte)0); //dummy metadata with command FAILED
+            return null;
         }
     }
 
