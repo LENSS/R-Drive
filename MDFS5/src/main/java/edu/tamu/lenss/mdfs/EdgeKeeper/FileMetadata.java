@@ -17,13 +17,15 @@ public class FileMetadata implements Serializable {
     public String filePathMDFS;                                     //directory in MDFS in which the file is virtually stored
     public List<String> ownGroupNames;                              //list of groups a GUID belongs to
     public String metadataDepositorGUID;                            //the GUID/node who deposits metadata. This can be either the file creator, or a fragment receiver.
-    public String fileCreatorGUID;                                  //the GUID/node who created the file ins MDFS
+    public String fileCreatorGUID;                                  //the GUID/node who created the file in MDFS
     public String metadataRequesterGUID;                            //the GUID who requested a metadata of a file
     public String mdfsdirectoryJObREquesterGUID;                    //the GUID that is creating a directory in MDFS, or fetching a list of files and folders in mdfs
     public String removeRequesterGUID;                              //the GUID that requested for removing a dir or file
     public String groupConversionRequesterGUID;                     //the GUID who requested for group to GUID conversion.
     public String filename;                                         //file name
     public long fileID;                                             //file id is at what time file was created on the local drive. this has nothing to do with MDFS fie creation time (timestamp variable).
+    public long filesize;                                           //size of the entire file
+    public long creatorMAC;                                         //the MAC(not GUID) of the node who created the file in MDFS
     public long timeStamp;                                          //the time file was created in MDFS
     public String uniqueReqID;                                      //metadataUniqueID. used for file creation, for each file creation request a unique req id is used. this is used for checking if the file has been deleted.
     public int numOfBlocks;                                         //number of blocks in a file
@@ -40,13 +42,15 @@ public class FileMetadata implements Serializable {
     //constructor for metadata deposit by fragment receiver with cmd = FRAGMENT_RECEIVER_METADATA_DEPOSIT_REQUEST (object made by -client, sent to- EdgeKeeper, reason - to deposit metadata after a fragment of a file has been received)
     //constructor for metadata withdraw reply with cmd = METADATA_WITHDRAW_REPLY_SUCCESS (object made by EdgeKeeper, sent to - client, reason - success to reply with metadata of a file)
     //constructor for metadata withdraw reply with cmd = METADATA_WITHDRAW_REPLY_FAILED (object made by EdgeKeeper, sent to - client, reason - failed to reply with metadata of a file but no metadata found for this file so dummy metadata sent)
-    public FileMetadata(int cmd, List<String> owngroupnames, String metadataDepositorGUID, String fileCreatorGUID, long fileid, String[] permList, long timeStamp, String uniquereqid, String filename, String filePathMDFS, int numofblocks, byte n2, byte k2){
+    public FileMetadata(int cmd, List<String> owngroupnames, String metadataDepositorGUID, String fileCreatorGUID, long fileid, String[] permList, long timeStamp, String uniquereqid, String filename, long filesize, long creatorMAC, String filePathMDFS, int numofblocks, byte n2, byte k2){
         this.command = cmd;
         this.ownGroupNames = owngroupnames;
         this.metadataDepositorGUID = metadataDepositorGUID;
         this.fileCreatorGUID = fileCreatorGUID;
         this.permissionList = permList;
         this.filename = filename;
+        this.filesize = filesize;
+        this.creatorMAC = creatorMAC;
         this.filePathMDFS = filePathMDFS;
         this.fileID = fileid;
         this.timeStamp = timeStamp;

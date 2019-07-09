@@ -33,7 +33,7 @@ import edu.tamu.lenss.mdfs.utils.Logger;
 
 
 //this class object is made in MDFSFileCreatorViaRsock.java file
-//this class is responsible for taking each block and send over rsock, instead of tcp
+//this class is responsible for taking each block, fragment it, and send over rsock, instead of tcp
 //most of the code are copied from mdfsBlockCreator.java class which uses tcp
 public class MDFSBlockCreatorViaRsock {
     private static final String TAG = MDFSBlockCreatorViaRsock.class.getSimpleName();
@@ -53,7 +53,7 @@ public class MDFSBlockCreatorViaRsock {
     String uniqueReqID;             //unique req id fr file creation job
     public boolean isFinished = false;
     String clientID;                //client id who made the file creation request
-    String filePathMDFS;            //mdfs directory in which the file will be virtulally stored
+    String filePathMDFS;            //mdfs directory in which the file will be virtually stored
 
     public MDFSBlockCreatorViaRsock(File file, String filePathMDFS, MDFSFileInfo info, byte blockIndex, MDFSBlockCreatorListenerViaRsock lis, String[] permlist, String uniquereqid, List<String> chosenodes, String clientID) {  //RSOCK
         this.blockIdx = blockIndex;
@@ -73,14 +73,13 @@ public class MDFSBlockCreatorViaRsock {
 
 
     public void start() {
-        System.out.println("start gets called aaa");
         encryptFile();
         initTopology();
         distributeFragments();
     }
 
 
-    //gets the chosenNodes fetched and chosen by MDFSFileCreatorViaRsock.java class
+    //gets the chosenNodes those were fetched and chosen by MDFSFileCreatorViaRsock.java class
     private void initTopology(){
         fileStoragesAddrasGUID = chosenNodes;
         fetchTopology = true;
@@ -186,11 +185,11 @@ public class MDFSBlockCreatorViaRsock {
 
     //This class is used when a fragment is about to be sent over rsock, instead of tcp
     //this class packs all the required parameters and packs into a MDFSRsockBlockCreator obj,
-    //and pushes it to the rsock daemon through rsock api
+    //and pushes it to the rsock daemon through rsock java api.
     //most of the code of this class is copied from MDFSBlockCreator.FragmentUploader class
     //read MDFSBlockCreator.FragmentUploader class to see how that code was used here.
     //how: we first generate a header, pack the header-filefrag and other important params in a
-    //MDFSRsockBlockCreator object, convert the objest into byteArray, and send that over rsock.
+    //MDFSRsockBlockCreator object, convert the object into byteArray, and send that over rsock.
     class FragmentUploaderViaRsock implements Runnable{
         private File fileFrag;
         private String destGUID;
@@ -247,7 +246,7 @@ public class MDFSBlockCreatorViaRsock {
                 System.out.println("sizeee of bytearray send: " + byteArray.length);
 
                 //make MDFSRsockBlockCreator obj
-                MDFSRsockBlockCreator mdfsrsockblock = new MDFSRsockBlockCreator(header, byteArray, fileInfo.getFileName(), filePathMDFS, fileFrag.length(), fileInfo.getNumberOfBlocks(), fileInfo.getN2(), fileInfo.getK2(), fileCreatedTime, permList, uniqueReqID,  GNS.ownGUID, destGUID);
+                MDFSRsockBlockCreator mdfsrsockblock = new MDFSRsockBlockCreator(header, byteArray, fileInfo.getFileName(), fileInfo.getFileSize(), fileInfo.getCreator(), filePathMDFS, fileFrag.length(), fileInfo.getNumberOfBlocks(), fileInfo.getN2(), fileInfo.getK2(), fileCreatedTime, permList, uniqueReqID,  GNS.ownGUID, destGUID);
 
                 //get byteArray and size of the MDFSRsockBlockCreator obj and do send over rsock
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();

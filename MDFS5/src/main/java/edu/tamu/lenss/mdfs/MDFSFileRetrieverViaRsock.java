@@ -20,6 +20,7 @@ import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
 import edu.tamu.lenss.mdfs.EdgeKeeper.FileMetadata;
 import edu.tamu.lenss.mdfs.EdgeKeeper.client;
 import edu.tamu.lenss.mdfs.GNS.GNS;
+import edu.tamu.lenss.mdfs.GNS.GNSConstants;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
@@ -74,7 +75,7 @@ public class MDFSFileRetrieverViaRsock {
         if(!connected){
             //return with dummy metadata with cmd = EDGEKEEPER_CONNECTION_FAILED and other dummy information
             //dont put it in client.putInDTNQueue() function
-            this.metadata = new FileMetadata(EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED, EdgeKeeperConstants.getMyGroupName(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "dummyuniqueid", "filename", "filePathMDFS",  0, (byte)0, (byte)0); //dummy metadata
+            this.metadata = new FileMetadata(EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED, EdgeKeeperConstants.getMyGroupName(), GNSConstants.dummyGUID, GNSConstants.dummyGUID, 0000, new String[1], new Date().getTime(), "dummyuniqueid", "filename", 0, 0, "filePathMDFS",  0, (byte)0, (byte)0); //dummy metadata
             return;
         }
 
@@ -106,7 +107,6 @@ public class MDFSFileRetrieverViaRsock {
         //then return dummy object
         if(recvBuf==null){
             client.close();
-            this.metadata = new FileMetadata(EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED, EdgeKeeperConstants.getMyGroupName(), "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", 0000, new String[1], new Date().getTime(), "dummyuniqueid" ,"filename",  "filePathMDFS",0, (byte)0, (byte)0); //dummy metadata
             return;
         }
 

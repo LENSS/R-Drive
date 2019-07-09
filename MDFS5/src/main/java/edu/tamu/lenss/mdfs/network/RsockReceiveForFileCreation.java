@@ -71,6 +71,8 @@ public class RsockReceiveForFileCreation implements Runnable{
                     byte n2 =  (byte) mdfsrsockblock.n2;
                     byte k2 =  (byte) mdfsrsockblock.k2;
                     String fileName = (String) mdfsrsockblock.fileName;
+                    long filesize = (long) mdfsrsockblock.filesize;
+                    long creatorMAC = (long) mdfsrsockblock.creatorMAC;
                     String filePathMDFS= (String) mdfsrsockblock.filePathMDFS;
                     long fileCreatedTime = (long) mdfsrsockblock.fileCreatedTime;
                     String[] permList = (String[]) mdfsrsockblock.permList;
@@ -79,7 +81,7 @@ public class RsockReceiveForFileCreation implements Runnable{
                     String destGUID = (String) mdfsrsockblock.destGUID;
 
                     //now save the fileFrag
-                    saveTheFileFragAndUpdateMetadataToEdgeKeeper(fileName, filePathMDFS, fileCreatedTime, permList, uniquereqid, numOfBlocks, n2, k2, header, byteArray, fileCreatorGUID, destGUID);
+                    saveTheFileFragAndUpdateMetadataToEdgeKeeper(fileName, filesize, creatorMAC, filePathMDFS, fileCreatedTime, permList, uniquereqid, numOfBlocks, n2, k2, header, byteArray, fileCreatorGUID, destGUID);
 
 
                     try {
@@ -98,7 +100,7 @@ public class RsockReceiveForFileCreation implements Runnable{
 
     //part of this function basically copied from FragExchangeHelper.java receiveBlockFragment() function
     //this function does two jobs one: save the filefrag locally in this device, two: submits fragment metadata to EdgeKeeper
-    private void saveTheFileFragAndUpdateMetadataToEdgeKeeper(String filename, String filePathMDFS, long fileCreatedTime, String[] permList, String uniquereqid, int numOfBlocks, byte n2, byte k2, FragmentTransferInfo header, byte[] byteArray, String fileCreatorGUID, String destGUID) {  //note: destGUID was never used
+    private void saveTheFileFragAndUpdateMetadataToEdgeKeeper(String filename, long filesize, long creatorMAC, String filePathMDFS, long fileCreatedTime, String[] permList, String uniquereqid, int numOfBlocks, byte n2, byte k2, FragmentTransferInfo header, byte[] byteArray, String fileCreatorGUID, String destGUID) {  //note: destGUID was never used
         //create file
         File tmp0 = null;
         try{
@@ -122,7 +124,7 @@ public class RsockReceiveForFileCreation implements Runnable{
             ServiceHelper.getInstance().getDirectory().addBlockFragment(header.getCreatedTime(), header.getBlockIndex(), header.getFragIndex());
 
             //update to edgekeeper about the fragments that I just received
-            FileMetadata metadata = new FileMetadata(EdgeKeeperConstants.FRAGMENT_RECEIVER_METADATA_DEPOSIT_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, fileCreatorGUID, fileCreatedTime, permList, new Date().getTime(), uniquereqid, filename, filePathMDFS, numOfBlocks , n2, k2);
+            FileMetadata metadata = new FileMetadata(EdgeKeeperConstants.FRAGMENT_RECEIVER_METADATA_DEPOSIT_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, fileCreatorGUID, fileCreatedTime, permList, new Date().getTime(), uniquereqid, filename, filesize, creatorMAC , filePathMDFS, numOfBlocks , n2, k2);
 
             //add info of the fragment I received/have
             metadata.addInfo(GNS.ownGUID, Integer.toString((int)header.getBlockIndex()), Integer.toString((int)header.getFragIndex()));

@@ -107,6 +107,8 @@ class RequestHandler implements Runnable{
 
                             String fileNameWithFullLocalPath = cmd[2];
 
+                            //todo: check if local filepath is valid
+
                             //get filename and filepath
                             String filename = "";
                             String filepathLocal = "";
@@ -123,10 +125,14 @@ class RequestHandler implements Runnable{
                             //check if this file exists
                             File[] listoffiles = new File(filepathLocal).listFiles();
                             boolean fileExists = false;
-                            for (int i = 0; i < listoffiles.length; i++) {
-                                if (listoffiles[i].getName().equals(filename)) {
-                                    fileExists = true;
-                                    break;
+                            if(listoffiles==null){
+                                fileExists = false;
+                            }else {
+                                for (int i = 0; i < listoffiles.length; i++) {
+                                    if (listoffiles[i].getName().equals(filename)) {
+                                        fileExists = true;
+                                        break;
+                                    }
                                 }
                             }
 
@@ -166,7 +172,82 @@ class RequestHandler implements Runnable{
                         } else {
                             clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a filename with absolute path..ex:/storage/emulated/0/.../test.jpg ");
                         }
-                    } else if (cmd[1].equals("-mkdir")) {
+                    }else if(cmd[1].equals("-get")){
+
+                        //check if the next token exists that would be filename with MDFS dir
+                        if(cmd.length>2){
+
+                            //get the MDFS path
+                            String mdfsDirWithFilename = cmd[2];
+
+                            //check if the last char of mdfsDirWithFilename is slash
+                            if(mdfsDirWithFilename.charAt(mdfsDirWithFilename.length()-1)=='/'){
+                                clientSockets.sendAndClose(clientID, "CLIII Error! Filename not mentioned.");
+                            }else{
+
+                                //divide the mdfsDirWithFilename in tokens
+                                String[] dirTokens = mdfsDirWithFilename.split("/");
+
+                                //remove all empty strings
+                                dirTokens = Directory.delEmptyStr(dirTokens);
+
+                                //check if the last token is a filename
+                                if(dirTokens[dirTokens.length-1].contains(".jpg") || dirTokens[dirTokens.length-1].contains(".mp4") || dirTokens[dirTokens.length-1].contains(".txt") || dirTokens[dirTokens.length-1].contains(".pdf")){
+
+                                    //get the filename
+                                    String filename = dirTokens[dirTokens.length-1];
+
+                                    //get the MDFS directory of the file
+                                    String mdfsDir = "/";
+                                    if(dirTokens.length>1){
+                                        for(int i=0; i< dirTokens.length-1; i++){ mdfsDir = mdfsDir + dirTokens[i] + "/"; }
+                                    }else{
+                                        //the file is at the root
+                                        mdfsDir = mdfsDir;
+                                    }
+
+                                    //check if MDFS dir is valid
+                                    String isMDFSdirValid = utils.isValidMDFSDir(mdfsDir);
+                                    if(isMDFSdirValid.equals("OK")){
+
+                                        //mdfs dir is valid
+                                        //check if next token exists
+                                        if(cmd.length>3){
+
+                                            //next token exists tht is local dir
+                                            String locDir = cmd[3];
+
+                                            //check if local path is valid
+                                            String locDirValid = utils.isValidLocalDir(locDir);
+
+                                            if(locDirValid.equals("OK")){
+
+                                                //do the job todo
+
+                                            }else{
+                                                clientSockets.sendAndClose(clientID, "CLIII Error! Invalid local directory, " + locDirValid);
+                                            }
+
+
+                                        }else{
+                                            clientSockets.sendAndClose(clientID, "CLIII Error! Command not comeplete, local filepath not mentioned.");
+                                        }
+
+
+                                    }else{
+                                        clientSockets.sendAndClose(clientID, "CLIII Error! Invalid MDFS directory, " + isMDFSdirValid);
+                                    }
+
+                                }else{
+                                    clientSockets.sendAndClose(clientID, "CLIII Error!Command not complete, Filename not mentioned.");
+                                }
+
+
+                            }
+                        }else{
+                            clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a filename with MDFS filepath.");
+                        }
+                    }else if (cmd[1].equals("-mkdir")) {
 
                         //check if the next token exists that is a mdfs directory
                         if (cmd.length > 2) {

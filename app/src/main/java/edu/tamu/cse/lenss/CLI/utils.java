@@ -104,4 +104,20 @@ public class utils {
         return "OK";
     }
 
+    //check if local dir is valid
+    //returns "OK" if correct,
+    //else returns he reason the local dir is not valid
+    public static String isValidLocalDir(String dir){
+
+        //check if dir length is enough
+        if(dir.length()<"/storage/emulated/0/".length()){ return "local directory path must start with /storage/emulated/0/";}
+
+        //check if dir starts with /storage/emulated/0/
+        if(!dir.substring(0, new StringBuilder("/storage/emulated/0/").toString().length()).equals("/storage/emulated/0/")){
+            return "local directory path must start with /storage/emulated/0/";
+        }
+
+        return "OK";
+    }
+
 }

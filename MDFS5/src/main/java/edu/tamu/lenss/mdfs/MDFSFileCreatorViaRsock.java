@@ -45,9 +45,6 @@ import rsock.Topology;
 import static java.lang.Thread.sleep;
 
 
-
-
-//this class object is only made in homescreen.java class.
 //this class is used only to create file and distribute fragments to other nodes using rsock, instead of tcp.
 //most of the codes are copied from MDFSFileCreator.java class.
 public class MDFSFileCreatorViaRsock {
@@ -64,11 +61,11 @@ public class MDFSFileCreatorViaRsock {
     String[] permList;              //permList contains entries like WORLD, OWNER, GROUP:<group_name> or GUIDs
     FileMetadata metadata;          //metadata object for this file
     String clientID;                //the client who is making this request
-    String filePathMDFS;            //virtuall directory path in MDFS in which the file will be saved
+    String filePathMDFS;            //virtual directory path in MDFS in which the file will be saved. if dir doesnt exist, it willbe created first
     String uniqueReqID;             //unique id for file creation req
 
 
-    //this constructor is called from the application side HomeScreen.java class
+    //this constructor is called from the application side
     public MDFSFileCreatorViaRsock(File f, String filePathMDFS, long maxBlockSize, double encodingRatio, String[] permList, String clientID) {  //RSOCK
         this.file = f;
         this.filePathMDFS = filePathMDFS;
@@ -78,10 +75,11 @@ public class MDFSFileCreatorViaRsock {
         this.fileInfo.setFileSize(file.length());
         this.fileInfo.setNumberOfBlocks((byte)blockCount);
         this.uniqueReqID = UUID.randomUUID().toString().substring(0,12);
-        this.metadata = new FileMetadata(EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, GNS.ownGUID, fileInfo.getCreatedTime(), new String[1], new Date().getTime(), uniqueReqID, fileInfo.getFileName(), filePathMDFS ,blockCount, (byte)0,(byte) 0);
         this.permList = permList;
         this.clientID = clientID;
         this.chosenNodes = new ArrayList<>();
+        this.metadata = new FileMetadata(EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, GNS.ownGUID, fileInfo.getCreatedTime(), new String[1], new Date().getTime(), uniqueReqID, fileInfo.getFileName(), fileInfo.getFileSize(), fileInfo.getCreator(), filePathMDFS ,blockCount, (byte)0,(byte) 0);
+
     }
 
 
@@ -97,6 +95,12 @@ public class MDFSFileCreatorViaRsock {
         //first fetch topology from olsr
         //then convert permList[] into GUIDs and populates chosenNodes list
         fetchTopologyAndChooseNodes();
+
+        /*//check if for some reason fetchtop failed
+        if(!isTopComplete){
+            this.metadata.addInfo(GNS.ownGUID, "-1", "-1");
+            updateEdgeKeeper();
+        }*/
 
         if(blockCount > 1){
             partition();
@@ -127,6 +131,7 @@ public class MDFSFileCreatorViaRsock {
 
 
 
+    //divides a file into multiple blocks
     public void partition(){
         Callable<Boolean> splitJob = new Callable<Boolean>() {
             @Override
@@ -161,13 +166,14 @@ public class MDFSFileCreatorViaRsock {
     }
 
 
-    /**
-     * Can be started only after both topology discovery and file partition have completed <Br>
-     * Each block is sent with one MDFSFileCreatorViaRsock. All MDFSFileCreatorViaRsock instances are placed <Br>
-     * in a Queue, and MDFSFileCreatorViaRsock tries it best to complete all tasks in the queue.
-     * Non-blocking call
-     */
+
+     //Can be started only after both topology discovery and file partition have completed <Br>
+     // Each block is sent with one MDFSFileCreatorViaRsock. All MDFSFileCreatorViaRsock instances are placed <Br>
+     //in a Queue, and MDFSFileCreatorViaRsock tries it best to complete all tasks in the queue.
+     //Non-blocking call
     private synchronized void sendBlocks(){
+
+        //first check if all the pre-works are done
         synchronized(fileInfo){
             if(!isTopComplete || !isPartComplete || isSending){
                 return;
@@ -292,7 +298,7 @@ public class MDFSFileCreatorViaRsock {
     //this function fetches a list of nodes from rsock java api (which fetches it from olsrd)
     //who are the two hops nodes nearby. Then also fetches a list of nodes from GNS
     // about who are the nodes currently running mdfs. cross the two lists.
-    //then matches the list with the list of permitted nodes.
+    //then matches the list with the list of permitted nodes provided by user input.
     //the final list contains nodes as candidate nodes to hold the file fragments.
     //overall, this function basically populates chosenNodes list with GUIDs, and
     //decides n and k value for fragment distribution.
@@ -300,18 +306,22 @@ public class MDFSFileCreatorViaRsock {
 
         //check if the perm list has only one entry and that is OWNER or WORLD
         if(permList.length==1 && permList[0].equals("OWNER")){
+
             //if permission is OWNER, then send fragments to the same node
             chosenNodes.add( GNS.ownGUID);
+
         }else if(permList.length==1 && permList[0].equals("WORLD")){
+
             //if permission is WORLD, then we only send to those GUIDs who are running MDFS + nearby to me
             //get peer guids who are running mdfs from GNS
             List<String> peerGUIDsListfromGNS = GNS.gnsServiceClient.getPeerGUIDs("MDFS", "default");
             if(peerGUIDsListfromGNS==null){ fileCreatorListener.onError("GNS Error! called getPeerGUIDs() and returned null.", clientID); return;}
-            if(peerGUIDsListfromGNS.size()==0){fileCreatorListener.onError("no other MDFS peer registered to GNS.", clientID); return; }
+            if(peerGUIDsListfromGNS.size()==0){ fileCreatorListener.onError("no other MDFS peer registered to GNS.", clientID); return; }
 
             //get all nearby vertices from Topology.java from rsockJavaAPI(OLSR) and put it in a list
             Set<String> peerGUIDsSetfromOLSR = Topology.getInstance(RSockConstants.intrfc_creation_appid).getVertices();
-            if(peerGUIDsSetfromOLSR.size()==0){fileCreatorListener.onError("no neighbors found from OLSR", clientID);return;}
+            if(peerGUIDsSetfromOLSR==null){fileCreatorListener.onError("    Topology fetch from OLSR Error! called getNeighbors() and returned null.", clientID);return;}
+            if(peerGUIDsSetfromOLSR.size()==0){fileCreatorListener.onError("No neighbors found from OLSR", clientID);return;}
             List<String> peerGUIDsListfromOLSR = new ArrayList<String>(peerGUIDsSetfromOLSR);
 
             //cross the peerGUIDsListfromGNS and peerGUIDsListfromOLSR and get the common ones
@@ -374,7 +384,8 @@ public class MDFSFileCreatorViaRsock {
 
             //get all nearby vertices from Topology.java from rsockJavaAPI(OLSR) and put it in a list
             Set<String> peerGUIDsSetfromOLSR = Topology.getInstance(RSockConstants.intrfc_creation_appid).getVertices();
-            if(peerGUIDsSetfromOLSR.size()==0){fileCreatorListener.onError("no neighbors found from OLSR", clientID);return;}
+            if(peerGUIDsSetfromOLSR==null){fileCreatorListener.onError("    Topology fetch from OLSR Error! called getNeighbors() and returned null.", clientID);return;}
+            if(peerGUIDsSetfromOLSR.size()==0){fileCreatorListener.onError("No neighbors found from OLSR", clientID);return;}
             List<String> peerGUIDsListfromOLSR = new ArrayList<String>(peerGUIDsSetfromOLSR);
 
             //cross the peerGUIDsListfromGNS and peerGUIDsListfromOLSR and get the common ones
@@ -409,6 +420,12 @@ public class MDFSFileCreatorViaRsock {
 
         }
 
+        populateChosenNodes();
+    }
+
+
+    //this function populates the choseNodes list, and selects n2, k2 values
+    public void populateChosenNodes(){
         //print
         System.out.print("debuggg chosen nodes: " );
         for(String node: chosenNodes){System.out.print(node + " , ");}
@@ -432,7 +449,7 @@ public class MDFSFileCreatorViaRsock {
     }
 
     //this function takes a list of group names, makes a call to edgekeeper, and returns a list of GUIDs
-    //this list may return empty due to conversion failure(due to disconnection etc)
+    //this list may return empty due to conversion failure(or due to disconnection etc)
     private List<String> groupToGUIDConvert(List<String> groups){
         //create client connection
         client client = new client(EdgeKeeperConstants.dummy_EdgeKeeper_ip, EdgeKeeperConstants.dummy_EdgeKeeper_port);

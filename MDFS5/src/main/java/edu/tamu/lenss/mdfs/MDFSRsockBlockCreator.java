@@ -11,6 +11,8 @@ public class MDFSRsockBlockCreator implements Serializable {  				//RSOCK
 	public byte[] fileFrag;			//the byteArray that contains filefrag
 	public long fileFragLength;		//num of bytes in file frag array
 	public String fileName;			//filename
+	public long filesize;			//size of the entire file
+	public long creatorMAC;			//MAC address of the node who created the file in MDFS
 	public String filePathMDFS;		//file path in MDFS in which the file will be stored
 	public long fileCreatedTime;	//time the file has been created, currently known as FileID
 	public String fileCreatorGUID;  //the guid/node which created the file
@@ -22,9 +24,11 @@ public class MDFSRsockBlockCreator implements Serializable {  				//RSOCK
 	public String uniqueReqID;
 
 
-	public MDFSRsockBlockCreator(FragmentTransferInfo fragtransinfo, byte[] file, String name, String filePathMDFS,  long filelength, byte blockcount, byte n2, byte k2, long filecreatedtime, String[] permlist, String uniquereqid, String fileCreatorGUID, String destGUID){
+	public MDFSRsockBlockCreator(FragmentTransferInfo fragtransinfo, byte[] file, String filename, long filesize, long creatorMAC, String filePathMDFS,  long filelength, byte blockcount, byte n2, byte k2, long filecreatedtime, String[] permlist, String uniquereqid, String fileCreatorGUID, String destGUID){
 		this.fragTransInfoHeader = fragtransinfo;
-		this.fileName = name;
+		this.fileName = filename;
+		this.filesize = filesize;
+		this.creatorMAC = creatorMAC;
 		this.filePathMDFS = filePathMDFS;
 		this.fileFragLength = filelength;
 		this.fileCreatedTime = filecreatedtime;
