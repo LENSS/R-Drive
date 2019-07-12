@@ -48,9 +48,12 @@ public class MDFSHandler extends Thread {
             try {
                 //Set encryption key
                 byte[] encryptKey = new byte[32];
-                appContext.getAssets().open("keystore", AssetManager.ACCESS_BUFFER).read(encryptKey, 0, 32);
+                int[] keyValues = {121, 108, 85, 100, -17, 52, 31, 65, -106, 82, 116, -94, -71, 50, -80, -90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+                int index = 0;
+                for(int i: keyValues){encryptKey[index] = (byte)i; index++;}
                 ServiceHelper.getInstance().setEncryptKey(encryptKey);
-            } catch (IOException e) {
+
+            } catch (NullPointerException /*|| IOException*/ e) {
                 e.printStackTrace();
             }
             LocalBroadcastManager.getInstance(appContext).registerReceiver(mMessageReceiver, new IntentFilter("current_ip"));  //sagor

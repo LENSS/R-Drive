@@ -111,6 +111,56 @@ public class server{
                                 }else if (metadataRec.command == EdgeKeeperConstants.METADATA_WITHDRAW_REQUEST) {
                                     System.out.println("EdgeKeeper server got metadata Withdraw request");
 
+                                    //return object
+                                    FileMetadata metadataRet = null;
+
+                                    //get all the required variables
+                                    String dir = metadataRec.filePathMDFS;
+                                    String filename = metadataRec.filename;
+
+                                    //check if the directory exists to begin with
+                                    if(directory.dirExists(dir)){
+
+                                        //check if the file exists in the dir
+                                        if(directory.fileExists(filename, dir)){
+
+                                            //get the file metadata
+                                            metadataRet = directory.getFileMetadata(filename, dir);
+
+                                            //change the command of the metadata
+                                            metadataRet.setCommand(EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_SUCCESS);
+
+
+                                        }else{
+
+                                            //dir exists but the file doesnt exist
+                                            metadataRet = new FileMetadata(EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST, "a file of name " + metadataRec.filename + " doesnt exists in the directory " + metadataRec.filePathMDFS);
+
+                                        }
+                                    }else{
+
+                                        //directory doesnt exists to begin with
+                                        metadataRet = new FileMetadata(EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_DIRNOTEXIST, "directory " + metadataRec.filePathMDFS + " doesnt exist.");
+
+                                    }
+
+                                    //send back the reply
+                                    //convert metadata into json string
+                                    String str = metadataRet.toBuffer(metadataRet);
+
+                                    //allocate space for reply
+                                    sendBuf = ByteBuffer.allocate(str.length());
+                                    sendBuf.order(ByteOrder.LITTLE_ENDIAN);
+                                    sendBuf.clear();
+
+                                    //put data in sendBuf
+                                    sendBuf.put(str.getBytes());
+                                    sendBuf.flip();
+
+                                    //send back
+                                    send(sendBuf);
+
+
                                 }else if(metadataRec.command==EdgeKeeperConstants.CREATE_MDFS_DIR_REQUEST){
 
                                     //reply object
@@ -120,7 +170,7 @@ public class server{
                                     if(directory.dirExists(metadataRec.filePathMDFS)){
 
                                         //directory already exists, create dummy obj with command = CREATE_MDFS_DIR_REPLY_FAILED
-                                        metadataRet = new FileMetadata(EdgeKeeperConstants.CREATE_MDFS_DIR_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID, metadataRec.filePathMDFS, " MDFS directory already exists.");
+                                        metadataRet = new FileMetadata(EdgeKeeperConstants.CREATE_MDFS_DIR_REPLY_FAILED, "MDFS directory already exists.");
 
                                     }else{
 
@@ -132,7 +182,7 @@ public class server{
                                             metadataRet = new FileMetadata(EdgeKeeperConstants.CREATE_MDFS_DIR_REPLY_SUCCESS, new Date().getTime(), new ArrayList<>(), metadataRec.mdfsdirectoryJObREquesterGUID, metadataRec.filePathMDFS, "success");
                                         }else{
                                             //directory creation failed for some reason, create dummy obj with command = CREATE_MDFS_DIR_REPLY_FAILED
-                                            metadataRet = new FileMetadata(EdgeKeeperConstants.CREATE_MDFS_DIR_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID, metadataRec.filePathMDFS, "arbitrary error.");
+                                            metadataRet = new FileMetadata(EdgeKeeperConstants.CREATE_MDFS_DIR_REPLY_FAILED, "arbitrary error.");
                                         }
                                     }
 
@@ -171,7 +221,8 @@ public class server{
                                         } else {
 
                                             //file and folder at root deletion failed for some reason
-                                            metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID, "dummy", "dummy", "arbitrary error.");
+                                            metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_FAILED, "arbitrary error.");
+
 
                                         }
 
@@ -189,15 +240,16 @@ public class server{
                                                 //dir deletion success
                                                 metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_SUCCESS, new Date().getTime(), new ArrayList<>(), metadataRec.removeRequesterGUID, metadataRec.filePathMDFS, metadataRec.filename, "success");
                                             } else {
+
                                                 //dir deletion failed for some reason
-                                                metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID, "dummy", "dummy", "arbitrary error.");
+                                                metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_FAILED, "arbitrary error.");
 
                                             }
 
                                         } else {
 
                                             //dir doesnt even exist
-                                            metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID, "dummy", "dummy", "MDFS directory doesnt exist.");
+                                            metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_FAILED, "MDFS directory doesnt exist.");
 
                                         }
                                     }
@@ -240,17 +292,18 @@ public class server{
 
                                             }else{
                                                 //for some reason file deletion failed
-                                                metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_FILE_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID , "dummy", "dummy", "arbitrary error." );
+                                                metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_FILE_REPLY_FAILED, "arbitrary error.");
+
                                             }
 
                                         }else{
                                             //dir exists but file doesnt
-                                            metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_FILE_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID , "dummy", "dummy", "MDFS directory exists but file doesnt exist." );
+                                            metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_FILE_REPLY_FAILED, "MDFS directory exists but file doesnt exist.");
                                         }
 
                                     }else{
                                         //dir doest even exist
-                                        metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_FILE_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID , "dummy", "dummy", "MDFS directory doesnt exist." );
+                                        metadataRet = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_FILE_REPLY_FAILED, "MDFS directory doesnt exist.");
                                     }
 
                                     //send back the reply
@@ -296,7 +349,8 @@ public class server{
                                         metadataRet = new FileMetadata(EdgeKeeperConstants.GET_MDFS_FILES_AND_DIR_REPLY_SUCCESS, new Date().getTime(), new ArrayList<>(), metadataRec.mdfsdirectoryJObREquesterGUID, metadataRec.filePathMDFS, result);
 
                                     }else{
-                                        metadataRet = new FileMetadata(EdgeKeeperConstants.GET_MDFS_FILES_AND_DIR_REPLY_FAILED, new Date().getTime(), new ArrayList<>(), EdgeKeeperConstants.dummyGUID, "dummyDir", " MDFS directory doesnt exist.");
+                                        metadataRet = new FileMetadata(EdgeKeeperConstants.GET_MDFS_FILES_AND_DIR_REPLY_FAILED, "MDFS directory doesnt exist.");
+
                                     }
 
                                     //send back the reply
@@ -315,8 +369,8 @@ public class server{
                                     //send back
                                     send(sendBuf);
 
-                                }else if(metadataRec.command == EdgeKeeperConstants.METADATA_WITHDRAW_REQUEST){
-                                    //do nothing yet
+                                }else{
+                                    //not implemented yet
                                 }
 
                             }

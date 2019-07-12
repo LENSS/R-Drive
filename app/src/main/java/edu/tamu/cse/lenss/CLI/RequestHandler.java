@@ -1,8 +1,6 @@
 package edu.tamu.cse.lenss.CLI;
 
 import android.content.Context;
-import android.icu.util.UniversalTimeScale;
-import android.webkit.URLUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -27,7 +25,7 @@ class RequestHandler implements Runnable{
 
 
     //commands
-    String[] comm = { "-help", "-ls", "-list", "-mkdir", "-rm", "-setfacl", "-getfacl", "-put", "-get"};
+    String[] comm = { "-help", "-ls", "-list", "-mkdir", "-rm", "-setfacl", "-getfacl", "-put", "-get", "-copyFromLocal", "-copyToLocal"};
     Set<String> commandNames = new HashSet<>(Arrays.asList(comm));
 
     public RequestHandler( Socket cSocket, Context con) {
@@ -218,7 +216,7 @@ class RequestHandler implements Runnable{
                                             String locDir = cmd[3];
 
                                             //check if local path is valid
-                                            String locDirValid = utils.isValidLocalDir(locDir);
+                                            String locDirValid = utils.isValidLocalDirInAndroidPhone(locDir);
 
                                             if(locDirValid.equals("OK")){
 
@@ -288,7 +286,7 @@ class RequestHandler implements Runnable{
                             }else if(dir.equals("/*")){
 
                                 //delete all files and folders in the root
-                                handleRMcommand.handleRMcommand(clientID, dir, new String[0], "del_file_n_dir");
+                                handleRMcommand.handleRMcommand(clientID, dir, new String[0], "del_dir");
 
                             }else {
 
@@ -337,6 +335,85 @@ class RequestHandler implements Runnable{
                             }
                         }else{
                             clientSockets.sendAndClose(clientID, "CLIII Error! Mention a MDFS directory to list files and folders.");
+                        }
+                    }else if(cmd[1].equals("-copyFromLocal")){
+
+                        //check if the next token exists
+                        if(cmd.length>2){
+
+                            //this is the unixLocal dir with filename
+                            String unixLocDirWithFileName = cmd[2];
+
+                            //check if the unixLocal dir is only root without filename
+                            if(unixLocDirWithFileName.equals("/")){
+
+                                //unixLocal is root without filename
+                                clientSockets.sendAndClose(clientID, "CLIII Error! filename not mentioned.");
+
+                            }else{
+
+                                //the last token is filename
+                                //separate the dir in tokens
+                                String[] dirTokens = unixLocDirWithFileName.split("/");
+
+                                //remove empty strings
+                                dirTokens = Directory.delEmptyStr(dirTokens);
+
+                                //check the length of dirTokens
+                                if(dirTokens.length>0){
+
+                                    //the filename is the last token in dirTokens
+                                    String filename = dirTokens[dirTokens.length-1];
+
+                                    //make the filepath
+                                    String unixLocalDir = "/";
+                                    if(dirTokens.length>1){
+
+                                        //add all tokens and make a filepath
+                                        for(int i=0; i< dirTokens.length-1; i++){unixLocalDir = unixLocalDir + dirTokens[i] + "/";}
+
+                                    }else{
+                                        //root is the filepath
+                                        unixLocalDir = unixLocalDir;
+                                    }
+
+                                    String unixLocDirValid = utils.isValidLocalDirInUnix(unixLocalDir);
+
+                                    if(unixLocDirValid.equals("OK")){
+
+                                        //check if the next token exists
+                                        if(cmd.length>3){
+
+                                            //this is the androidLocalDir
+                                            String androidLocalDir = cmd[3];
+
+                                            //check if the androidLocalDir is valid
+                                            String androidLocDirValid  = utils.isValidLocalDirInAndroidPhone(androidLocalDir);
+                                            if(androidLocDirValid.equals("OK")){
+
+                                                //do the job
+                                                handleCOPYFROMLOCALcommand.handleCOPYFROMLOCALcommand(clientID, filename, unixLocalDir, androidLocalDir);
+
+                                            }else{
+                                                clientSockets.sendAndClose(clientID, "CLIII Error! Phone local " + androidLocDirValid);
+                                            }
+
+                                        }else{
+                                            clientSockets.sendAndClose(clientID, "CLIII Error! Phone local directory not mentioned.");
+                                        }
+                                    }else{
+                                        clientSockets.sendAndClose(clientID, "CLIII Error! Client local " + unixLocDirValid);
+                                    }
+
+                                }else{
+                                    //this should not execute unless some weird error
+                                    clientSockets.sendAndClose(clientID, "CLIII Error! No filename mentioned with client local directory.");
+                                }
+
+                            }
+
+                        }else{
+                            clientSockets.sendAndClose(clientID, "CLIII Error! Client local directory not mentioned.");
                         }
                     }else{
                         clientSockets.sendAndClose(clientID, "CLIII Error! Command has not been implemented yet.");

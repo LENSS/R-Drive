@@ -1,4 +1,3 @@
-/*
 package edu.tamu.lenss.mdfs;
 
 import java.io.File;
@@ -44,134 +43,16 @@ public class MDFSFileRetrieverViaRsock {
     private byte[] decryptKey;
     private MDFSFileInfo fileInfo;
     private FileMetadata metadata;
+    private String clientID;
 
-    public MDFSFileRetrieverViaRsock(MDFSFileInfo fInfo) {
+    public MDFSFileRetrieverViaRsock(MDFSFileInfo fInfo, FileMetadata metadata, String clientID) {
         this.fileInfo = fInfo;
+        this.metadata = metadata;
+        this.clientID = clientID;
     }
 
     public void start(){
-        fetchFileMetadataFromEdgeKeeper();
-
-        //check if metadata is valid
-        if(metadata.command == EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST){
-            fileListener.onError("Failed, EdgeKeeper has no metadata for this file.", fileInfo);
-        }else if(metadata.command == EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_PERMISSIONDENIED){
-            fileListener.onError("Failed, File permission denied", fileInfo);
-        }else if(metadata.command == EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED){
-            fileListener.onError("Failed, could not connect to EdgeKeeper.", fileInfo);
-        }else if(metadata.command ==  EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_SUCCESS){
-            retrieveBlocks();
-        }
-
-    }
-
-    private void fetchFileMetadataFromEdgeKeeper() {
-        //create client connection
-        client client = new client(EdgeKeeperConstants.dummy_EdgeKeeper_ip, EdgeKeeperConstants.dummy_EdgeKeeper_port);
-
-        //connect
-        boolean connected = client.connect();
-
-        //if could not connect to edgeKeeper
-        if(!connected){
-            //return with dummy metadata with cmd = EDGEKEEPER_CONNECTION_FAILED and other dummy information
-            //dont put it in client.putInDTNQueue() function
-            this.metadata = new FileMetadata(EdgeKeeperConstants.EDGEKEEPER_CONNECTION_FAILED, EdgeKeeperConstants.getMyGroupName(), GNSConstants.dummyGUID, GNSConstants.dummyGUID, 0000, new String[1], new Date().getTime(), "dummyuniqueid", "filename", 0, 0, "filePathMDFS",  0, (byte)0, (byte)0); //dummy metadata
-            return;
-        }
-
-        //if connected set socket read timeout
-        client.setSocketReadTimeout();
-
-        //make request metadata object
-        FileMetadata metadataReq = new FileMetadata(EdgeKeeperConstants.METADATA_WITHDRAW_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, fileInfo.getCreatedTime(), new Date().getTime(), fileInfo.getFileName());
-
-        //convert into json string
-        String str = metadataReq.toBuffer(metadataReq);
-
-        //create bytebuffer
-        ByteBuffer sendBuf = ByteBuffer.allocate(str.length());
-        sendBuf.order(ByteOrder.LITTLE_ENDIAN);
-        sendBuf.clear();
-
-        //put str in sendBuf and flip
-        sendBuf.put(str.getBytes());
-        sendBuf.flip();
-
-        //send metadata req
-        client.send(sendBuf);
-
-        //get return
-        ByteBuffer recvBuf = client.receive();
-
-        //check if receive value is null or nah(can be null due to timeout),
-        //then return dummy object
-        if(recvBuf==null){
-            client.close();
-            return;
-        }
-
-        //close client socket
-        client.close();
-
-        //get data from recvBuf and make string
-        StringBuilder bd = new StringBuilder();
-        while (recvBuf.remaining() > 0){ bd.append((char)recvBuf.get());}
-        String str1 = bd.toString();
-
-        //make metadata from str1
-        this.metadata = FileMetadata.parse(str1);
-
-        printMetadata(metadata);
-
-    }
-
-    //testing purpose
-    public void printMetadata(FileMetadata metadata){
-        System.out.println("metadataaaa command return: " + metadata.command);
-        System.out.println("metadataaaa chosennodes size: " + metadata.getAllUniqueFragmentHolders().size());
-
-        //print all unique nodes
-        List<String> allUNiqueNodes = metadata.getAllUniqueFragmentHolders();
-        System.out.print("metadataaa all unique nodes are : ");
-        for(int i=0; i< allUNiqueNodes.size(); i++){System.out.print(allUNiqueNodes.get(i) + " ");}
-        System.out.println();
-        System.out.println();
-
-        //print all blocksnums by each node
-        for(int i=0; i< allUNiqueNodes.size();i++){
-            List<String> blocksnums = metadata.getBlockNumbersHeldByNode(allUNiqueNodes.get(i));
-            System.out.print("metadataaa " +  allUNiqueNodes.get(i) + " has blocknumbers ");
-            for(int j=0; j< blocksnums.size(); j++){System.out.print(blocksnums.get(j) + " ");}
-            System.out.println();
-        }
-        System.out.println();
-        System.out.println();
-
-        //print all fragment number by each user
-        for(int i=0; i< allUNiqueNodes.size(); i++){
-            List<String> blocksnums = metadata.getBlockNumbersHeldByNode(allUNiqueNodes.get(i));
-            //print num of blocks
-            System.out.println("metadataaaa num of blocks: " + metadata.numOfBlocks + " " + blocksnums);
-            for(int j=0; j< blocksnums.size(); j++){
-                List<String> frags = metadata.getFragmentListByNodeAndBlockNumber(allUNiqueNodes.get(i), blocksnums.get(j));
-                System.out.println("metadataaa " + allUNiqueNodes.get(i) + " has blocknum " + blocksnums.get(j) + " containing fragment " + frags);
-
-            }
-        }
-        System.out.println();
-        System.out.println();
-
-        //print all the nodes containing a block
-        int blocknumba = 0;
-        List<String> nodes = metadata.getNodesContainingFragmentsOfABlock(Integer.toString(blocknumba));
-        System.out.println("metadataaa size of nodes containing blocknum " + blocknumba + " is: " + nodes.size());
-        System.out.print("metadataaa nodes containing blocknum " + blocknumba + " are: ");
-        for(int i=0; i< nodes.size(); i++){
-            System.out.print(nodes.get(i) + " ");
-        }
-        System.out.println();
-        System.out.println();
+        retrieveBlocks();
     }
 
     public void setDecryptKey(byte[] key){
@@ -185,8 +66,7 @@ public class MDFSFileRetrieverViaRsock {
 
     //this function calls new MDFSBlockRetrieverViaRsock()
     private void retrieveBlocks(){
-        Logger.i(TAG, "Start downloading blocks. Total " + fileInfo.getNumberOfBlocks() + " blocks.");
-        fileListener.statusUpdate("Start downloading blocks. Total " + fileInfo.getNumberOfBlocks() + " blocks.");
+        fileListener.statusUpdate("Start downloading blocks. Total " + fileInfo.getNumberOfBlocks() + " blocks.", clientID);
         final Queue<Byte> downloadQ = new ConcurrentLinkedQueue<Byte>();
         for(byte i=0; i < fileInfo.getNumberOfBlocks(); i++){
             downloadQ.add(i);
@@ -202,7 +82,7 @@ public class MDFSFileRetrieverViaRsock {
                 synchronized(downloadQ){
                     while(!downloadQ.isEmpty() && reTryLimit > 0){
                         curBlockIdx = downloadQ.poll();
-                        curBlock = new MDFSBlockRetrieverViaRsock(fileInfo, curBlockIdx, metadata);  //RSOCK
+                        curBlock = new MDFSBlockRetrieverViaRsock(fileInfo, curBlockIdx, metadata, clientID);  //RSOCK
                         curBlock.setListener(blockListener);
                         curBlock.setDecryptKey(decryptKey);
                         curBlock.start();
@@ -210,6 +90,9 @@ public class MDFSFileRetrieverViaRsock {
                         reTryLimit--;
                     }
                     Logger.i(TAG, "Finish downloadQ");
+                    //downloadQ beung empty means there are no blocks to retrieve,
+                    //not empty means there are some block failed and,
+                    //they needs to be retrieved again but reTryLimit exceeded.
                     if(downloadQ.isEmpty())
                         return true;
                     else
@@ -223,9 +106,8 @@ public class MDFSFileRetrieverViaRsock {
             BlockRetrieverListenerViaRsock blockListener = new BlockRetrieverListenerViaRsock(){
                 private long sleepPeriod = Constants.IDLE_BTW_FAILURE;
                 @Override
-                public void onError(String error, MDFSFileInfo fInfo) {
-                    Logger.w(TAG, "Retrieve block failure.  " + error);
-                    fileListener.onError("Retrieve block unsuccessful. Retrying...  " + error, fInfo);
+                public void onError(String error, MDFSFileInfo fInfo, String clientID) {
+                    //fileListener.onError("Retrieve block unsuccessful. Retrying...  " + error, fInfo, clientID);
                     try {
                         Thread.sleep(sleepPeriod);
                     } catch (InterruptedException e) {
@@ -239,7 +121,7 @@ public class MDFSFileRetrieverViaRsock {
                 }
 
                 @Override
-                public void onComplete(File decryptedFile, MDFSFileInfo fileInfo) {
+                public void onComplete(File decryptedFile, MDFSFileInfo fileInfo, String clientID) {
                     Logger.i(TAG, "Complete Retrieving One Block");
                     synchronized(downloadQ){
                         sleepPeriod = Constants.IDLE_BTW_FAILURE;
@@ -248,7 +130,7 @@ public class MDFSFileRetrieverViaRsock {
                 }
 
                 @Override
-                public void statusUpdate(String status) {
+                public void statusUpdate(String status, String clientID) {
                     Logger.i(TAG, status);
                 }
             };
@@ -261,7 +143,7 @@ public class MDFSFileRetrieverViaRsock {
                 if(result){
                     // Directory update
                     Logger.i(TAG, "Complete downloading all blocks of a file");
-                    fileListener.statusUpdate("Complete downloading all blocks of a file");
+                    fileListener.statusUpdate("Complete downloading all blocks of a file", clientID);
                     if(fileInfo.getFileName().contains(".mp4") && fileInfo.getNumberOfBlocks() > 1){
                         mergeBlocks();
                     }
@@ -271,7 +153,8 @@ public class MDFSFileRetrieverViaRsock {
                 }
                 else{
                     Logger.e(TAG, "Fail to download some blocks");
-                    fileListener.onError("Fail to download some blocks", fileInfo);
+                    fileListener.onError("Fail to download some blocks", fileInfo, clientID);
+                    return;
                 }
             }
         };
@@ -318,7 +201,7 @@ public class MDFSFileRetrieverViaRsock {
         }
         // update directory
         ServiceHelper.getInstance().getDirectory().addDecryptedFile(fileInfo.getCreatedTime());
-        fileListener.onComplete(to, fileInfo);  //this is where execution of this file ends
+        fileListener.onComplete(to, fileInfo, clientID);  //this is where execution of this file ends
 
         StringBuilder logStr = new StringBuilder();
         logStr.append(System.currentTimeMillis() + ", ");
@@ -348,11 +231,11 @@ public class MDFSFileRetrieverViaRsock {
                 // start MDFS
                 if(result){
                     Logger.i(TAG, "Video Merge Complete.");
-                    fileListener.statusUpdate("Video Merge Complete.");
+                    fileListener.statusUpdate("Video Merge Complete.", clientID);
                     deleteBlocks();
                     // Update directory
                     ServiceHelper.getInstance().getDirectory().addDecryptedFile(fileInfo.getCreatedTime());
-                    fileListener.onComplete(AndroidIOUtils.getExternalFile(getDecryptedFilePath()), fileInfo);  //this is where execution of this file ends
+                    fileListener.onComplete(AndroidIOUtils.getExternalFile(getDecryptedFilePath()), fileInfo, clientID);  //this is where execution of this file ends
 
                     StringBuilder logStr = new StringBuilder();
                     logStr.append(System.currentTimeMillis() + ", ");
@@ -366,18 +249,14 @@ public class MDFSFileRetrieverViaRsock {
                 }
                 else{
                     Logger.e(TAG, "Fail to merge video.");
-                    fileListener.onError("Fail to merge video.", fileInfo);
+                    fileListener.onError("Fail to merge video.", fileInfo, clientID);
+                    return;
                 }
             }
         };
         ServiceHelper.getInstance().submitCallableTask(new CallableTask<Boolean>(mergeJob, callback));
     }
 
-    */
-/**
-     * Return the file path to the final storage location of the decrypted file. File may not exist yet
-     * @return
-     *//*
 
     private String getDecryptedFilePath(){
         return Environment.getExternalStorageDirectory().getAbsolutePath()
@@ -401,21 +280,17 @@ public class MDFSFileRetrieverViaRsock {
             f.delete();
     }
 
-    */
-/*
-     * Default FileRetrieverListener. Do nothing.
-     *//*
+
 
     private BlockRetrieverListenerViaRsock fileListener = new BlockRetrieverListenerViaRsock(){
         @Override
-        public void onError(String error, MDFSFileInfo fInfo) {
+        public void onError(String error, MDFSFileInfo fInfo, String clientID) {
         }
         @Override
-        public void onComplete(File decryptedFile, MDFSFileInfo fileInfo) {
+        public void onComplete(File decryptedFile, MDFSFileInfo fileInfo, String clientID) {
         }
         @Override
-        public void statusUpdate(String status) {
+        public void statusUpdate(String status, String clientID) {
         }
     };
 }
-*/

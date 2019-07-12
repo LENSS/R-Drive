@@ -1,5 +1,6 @@
 package edu.tamu.cse.lenss.CLI;
 
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Date;
@@ -8,12 +9,54 @@ import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
 import edu.tamu.lenss.mdfs.EdgeKeeper.FileMetadata;
 import edu.tamu.lenss.mdfs.EdgeKeeper.client;
 import edu.tamu.lenss.mdfs.GNS.GNS;
+import edu.tamu.lenss.mdfs.MDFSBlockRetrieverViaRsock;
+import edu.tamu.lenss.mdfs.MDFSFileRetrieverViaRsock;
+import edu.tamu.lenss.mdfs.handler.ServiceHelper;
+import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 
 public class handleGETrequest {
 
     public static void handleGETrequest(String clientID, String filename, String mdfsDir, String localDir){
 
-        //make metadata object
+        //first retrieve the metadata from edgeKeeper
+        FileMetadata metadata = fetchFileMetadataFromEdgeKeeper(clientID,filename, mdfsDir);
+
+        //check for null
+        if(metadata!=null){
+
+            //re-create MDFSFileInfo object
+            MDFSFileInfo fileInfo  = new MDFSFileInfo(metadata.filename, metadata.fileID);
+            fileInfo.setCreator(metadata.creatorMAC);
+            fileInfo.setFileSize(metadata.filesize);
+            fileInfo.setNumberOfBlocks((byte)metadata.numOfBlocks);
+            fileInfo.setFragmentsParms((byte)metadata.n2,  (byte)metadata.k2);
+
+            //do the job
+            ServiceHelper.getInstance().executeRunnableTask(new Runnable() {
+                @Override
+                public void run(){
+
+                    MDFSFileRetrieverViaRsock retriever = new MDFSFileRetrieverViaRsock(fileInfo, metadata, clientID);  //RSOCK
+                    retriever.setDecryptKey(ServiceHelper.getInstance().getEncryptKey());
+                    retriever.setListener(fileRetrieverListenerviarsock);
+                    retriever.start();
+                }
+            });
+
+            //send reply tto cli client
+            clientSockets.sendAndClose(clientID, "CLIII Error! -get request has been place.");
+
+        }else{
+            //dont do anything here..errors have been handled already
+        }
+    }
+
+
+    //fetched file metadata from EdgeKeeper
+    //returns FileMetadata object or null.
+    private static FileMetadata fetchFileMetadataFromEdgeKeeper(String clientID, String filename, String mdfsDir) {
+
+        //make request metadata object
         FileMetadata metadataReq = new FileMetadata(EdgeKeeperConstants.METADATA_WITHDRAW_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, new Date().getTime(), filename, mdfsDir);
 
         //create client connection
@@ -25,7 +68,7 @@ public class handleGETrequest {
         //check if connection succeeded..if not, return with error msg
         if(!connected){
             clientSockets.sendAndClose(clientID, "-get Error! Could not connect to EdgeKeeper.");
-            return;
+            return null;
         }
 
         //if connected, set socket read timeout(necessary here as we are expected reply in time)
@@ -55,7 +98,7 @@ public class handleGETrequest {
             //close client socket
             client.close();
             clientSockets.sendAndClose(clientID, "CLIII -get Info. Did not receive a reply from Edgekeeper, request might/might not succeed.");
-            return;
+            return null;
 
         }else{
 
@@ -73,18 +116,42 @@ public class handleGETrequest {
             //check command
             if(metadataRet.command==EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_SUCCESS){
 
-                //metadata received for the file
-                //todo: do the job
+                //return the metadata
+                return metadataRet;
 
             }else if(metadataRet.command==EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST){
 
                 //reply with failure as file dont exist
                 clientSockets.sendAndClose(clientID, "CLIII Failed! remove failed. Reason: File doesnt exist.");
+                return null;
+
             }else if(metadataRet.command==EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_PERMISSIONDENIED){
 
                 //reply with failure as permission denied
                 clientSockets.sendAndClose(clientID, "CLIII Failed! remove failed. Reason: File permission denied.");
+                return null;
             }
         }
+
+        return null;
     }
+
+    //rsock listener
+    private static MDFSBlockRetrieverViaRsock.BlockRetrieverListenerViaRsock fileRetrieverListenerviarsock = new MDFSBlockRetrieverViaRsock.BlockRetrieverListenerViaRsock(){        //RSOCK
+
+        @Override
+        public void onError(String error, MDFSFileInfo fileInfo, String clientID) {
+            //clientSockets.sendAndClose(clientID, error);
+        }
+
+        @Override
+        public void statusUpdate(String status, String clientID) {
+            //do nothing
+        }
+
+        @Override
+        public void onComplete(File decryptedFile, MDFSFileInfo fileInfo, String clientID) {
+            //do nothing, already file has been saved and handled
+        }
+    };
 }

@@ -105,7 +105,7 @@ public class MDFSDirectory implements Serializable {
 	//return A List of all available files. The List may be empty
 	public synchronized List<MDFSFileInfo> getFileList() {
 		List<MDFSFileInfo> list;
-		if (!fileInfoMap.isEmpty())
+		if (fileInfoMap!=null && !fileInfoMap.isEmpty())
 			list = new ArrayList<MDFSFileInfo>(fileInfoMap.values());
 		else
 			list = new ArrayList<MDFSFileInfo>();

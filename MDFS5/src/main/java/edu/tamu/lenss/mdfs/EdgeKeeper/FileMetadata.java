@@ -61,6 +61,17 @@ public class FileMetadata implements Serializable {
         this.chosenNodes = new ArrayList<>(); //this list if populated by addInfo() function
     }
 
+    //dummy metadata constructor
+    //only used when request fails
+    //object created by EdgeKeeper,
+    //object sent to- client
+    public FileMetadata(int cmd, String message){
+        this.command = cmd;
+        this.message = message;
+    }
+
+
+
     //constructor for metadata withdraw request with cmd  = METADATA_WITHDRAW_REQUEST (object made by -client, sent to - EdgeKeeper, reason -to ask for metadata for a file)
     public FileMetadata(int cmd, List<String> owngroupnames, String metadataRequesterGUID, long timestamp, String filename, String mdfsDir){
         this.command = cmd;

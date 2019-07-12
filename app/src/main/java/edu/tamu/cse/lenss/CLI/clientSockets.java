@@ -27,12 +27,15 @@ public class clientSockets {
     private static void close(String clientID){
         ///get the clientSockets object from map
         clientSockets socket = sockets.get(clientID);
-        try {
-            socket.inBuffer.close();
-            socket.os.close();
-            socket.cSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+
+        if(socket!=null) {
+            try {
+                socket.inBuffer.close();
+                socket.os.close();
+                socket.cSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
     }
@@ -42,11 +45,13 @@ public class clientSockets {
         clientSockets socket = sockets.get(clientID);
 
         //write on the socket aka send reply to client
-        try {
-            socket.os.write((reply+"\n\n").getBytes());
-            socket.os.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if(socket!=null) {
+            try {
+                socket.os.write((reply + "\n\n").getBytes());
+                socket.os.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
     }
@@ -54,6 +59,7 @@ public class clientSockets {
     public static void sendAndClose(String clientID, String reply){
         send(clientID, reply);
         close(clientID);
+
         //remeove the entry from the map
         sockets.remove(clientID);
     }

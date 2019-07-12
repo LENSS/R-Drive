@@ -37,6 +37,7 @@ public class EdgeKeeperConstants {
     public static int METADATA_WITHDRAW_REPLY_SUCCESS = 80;
     public static int METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST = 90;
     public static int METADATA_WITHDRAW_REPLY_FAILED_PERMISSIONDENIED = 100;
+    public static int METADATA_WITHDRAW_REPLY_FAILED_DIRNOTEXIST = 105;
 
     //group tp GUID conversion commands
     public static int GROUP_TO_GUID_CONV_REQUEST = 110;
@@ -66,7 +67,7 @@ public class EdgeKeeperConstants {
 
 
     //command if connecting to EdgeKeeper failed
-    public static int EDGEKEEPER_CONNECTION_FAILED = 240;
+    public static int EDGEKEEPER_CONNECTION_FAILED = 270;
 
     //MDFS group info temporarily stored here todo: this needs to be written on disk
     public static List<String> getMyGroupName(){

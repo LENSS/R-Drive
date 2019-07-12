@@ -104,20 +104,34 @@ public class utils {
         return "OK";
     }
 
-    //check if local dir is valid
+    //check if local dir is valid in android linux system
     //returns "OK" if correct,
-    //else returns he reason the local dir is not valid
-    public static String isValidLocalDir(String dir){
+    //else returns he reason the local dir is not valid.
+    //note: the reason this function checks linux directory,
+    //explicitly for phones is because android host filesystem,
+    //is a bit different that the usual linux(like ubuntu) file system.
+    public static String isValidLocalDirInAndroidPhone(String dir){
 
         //check if dir length is enough
-        if(dir.length()<"/storage/emulated/0/".length()){ return "local directory path must start with /storage/emulated/0/";}
+        if(dir.length()<"/storage/emulated/0/".length()){ return "directory path must start with /storage/emulated/0/";}
 
         //check if dir starts with /storage/emulated/0/
         else if(!dir.substring(0, new StringBuilder("/storage/emulated/0/").toString().length()).equals("/storage/emulated/0/")){
-            return "local directory path must start with /storage/emulated/0/";
+            return "directory path must start with /storage/emulated/0/";
         }
 
         else{ return "OK"; }
+    }
+
+    //check if the local dir is valid in typical linux system
+    public static String isValidLocalDirInUnix(String dir){
+
+        //check if the first char is root
+        if(dir.charAt(0)!='/'){
+            return "dir must start with root.";
+        }
+
+        return "OK";
     }
 
 }

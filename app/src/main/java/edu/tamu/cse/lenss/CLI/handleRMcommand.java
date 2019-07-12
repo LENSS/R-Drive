@@ -36,12 +36,6 @@ public class handleRMcommand {
             //create dir deletion object
             metadataReq = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REQUEST, new Date().getTime(), EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, dirToDel, "dummy_filename", "del_dir" );
 
-        }else if(reqType.equals("del_file_n_dir")){
-
-            //get the dir to delete
-            String dirToDel = dir;
-            metadataReq = new FileMetadata(EdgeKeeperConstants.REMOVE_MDFS_DIR_REQUEST, new Date().getTime(), EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, dirToDel, "dummy_filename", "del_file_n_dir" );
-
         }
 
         //create client connection
