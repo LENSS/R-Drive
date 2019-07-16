@@ -1,9 +1,12 @@
 package edu.tamu.cse.lenss.CLI;
 
 import android.content.Context;
+import android.os.Environment;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -39,7 +42,11 @@ class RequestHandler implements Runnable{
             //Read the request from the CPP daemon
             BufferedReader inBuffer = new BufferedReader(new InputStreamReader( cSocket.getInputStream() ));
             OutputStream os = cSocket.getOutputStream();
-            String command = inBuffer.readLine();
+            String command = inBuffer.readLine();  //note: the reading finishes until one or more \n is read
+
+            //todo:send the string to a parse function
+            //the parse function will return a cliObject
+
 
             //make clientSockets object
             clientSockets socket = new clientSockets(inBuffer, os, cSocket);
@@ -54,7 +61,7 @@ class RequestHandler implements Runnable{
             processRequestCpp(clientID, command);
 
         }catch (IOException e) {
-            System.out.println("CLIII Problem handling client socket in RequestHandler"+ e);
+            System.out.println("Problem handling client socket in RequestHandler "+ e);
 
         }
 
@@ -65,7 +72,7 @@ class RequestHandler implements Runnable{
 
         //check if its an empty string
         if(command.equals("")){
-            clientSockets.sendAndClose(clientID, "CLIII Error! No command found...Type \"mdfs help\" for more information.");
+            clientSockets.sendAndClose(clientID, "No command found...Type \"mdfs help\" for more information.");
             return;
         }
 
@@ -105,8 +112,6 @@ class RequestHandler implements Runnable{
 
                             String fileNameWithFullLocalPath = cmd[2];
 
-                            //todo: check if local filepath is valid
-
                             //get filename and filepath
                             String filename = "";
                             String filepathLocal = "";
@@ -120,55 +125,65 @@ class RequestHandler implements Runnable{
                                 }
                             }
 
-                            //check if this file exists
-                            File[] listoffiles = new File(filepathLocal).listFiles();
-                            boolean fileExists = false;
-                            if(listoffiles==null){
-                                fileExists = false;
-                            }else {
-                                for (int i = 0; i < listoffiles.length; i++) {
-                                    if (listoffiles[i].getName().equals(filename)) {
-                                        fileExists = true;
-                                        break;
+
+                            //check if the filePathLocal is valid
+                            String isValLocDir  = utils.isValidLocalDirInAndroidPhone(filepathLocal);
+
+                            if(isValLocDir.equals("OK")) {
+
+
+                                //check if this file exists
+                                File[] listoffiles = new File(filepathLocal).listFiles();
+                                boolean fileExists = false;
+                                if (listoffiles == null) {
+                                    fileExists = false;
+                                } else {
+                                    for (int i = 0; i < listoffiles.length; i++) {
+                                        if (listoffiles[i].getName().equals(filename)) {
+                                            fileExists = true;
+                                            break;
+                                        }
                                     }
                                 }
-                            }
 
-                            //file exists
-                            if (fileExists) {
+                                //file exists
+                                if (fileExists) {
 
-                                //check if the file extension is jpg or mp4 or txt or pdf etc
-                                if (utils.checkFileExtension(filename)) {
+                                    //check if the file extension is jpg or mp4 or txt or pdf etc
+                                    if (utils.checkFileExtension(filename)) {
 
-                                    //check if fourth token exists and is <mdfs_filepath>
-                                    if (cmd.length > 3) {
-                                        String filePathMDFS = cmd[3];
+                                        //check if fourth token exists and is <mdfs_filepath>
+                                        if (cmd.length > 3) {
+                                            String filePathMDFS = cmd[3];
 
-                                        //check if mdfs filepath is valid
-                                        String dirValidCheck = utils.isValidMDFSDir(filePathMDFS);
-                                        if (dirValidCheck.equals("OK")) {
+                                            //check if mdfs filepath is valid
+                                            String dirValidCheck = utils.isValidMDFSDir(filePathMDFS);
+                                            if (dirValidCheck.equals("OK")) {
 
-                                            //dir is valid, get the perm list
-                                            String[] perm = utils.checkPermittedNodes("WORLD");  //dummy
+                                                //dir is valid, get the perm list
+                                                String[] perm = utils.checkPermittedNodes("WORLD");  //dummy
 
-                                            //do the job
-                                            handlePutCommand.handleCreateCommand(filepathLocal, filePathMDFS, filename, perm, clientID);
+                                                //do the job
+                                                handlePutCommand.handleCreateCommand(filepathLocal, filePathMDFS, filename, perm, clientID);
+
+                                            } else {
+                                                clientSockets.sendAndClose(clientID, "Error! " + "MDFS" + dirValidCheck);
+                                            }
 
                                         } else {
-                                            clientSockets.sendAndClose(clientID, "CLIII Error! " + "MDFS" + dirValidCheck);
+                                            clientSockets.sendAndClose(clientID, "Command not complete, mention a filepath in MDFS where the file will be stored.");
                                         }
-
                                     } else {
-                                        clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a filepath in MDFS where the file will be stored.");
+                                        clientSockets.sendAndClose(clientID, "File Extension not supported.");
                                     }
                                 } else {
-                                    clientSockets.sendAndClose(clientID, "CLIII Error! File Extension not supported.");
+                                    clientSockets.sendAndClose(clientID, "Directory/file does not exist.");
                                 }
-                            } else {
-                                clientSockets.sendAndClose(clientID, "CLIII Error! Directory/file does not exist.");
+                            }else{
+                                clientSockets.sendAndClose(clientID, "Error! " + isValLocDir);
                             }
                         } else {
-                            clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a filename with absolute path..ex:/storage/emulated/0/.../test.jpg ");
+                            clientSockets.sendAndClose(clientID, "Command not complete, mention a filename with absolute path..ex:/storage/emulated/0/.../test.jpg ");
                         }
                     }else if(cmd[1].equals("-get")){
 
@@ -180,7 +195,7 @@ class RequestHandler implements Runnable{
 
                             //check if the last char of mdfsDirWithFilename is slash
                             if(mdfsDirWithFilename.charAt(mdfsDirWithFilename.length()-1)=='/'){
-                                clientSockets.sendAndClose(clientID, "CLIII Error! Filename not mentioned.");
+                                clientSockets.sendAndClose(clientID, "Filename not mentioned.");
                             }else{
 
                                 //divide the mdfsDirWithFilename in tokens
@@ -190,7 +205,7 @@ class RequestHandler implements Runnable{
                                 dirTokens = Directory.delEmptyStr(dirTokens);
 
                                 //check if the last token is a filename
-                                if(dirTokens[dirTokens.length-1].contains(".jpg") || dirTokens[dirTokens.length-1].contains(".mp4") || dirTokens[dirTokens.length-1].contains(".txt") || dirTokens[dirTokens.length-1].contains(".pdf")){
+                                if(utils.checkFileExtension(dirTokens[dirTokens.length-1])){
 
                                     //get the filename
                                     String filename = dirTokens[dirTokens.length-1];
@@ -225,27 +240,26 @@ class RequestHandler implements Runnable{
 
 
                                             }else{
-                                                clientSockets.sendAndClose(clientID, "CLIII Error! Invalid local directory, " + locDirValid);
+                                                clientSockets.sendAndClose(clientID, "Invalid local directory, " + locDirValid);
                                             }
 
 
                                         }else{
-                                            clientSockets.sendAndClose(clientID, "CLIII Error! Command not comeplete, local filepath not mentioned.");
+                                            clientSockets.sendAndClose(clientID, "Command not comeplete, local filepath not mentioned.");
                                         }
 
 
                                     }else{
-                                        clientSockets.sendAndClose(clientID, "CLIII Error! Invalid MDFS directory, " + isMDFSdirValid);
+                                        clientSockets.sendAndClose(clientID, "Invalid MDFS directory, " + isMDFSdirValid);
                                     }
 
                                 }else{
-                                    clientSockets.sendAndClose(clientID, "CLIII Error!Command not complete, Filename not mentioned.");
+                                    clientSockets.sendAndClose(clientID, "Command not complete, Filename not mentioned.");
                                 }
-
 
                             }
                         }else{
-                            clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a filename with MDFS filepath.");
+                            clientSockets.sendAndClose(clientID, "Command not complete, mention a filename with MDFS filepath.");
                         }
                     }else if (cmd[1].equals("-mkdir")) {
 
@@ -263,10 +277,10 @@ class RequestHandler implements Runnable{
                                 handleMkdirCommand.handleMkdirCommand(clientID, mdfsDir);
 
                             }else{
-                                clientSockets.sendAndClose(clientID, "CLIII Error! Provided MDFS " + isDirValid);
+                                clientSockets.sendAndClose(clientID, "Provided MDFS " + isDirValid);
                             }
                         } else {
-                            clientSockets.sendAndClose(clientID, "CLIII Error! Command not complete, mention a new MDFS directory.");
+                            clientSockets.sendAndClose(clientID, "Command not complete, mention a new MDFS directory.");
                         }
                     }else if(cmd[1].equals("-rm")){
 
@@ -281,7 +295,7 @@ class RequestHandler implements Runnable{
                             if(dir.equals("/")){
 
                                 //cannot delete root
-                                clientSockets.sendAndClose(clientID, "CLIII Error! Cannot delete / directory.");
+                                clientSockets.sendAndClose(clientID, "Cannot delete / directory.");
 
                             }else if(dir.equals("/*")){
 
@@ -299,7 +313,7 @@ class RequestHandler implements Runnable{
 
 
                                 //check if the last elem is file or dir
-                                if (dirTokens[dirTokens.length - 1].contains(".jpg") || dirTokens[dirTokens.length - 1].contains(".mp4") || dirTokens[dirTokens.length - 1].contains(".txt") || dirTokens[dirTokens.length - 1].contains(".pdf")) {
+                                if (utils.checkFileExtension(dirTokens[dirTokens.length - 1])) {
 
                                     //this is a file deletion request
                                     handleRMcommand.handleRMcommand(clientID, dir, dirTokens, "del_file");
@@ -311,7 +325,7 @@ class RequestHandler implements Runnable{
                             }
 
                         }else{
-                            clientSockets.sendAndClose(clientID, "CLIII Error! Mention a MDFS directory or a MDFS filepath with file name to delete.");
+                            clientSockets.sendAndClose(clientID, "Mention a MDFS directory or a MDFS filepath with file name to delete.");
                         }
                     }else if(cmd[1].equals("-ls")){
 
@@ -331,101 +345,28 @@ class RequestHandler implements Runnable{
                                 handleLScommand.handleLScommand(clientID, mdfsDir);
 
                             }else{
-                                clientSockets.sendAndClose(clientID, "CLIII Error! MDFS " + isDirValid);
+                                clientSockets.sendAndClose(clientID, "MDFS " + isDirValid);
                             }
                         }else{
-                            clientSockets.sendAndClose(clientID, "CLIII Error! Mention a MDFS directory to list files and folders.");
+                            clientSockets.sendAndClose(clientID, "Mention a MDFS directory to list files and folders.");
                         }
                     }else if(cmd[1].equals("-copyFromLocal")){
-
-                        //check if the next token exists
-                        if(cmd.length>2){
-
-                            //this is the unixLocal dir with filename
-                            String unixLocDirWithFileName = cmd[2];
-
-                            //check if the unixLocal dir is only root without filename
-                            if(unixLocDirWithFileName.equals("/")){
-
-                                //unixLocal is root without filename
-                                clientSockets.sendAndClose(clientID, "CLIII Error! filename not mentioned.");
-
-                            }else{
-
-                                //the last token is filename
-                                //separate the dir in tokens
-                                String[] dirTokens = unixLocDirWithFileName.split("/");
-
-                                //remove empty strings
-                                dirTokens = Directory.delEmptyStr(dirTokens);
-
-                                //check the length of dirTokens
-                                if(dirTokens.length>0){
-
-                                    //the filename is the last token in dirTokens
-                                    String filename = dirTokens[dirTokens.length-1];
-
-                                    //make the filepath
-                                    String unixLocalDir = "/";
-                                    if(dirTokens.length>1){
-
-                                        //add all tokens and make a filepath
-                                        for(int i=0; i< dirTokens.length-1; i++){unixLocalDir = unixLocalDir + dirTokens[i] + "/";}
-
-                                    }else{
-                                        //root is the filepath
-                                        unixLocalDir = unixLocalDir;
-                                    }
-
-                                    String unixLocDirValid = utils.isValidLocalDirInUnix(unixLocalDir);
-
-                                    if(unixLocDirValid.equals("OK")){
-
-                                        //check if the next token exists
-                                        if(cmd.length>3){
-
-                                            //this is the androidLocalDir
-                                            String androidLocalDir = cmd[3];
-
-                                            //check if the androidLocalDir is valid
-                                            String androidLocDirValid  = utils.isValidLocalDirInAndroidPhone(androidLocalDir);
-                                            if(androidLocDirValid.equals("OK")){
-
-                                                //do the job
-                                                handleCOPYFROMLOCALcommand.handleCOPYFROMLOCALcommand(clientID, filename, unixLocalDir, androidLocalDir);
-
-                                            }else{
-                                                clientSockets.sendAndClose(clientID, "CLIII Error! Phone local " + androidLocDirValid);
-                                            }
-
-                                        }else{
-                                            clientSockets.sendAndClose(clientID, "CLIII Error! Phone local directory not mentioned.");
-                                        }
-                                    }else{
-                                        clientSockets.sendAndClose(clientID, "CLIII Error! Client local " + unixLocDirValid);
-                                    }
-
-                                }else{
-                                    //this should not execute unless some weird error
-                                    clientSockets.sendAndClose(clientID, "CLIII Error! No filename mentioned with client local directory.");
-                                }
-
-                            }
-
-                        }else{
-                            clientSockets.sendAndClose(clientID, "CLIII Error! Client local directory not mentioned.");
-                        }
+                        //do the job
+                        handleCOPYFROMLOCALcommand.handleCOPYFROMLOCALcommand(clientID, cmd);
+                    }else if(cmd[1].equals("-copyToLocal")){
+                        //do the job
+                        handleCOPYTOLOCALcommand.handleCOPYTOLOCALcommand(clientID, cmd);
                     }else{
-                        clientSockets.sendAndClose(clientID, "CLIII Error! Command has not been implemented yet.");
+                        clientSockets.sendAndClose(clientID, "cliii Command has not been implemented yet.");
                     }
                 }else{
-                    clientSockets.sendAndClose(clientID, "CLIII Error! No command found.");
+                    clientSockets.sendAndClose(clientID, "No command "+ cmd[1] + " found.");
                 }
             }else{
-                clientSockets.sendAndClose(clientID, "CLIII Error! Operand missing.");
+                clientSockets.sendAndClose(clientID, "Operand missing.");
             }
         }else{
-            clientSockets.sendAndClose(clientID, "CLIII Error! Not a MDFS command...Type \"mdfs -help\" for more information.");
+            clientSockets.sendAndClose(clientID, "Not a MDFS command...Type \"mdfs -help\" for more information.");
 
         }
 

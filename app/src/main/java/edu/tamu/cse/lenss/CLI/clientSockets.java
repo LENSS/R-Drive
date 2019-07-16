@@ -24,7 +24,7 @@ public class clientSockets {
         this.cSocket = cSocket;
     }
 
-    private static void close(String clientID){
+    public static void close(String clientID){
         ///get the clientSockets object from map
         clientSockets socket = sockets.get(clientID);
 
@@ -40,14 +40,14 @@ public class clientSockets {
 
     }
 
-    private static void send(String clientID, String reply){
+    public static void send(String clientID, String reply){
         ///get the clientSockets object from map
         clientSockets socket = sockets.get(clientID);
 
         //write on the socket aka send reply to client
         if(socket!=null) {
             try {
-                socket.os.write((reply + "\n\n").getBytes());
+                socket.os.write((reply).getBytes());
                 socket.os.flush();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -63,4 +63,5 @@ public class clientSockets {
         //remeove the entry from the map
         sockets.remove(clientID);
     }
+
 }

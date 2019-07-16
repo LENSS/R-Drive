@@ -31,20 +31,26 @@ public class handleGETrequest {
             fileInfo.setNumberOfBlocks((byte)metadata.numOfBlocks);
             fileInfo.setFragmentsParms((byte)metadata.n2,  (byte)metadata.k2);
 
-            //do the job
+/*            //do the job
             ServiceHelper.getInstance().executeRunnableTask(new Runnable() {
                 @Override
                 public void run(){
-
                     MDFSFileRetrieverViaRsock retriever = new MDFSFileRetrieverViaRsock(fileInfo, metadata, clientID);  //RSOCK
                     retriever.setDecryptKey(ServiceHelper.getInstance().getEncryptKey());
                     retriever.setListener(fileRetrieverListenerviarsock);
                     retriever.start();
                 }
-            });
+            });*/
+
+
+            MDFSFileRetrieverViaRsock retriever = new MDFSFileRetrieverViaRsock(fileInfo, metadata, clientID, localDir);  //RSOCK
+            retriever.setDecryptKey(ServiceHelper.getInstance().getEncryptKey());
+            retriever.setListener(fileRetrieverListenerviarsock);
+            retriever.start();
+
 
             //send reply tto cli client
-            clientSockets.sendAndClose(clientID, "CLIII Error! -get request has been place.");
+            clientSockets.sendAndClose(clientID, "CLIII Info! -get request has been place.");
 
         }else{
             //dont do anything here..errors have been handled already
@@ -122,13 +128,13 @@ public class handleGETrequest {
             }else if(metadataRet.command==EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST){
 
                 //reply with failure as file dont exist
-                clientSockets.sendAndClose(clientID, "CLIII Failed! remove failed. Reason: File doesnt exist.");
+                clientSockets.sendAndClose(clientID, "CLIII Failed! -get failed. Reason: File doesnt exist.");
                 return null;
 
             }else if(metadataRet.command==EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_PERMISSIONDENIED){
 
                 //reply with failure as permission denied
-                clientSockets.sendAndClose(clientID, "CLIII Failed! remove failed. Reason: File permission denied.");
+                clientSockets.sendAndClose(clientID, "CLIII Failed! -get failed. Reason: File permission denied.");
                 return null;
             }
         }
@@ -141,17 +147,20 @@ public class handleGETrequest {
 
         @Override
         public void onError(String error, MDFSFileInfo fileInfo, String clientID) {
-            //clientSockets.sendAndClose(clientID, error);
+            System.out.println("xxx:::" + error);
+            return;
         }
 
         @Override
         public void statusUpdate(String status, String clientID) {
-            //do nothing
+            System.out.println("xxx:::" + status);
+            return;
         }
 
         @Override
         public void onComplete(File decryptedFile, MDFSFileInfo fileInfo, String clientID) {
-            //do nothing, already file has been saved and handled
+            System.out.println("xxx:::" + "success");
+            return;
         }
     };
 }

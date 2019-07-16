@@ -13,7 +13,7 @@ public class EdgeKeeperConstants {
 
     //EdgeKeeper variables
     public static String my_wifi_ip_temp = "";
-    public static final String dummy_EdgeKeeper_ip = "192.168.0.3";
+    public static final String dummy_EdgeKeeper_ip = "192.168.0.2";
     public static final int dummy_EdgeKeeper_port = 9995;
     public static String dummyGUID = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
     public static int GUID_LENGTH = 40;

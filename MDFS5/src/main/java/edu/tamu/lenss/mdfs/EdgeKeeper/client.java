@@ -44,7 +44,7 @@ public class client{
     }
 
     public void setSocketReadTimeout(){
-        try { socket.socket().setSoTimeout((int) EdgeKeeperConstants.readIntervalInMilliSec); } catch (SocketException e) { e.printStackTrace(); }
+        //try { socket.socket().setSoTimeout((int) EdgeKeeperConstants.readIntervalInMilliSec); } catch (SocketException e) { e.printStackTrace(); }
     }
 
     public void close(){

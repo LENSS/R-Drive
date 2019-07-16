@@ -1,14 +1,12 @@
 package edu.tamu.lenss.mdfs.handler;
 
-import android.os.Environment;
-
 import java.util.Observable;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
-import edu.tamu.lenss.mdfs.EdgeKeeper.server;
+import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperServer;
 import edu.tamu.lenss.mdfs.GNS.GNS;
 import edu.tamu.lenss.mdfs.GNS.GNSConstants;
 import edu.tamu.lenss.mdfs.handler.Receiver.UDPReceiverListener;
@@ -18,7 +16,6 @@ import edu.tamu.lenss.mdfs.network.TCPReceive.TCPReceiverListener;
 import edu.tamu.lenss.mdfs.pdu.BroadcastPacket;
 import edu.tamu.lenss.mdfs.pdu.MessageContainer;
 import edu.tamu.lenss.mdfs.pdu.UserDataPacket;
-import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
 import edu.tamu.lenss.mdfs.utils.Logger;
 import edu.tamu.lenss.mdfs.network.RsockReceiveForFileCreation;   //ROSK
@@ -76,9 +73,9 @@ public class PacketExchanger extends Observable {
 			t1.start();
 		}
 
-		//check if I am the dummy EdgeKeeper server.
+		//check if I am the dummy EdgeKeeper server. //todo: you are not the edgekeeper
 		if(EdgeKeeperConstants.dummy_EdgeKeeper_ip.equals(EdgeKeeperConstants.my_wifi_ip_temp)){
-            server server = new server(EdgeKeeperConstants.dummy_EdgeKeeper_port);
+            EdgeKeeperServer EdgeKeeperServer = new EdgeKeeperServer(EdgeKeeperConstants.dummy_EdgeKeeper_port);
 		}
 
 

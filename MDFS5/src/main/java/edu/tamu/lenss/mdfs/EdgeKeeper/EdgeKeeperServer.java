@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class server{
+public class EdgeKeeperServer {
     //tcp variables
     public int port = -1;
     ServerSocketChannel serverSocketChannel;
@@ -20,7 +20,7 @@ public class server{
     Thread readerTrd;
 
 
-    public server(int port){
+    public EdgeKeeperServer(int port){
         this.port = port;
 
         //open

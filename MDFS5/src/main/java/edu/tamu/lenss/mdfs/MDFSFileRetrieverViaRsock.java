@@ -44,11 +44,13 @@ public class MDFSFileRetrieverViaRsock {
     private MDFSFileInfo fileInfo;
     private FileMetadata metadata;
     private String clientID;
+    private String localDir;
 
-    public MDFSFileRetrieverViaRsock(MDFSFileInfo fInfo, FileMetadata metadata, String clientID) {
+    public MDFSFileRetrieverViaRsock(MDFSFileInfo fInfo, FileMetadata metadata, String clientID, String localDir) {
         this.fileInfo = fInfo;
         this.metadata = metadata;
         this.clientID = clientID;
+        this.localDir = localDir;
     }
 
     public void start(){
@@ -66,6 +68,8 @@ public class MDFSFileRetrieverViaRsock {
 
     //this function calls new MDFSBlockRetrieverViaRsock()
     private void retrieveBlocks(){
+        System.out.println("xxx:::" + "inside retrieveblock");
+
         fileListener.statusUpdate("Start downloading blocks. Total " + fileInfo.getNumberOfBlocks() + " blocks.", clientID);
         final Queue<Byte> downloadQ = new ConcurrentLinkedQueue<Byte>();
         for(byte i=0; i < fileInfo.getNumberOfBlocks(); i++){
@@ -82,7 +86,7 @@ public class MDFSFileRetrieverViaRsock {
                 synchronized(downloadQ){
                     while(!downloadQ.isEmpty() && reTryLimit > 0){
                         curBlockIdx = downloadQ.poll();
-                        curBlock = new MDFSBlockRetrieverViaRsock(fileInfo, curBlockIdx, metadata, clientID);  //RSOCK
+                        curBlock = new MDFSBlockRetrieverViaRsock(fileInfo, curBlockIdx, metadata, clientID, fileInfo);  //RSOCK
                         curBlock.setListener(blockListener);
                         curBlock.setDecryptKey(decryptKey);
                         curBlock.start();
@@ -107,7 +111,7 @@ public class MDFSFileRetrieverViaRsock {
                 private long sleepPeriod = Constants.IDLE_BTW_FAILURE;
                 @Override
                 public void onError(String error, MDFSFileInfo fInfo, String clientID) {
-                    //fileListener.onError("Retrieve block unsuccessful. Retrying...  " + error, fInfo, clientID);
+                    fileListener.onError("Retrieve block unsuccessful. Retrying...  " + error, fInfo, clientID);
                     try {
                         Thread.sleep(sleepPeriod);
                     } catch (InterruptedException e) {
@@ -122,7 +126,7 @@ public class MDFSFileRetrieverViaRsock {
 
                 @Override
                 public void onComplete(File decryptedFile, MDFSFileInfo fileInfo, String clientID) {
-                    Logger.i(TAG, "Complete Retrieving One Block");
+                    System.out.println("xxx::: Complete Retrieving One Block");
                     synchronized(downloadQ){
                         sleepPeriod = Constants.IDLE_BTW_FAILURE;
                         downloadQ.notify();
@@ -142,7 +146,7 @@ public class MDFSFileRetrieverViaRsock {
             public void complete(Boolean result) {
                 if(result){
                     // Directory update
-                    Logger.i(TAG, "Complete downloading all blocks of a file");
+                    System.out.println("xxx" + " complete downlaoding all blocks");
                     fileListener.statusUpdate("Complete downloading all blocks of a file", clientID);
                     if(fileInfo.getFileName().contains(".mp4") && fileInfo.getNumberOfBlocks() > 1){
                         mergeBlocks();
@@ -159,6 +163,7 @@ public class MDFSFileRetrieverViaRsock {
             }
         };
 
+        System.out.println("xxx about to place job");
         ServiceHelper.getInstance().submitCallableTask(new CallableTask<Boolean>(downloadTask, callback));
     }
 
@@ -215,6 +220,7 @@ public class MDFSFileRetrieverViaRsock {
     }
 
     private void mergeBlocks(){
+        System.out.println("xxx::: mergeblock");
         Callable<Boolean> mergeJob = new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
@@ -228,7 +234,7 @@ public class MDFSFileRetrieverViaRsock {
         CallableCallback<Boolean> callback = new CallableCallback<Boolean>(){
             @Override
             public void complete(Boolean result) {
-                // start MDFS
+
                 if(result){
                     Logger.i(TAG, "Video Merge Complete.");
                     fileListener.statusUpdate("Video Merge Complete.", clientID);
@@ -248,7 +254,7 @@ public class MDFSFileRetrieverViaRsock {
                     ServiceHelper.getInstance().getDataLogger().appendSensorData(LogFileName.FILE_RETRIEVAL, logStr.toString());
                 }
                 else{
-                    Logger.e(TAG, "Fail to merge video.");
+                    Logger.e(TAG, "xxx::: Fail to merge video.");
                     fileListener.onError("Fail to merge video.", fileInfo, clientID);
                     return;
                 }
@@ -259,6 +265,10 @@ public class MDFSFileRetrieverViaRsock {
 
 
     private String getDecryptedFilePath(){
+
+        //first set the path where the file ought to be saved
+        Constants.DIR_DECRYPTED = localDir.replace("/storage/emulated/0/", "/");
+
         return Environment.getExternalStorageDirectory().getAbsolutePath()
                 + File.separator + Constants.DIR_DECRYPTED
                 + File.separator + fileInfo.getFileName();

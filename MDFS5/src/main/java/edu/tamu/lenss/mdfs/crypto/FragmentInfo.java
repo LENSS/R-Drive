@@ -25,8 +25,7 @@ public class FragmentInfo implements Serializable {
 	private byte _kNumber;
 	private byte _nNumber;
 	
-	public FragmentInfo(String filename, byte fragmentType, long filesize, 
-			byte[] fragment, byte fragmentNumber, byte kNumber, byte nNumber, long lastModified) {
+	public FragmentInfo(String filename, byte fragmentType, long filesize, byte[] fragment, byte fragmentNumber, byte kNumber, byte nNumber, long lastModified) {
 		super();
 		_filename = filename;
 		_fragment = fragment;

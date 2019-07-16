@@ -53,11 +53,7 @@ public class MDFSEncoder {
 			// Generate the secret key
 			SecretKey skey = MDFSCipher.getInstance().generateSecretKey();
 			rawSecretKey = skey.getEncoded(); 
-			
-			// Store the file fragments in local SDCard
-			/*File keyDir = AndroidIOUtils.getExternalFile(Constants.DIR_ROOT);
-			IOUtilities.byteToFile(rawSecretKey, keyDir, "keystore");			
-			rawSecretKey = IOUtilities.fileToByte(AndroidIOUtils.getExternalFile(Constants.DIR_ROOT + "/keystore"));*/
+
 			
 		}while(new BigInteger(rawSecretKey).signum()<=0);
 	}

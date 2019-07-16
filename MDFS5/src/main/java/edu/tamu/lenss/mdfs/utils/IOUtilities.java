@@ -378,12 +378,16 @@ public final class IOUtilities {
 			input.close();
 			fis.close();
 		} catch (FileNotFoundException e) {
+			System.out.println("xxx yoyoyoy");
 			e.printStackTrace();
 		} catch (StreamCorruptedException e) {
+			System.out.println("xxx yoyoyoy");
 			e.printStackTrace();
 		} catch (IOException e) {
+			System.out.println("xxx yoyoyoy");
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
+			System.out.println("xxx yoyoyoy");
 			e.printStackTrace();
 		}
 		return object;

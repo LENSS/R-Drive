@@ -46,7 +46,7 @@ public class handleRMcommand {
 
         //check if connection succeeded..if not, return with error msg
         if(!connected){
-            clientSockets.sendAndClose(clientID, "mkdir Error! Could not connect to EdgeKeeper.");
+            clientSockets.sendAndClose(clientID, "-rm Error! Could not connect to EdgeKeeper.");
             return;
         }
 

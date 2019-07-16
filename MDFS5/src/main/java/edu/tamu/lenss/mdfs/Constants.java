@@ -40,7 +40,7 @@ public class Constants {
 
 	public static final String DIR_ROOT = "MDFS";
 	public static final String DIR_CACHE = DIR_ROOT + File.separator + "cache";
-	public static final String DIR_DECRYPTED = DIR_ROOT + File.separator + "decrypted";
+	public static String DIR_DECRYPTED = "";  // DIR_ROOT + File.separator + "decrypted";
 	public static final String DIR_ENCRYPTED = DIR_ROOT + File.separator + "encrypted";
 	//public static final String DIR_JOB_CACHE = DIR_ROOT + File.separator +"job_cache";
 	public static final String DIR_JOBS = DIR_ROOT + File.separator + "jobs";

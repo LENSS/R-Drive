@@ -43,6 +43,7 @@ public class cli_processor extends Thread {
             //Accept the socket
             Socket cSocket;
             try {
+                //put the request in a new thread
                 cSocket = serverSocket.accept();
                 System.out.println("CLIII received new connection..." );
                 executor.execute(new RequestHandler(cSocket, appContext));

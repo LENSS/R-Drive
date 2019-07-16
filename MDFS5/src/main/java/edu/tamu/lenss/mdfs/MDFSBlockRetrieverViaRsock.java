@@ -54,27 +54,28 @@ public class MDFSBlockRetrieverViaRsock {
     private MDFSFileInfo fileInfo;
     private boolean decoding = false;	        // Has the decoding procedure started?
     private final BlockRetrieveLog fileRetLog = new BlockRetrieveLog();
-    private AtomicInteger locFragCounter = new AtomicInteger();
+    private AtomicInteger locFragCounter;
     private int initFileFragsCnt = 0;          //dont change it
     private FileMetadata metadata;
     private boolean isFinished = false;
     private String clientID;
     private byte[] decryptKey;
 
-    public MDFSBlockRetrieverViaRsock(String fileName, long fileId, byte blockIndex, String clientID){
+    public MDFSBlockRetrieverViaRsock(String fileName, long fileId, byte blockIndex, String clientID, MDFSFileInfo fileInfo){
         serviceHelper = ServiceHelper.getInstance();
         this.fileName = fileName;
         this.fileId = fileId;
         this.blockIdx = blockIndex;
-        this.fileInfo = serviceHelper.getDirectory().getFileInfo(fileId);
+        this.fileInfo = fileInfo;
         this.clientID = clientID;
     }
 
 
-    public MDFSBlockRetrieverViaRsock(MDFSFileInfo fInfo, byte blockIndex, FileMetadata metadata, String clientID){	//RSOCK
-        this(fInfo.getFileName(), fInfo.getCreatedTime(), blockIndex, clientID);
+    public MDFSBlockRetrieverViaRsock(MDFSFileInfo fInfo, byte blockIndex, FileMetadata metadata, String clientID, MDFSFileInfo fileInfo){	//RSOCK
+        this(fInfo.getFileName(), fInfo.getCreatedTime(), blockIndex, clientID, fileInfo);
         this.fileInfo = fInfo;
         this.metadata = metadata;
+        this.locFragCounter  = new AtomicInteger();
     }
 
     //setting decryption key
@@ -84,6 +85,8 @@ public class MDFSBlockRetrieverViaRsock {
 
 
     public void start(){
+
+        System.out.println("xxx" + " inside block ret start");
 
         // Check if a decrypted file or encrypted file already exists on my device
         // If it is, returns it immediately.
@@ -179,6 +182,7 @@ public class MDFSBlockRetrieverViaRsock {
 
     //non blocking call
     private void downloadFrags(){
+        System.out.println("xxx" + " inside download frags");
 
         // Create a folder for fragments of this block
         File tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileName, fileId, blockIdx));
@@ -191,8 +195,9 @@ public class MDFSBlockRetrieverViaRsock {
 
         listener.statusUpdate("Downloading fragments", clientID);
         // If I have enough fragments already
+        System.out.println("xxx locfragcount: " + locFragCounter.get());
         if(locFragCounter.get() >= fileInfo.getK2()){
-            System.out.println("ifff decodefile is being called from downloadfrags");
+            System.out.println("xxx decodefile is being called from downloadfrags");
             decodeFile();
             return;
         }
@@ -211,6 +216,8 @@ public class MDFSBlockRetrieverViaRsock {
 
                     Thread thread = new Thread(new FragmentDownloaderViaRsock(sNode, blockIdx, fragNum, UUID.randomUUID().toString().substring(0, 7)));
                     thread.start();
+
+                    //new FragmentDownloaderViaRsock(sNode, blockIdx, fragNum, UUID.randomUUID().toString().substring(0, 7)).run();
 
                     if(--requiredDownloadCnt < 1){
                         return;
@@ -243,7 +250,7 @@ public class MDFSBlockRetrieverViaRsock {
 
         @Override
         public void run(){
-            System.out.println("a thread is born");
+            System.out.println("xxx a thread is born");
             System.out.println("ifff downloading blocknum " + blockIdx + " fragmentnum " + fragmentIndex);
             int block = 0;
             int total_pooling_time = 0;
@@ -281,12 +288,12 @@ public class MDFSBlockRetrieverViaRsock {
                 ReceivedFile receivedFile = null;
                 while(true){
                     //block only for this amount of time
-                    System.out.println("blocking on while " + (++block));
+                    System.out.println("xxx blocking on while " + (++block));
 
                     //check if blocking time expired then break out of while(whether or not fragment received))
                     if(total_pooling_time>= Constants.FRAGMENT_RETRIEVAL_TIMEOUT_INTERVAL){
                         RSockConstants.intrfc_retrieval.deleteEndpoint(sendAndReplyEndpoint);
-                        System.out.println("un blocking on while ");
+                        System.out.println("xxx un blocking on while ");
                         break;
                     }
 
@@ -295,7 +302,7 @@ public class MDFSBlockRetrieverViaRsock {
                     total_pooling_time = total_pooling_time + interval;
                     if(receivedFile!=null) {
                         //coming here means we received a reply for file fragment request
-                        System.out.println("received file frag which is not null inside MDFSBlockRetrieval (success)");
+                        System.out.println("xxx received file frag which is not null inside MDFSBlockRetrieval (success)");
                         RSockConstants.intrfc_retrieval.deleteEndpoint(sendAndReplyEndpoint);
 
                         //get the byteArray[] from the receivedFile obj and convert into MDFSRsockBlockRetrieval object
@@ -358,6 +365,7 @@ public class MDFSBlockRetrieverViaRsock {
                     serviceHelper.getDirectory().addBlockFragment(header.getCreatedTime(), header.getBlockIndex(), header.getFragIndex());
                     locFragCounter.incrementAndGet();
                 }else if(tmp0 != null){
+                    //something was wrong
                     tmp0.delete();
                 }
 
@@ -367,7 +375,7 @@ public class MDFSBlockRetrieverViaRsock {
 
             }
 
-            System.out.println("a thread is dying");
+            System.out.println("xxx a thread is dying");
         }
 
     }
@@ -378,11 +386,13 @@ public class MDFSBlockRetrieverViaRsock {
     //or called by decodeFIle() function after fetching of fragments is done.
     private synchronized void decodeFile(List<FragmentInfo> blockFragments){
 
+        System.out.println("xxx inside decodefile");
         if(!isFinished) {
             // Final Check. Make sure enough fragments are available
             //decodeFile() execution will only proceed further if this block of code passes
             if (blockFragments.size() < fileInfo.getK2()) {
                 String s = blockFragments.size() + " block fragments are available locally.";
+                System.out.println("xxx inside decodefile insufficient fragments");
                 listener.onError("Insufficient fragments. " + s, fileInfo, clientID);
                 return;
             }
@@ -411,9 +421,10 @@ public class MDFSBlockRetrieverViaRsock {
 
             //check if decoding completed
             if (decoder.decodeNow(blockFragments, tmp.getAbsolutePath())) {
-                Logger.i(TAG, "Block Decryption Complete");
+                System.out.println("xxx Block Decryption Complete");
                 isFinished = true;
                 listener.onComplete(tmp, fileInfo, clientID);
+                return;
             } else {
                 isFinished = false;
                 decoding = false;
@@ -442,6 +453,7 @@ public class MDFSBlockRetrieverViaRsock {
     //get stored fragments
     private List<FragmentInfo> getStoredFrags(){
         Set<Byte> cachedFrags = serviceHelper.getDirectory().getStoredFragIndex(fileId, blockIdx);
+
         List<FragmentInfo> blockFragments = new ArrayList<FragmentInfo>();
         if(cachedFrags != null){
             // Check stored fragments
@@ -452,18 +464,24 @@ public class MDFSBlockRetrieverViaRsock {
                     public boolean accept(File f) {
                         // one fragment maybe still being downloaded. We assume each fragment is at least 5k large
                         return (f.isFile()
-                                && !f.getName().contains(DOWNLOADING_SIGNATURE)
+                                //&& !f.getName().contains(DOWNLOADING_SIGNATURE)
                                 && f.getName().contains(fileName + "__" + blockIdx + "__frag__")
-                                && f.length() > 1024*5);
+                                //&& f.length() > 1024*5
+                                );
                     }
                 });
+
+                System.out.println("xxx list of files " + files.length);
                 for (File f : files) {
-                    FragmentInfo frag; frag = IOUtilities.readObjectFromFile(f, FragmentInfo.class);
+                    FragmentInfo frag;
+                    frag = IOUtilities.readObjectFromFile(f, FragmentInfo.class);
                     if(frag != null && cachedFrags.contains(frag.getFragmentNumber()))
                         blockFragments.add(frag);
                 }
             }
         }
+
+        System.out.println("xxx local frag count:  " + blockFragments.size());
         return blockFragments;
     }
 

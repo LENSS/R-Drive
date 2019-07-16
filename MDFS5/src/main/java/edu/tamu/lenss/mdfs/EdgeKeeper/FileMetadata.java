@@ -68,6 +68,7 @@ public class FileMetadata implements Serializable {
     public FileMetadata(int cmd, String message){
         this.command = cmd;
         this.message = message;
+        this.chosenNodes = new ArrayList<>(); //this list if populated by addInfo() function
     }
 
 

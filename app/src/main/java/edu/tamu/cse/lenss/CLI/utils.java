@@ -124,7 +124,7 @@ public class utils {
     }
 
     //check if the local dir is valid in typical linux system
-    public static String isValidLocalDirInUnix(String dir){
+    public static String isValidLocalDirInLinux(String dir){
 
         //check if the first char is root
         if(dir.charAt(0)!='/'){
