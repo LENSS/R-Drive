@@ -61,7 +61,7 @@ import edu.tamu.lenss.mdfs.utils.Logger;
 
 
 //this class is the first class that is run as a service.
-//this class is basically the execution starting point of mdfs library
+//this class is basically the networking execution starting point of mdfs library
 public class NetworkObserver extends Service implements Observer {
 	private static final String TAG = NetworkObserver.class.getSimpleName();
 	private static final String SCREEN_STATE_LISTENER = "screen_state";

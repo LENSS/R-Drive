@@ -71,7 +71,9 @@ public class EdgeKeeperServer {
                                     System.out.println("EdgeKeeper server got metadata Deposit request from fragment receiver");
 
                                     //first check if the metadataRec reqUniqueID belongs to deleted files,
-                                    //that means the file has been deleted
+                                    //that means that file has been deleted.
+                                    //note: if the same file has been put in MDFS again,
+                                    //then it will have a different reqUniqueID so it will not be a problem.
                                     if(directory.deletedFiles.contains(metadataRec.uniqueReqID)){
                                         continue;   //the file has already been deleted so we ignore this metadata
 

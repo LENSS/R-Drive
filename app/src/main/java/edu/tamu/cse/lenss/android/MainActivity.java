@@ -19,6 +19,8 @@ import android.widget.Toast;
 import java.io.IOException;
 
 
+
+//this is the main actiivty and where the executio of this app starts.
 public class MainActivity extends AppCompatActivity {
 
 
