@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../MDFS5/MDFS5.iml" filepath="$PROJECT_DIR$/../MDFS5/MDFS5.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../MDFS_NG.iml" filepath="$PROJECT_DIR$/../MDFS_NG.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app.iml" filepath="$PROJECT_DIR$/app.iml" />
+    </modules>
+  </component>
+</project>

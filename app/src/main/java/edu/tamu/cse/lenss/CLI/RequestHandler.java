@@ -28,7 +28,7 @@ class RequestHandler implements Runnable{
 
 
     //commands
-    String[] comm = { "-help", "-ls", "-list", "-mkdir", "-rm", "-setfacl", "-getfacl", "-put", "-get", "-copyFromLocal", "-copyToLocal"};
+    String[] comm = { "-help", "-ls", "-list", "-mkdir", "-rm", "-setfacl", "-getfacl", "-put", "-get", "-copyFromLocal", "-copyToLocal", "-hdfs"};
     Set<String> commandNames = new HashSet<>(Arrays.asList(comm));
 
     public RequestHandler( Socket cSocket, Context con) {
@@ -356,6 +356,8 @@ class RequestHandler implements Runnable{
                     }else if(cmd[1].equals("-copyToLocal")){
                         //do the job
                         handleCOPYTOLOCALcommand.handleCOPYTOLOCALcommand(clientID, cmd);
+                    }else if(cmd[1].equals("-hdfs")){
+                        handleHDFSjobs.handleHDFSjobs();  //todo: testing
                     }else{
                         clientSockets.sendAndClose(clientID, "cliii Command has not been implemented yet.");
                     }
