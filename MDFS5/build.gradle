@@ -56,20 +56,18 @@ dependencies {
     //rsock java api
     implementation files('libs/API.jar')
     //logging.
-    //implementation 'de.mindpipe.android:android-logging-log4j:1.0.3'
     implementation 'log4j:log4j:1.2.17'
-    //implementation 'org.slf4j:slf4j-android:1.6.1-RC1'
-    //jackson
-    //implementation files('libs/jackson-annotations-2.9.4.jar')
-    //implementation files('libs/jackson-core-2.9.4.jar')
-    //implementation files('libs/jackson-databind-2.9.4.jar')
+    implementation 'org.slf4j:slf4j-android:1.6.1-RC1'
     //hadoop
-    //implementation 'org.apache.hadoop:hadoop-hdfs-client:3.0.0'
     implementation files('libs/hadoop-common-3.0.0.jar')
     //implementation files('libs/hadoop-hdfs-3.0.0.jar')
+    //jackson
     implementation files('libs/jackson-annotations-2.9.4.jar')
     implementation files('libs/jackson-core-2.9.4.jar')
     implementation files('libs/jackson-databind-2.9.4.jar')
+    //hadoop dependencies
+    implementation group: 'org.codehaus.woodstox', name: 'woodstox-core-asl', version: '4.4.1'
+    implementation group: 'commons-collections', name: 'commons-collections', version: '3.2.2'
 }
 
 

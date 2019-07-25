@@ -357,7 +357,7 @@ class RequestHandler implements Runnable{
                         //do the job
                         handleCOPYTOLOCALcommand.handleCOPYTOLOCALcommand(clientID, cmd);
                     }else if(cmd[1].equals("-hdfs")){
-                        handleHDFSjobs.handleHDFSjobs();  //todo: testing
+                        handleHDFSjobs.handleHDFSjobs(clientID);  //todo: testing
                     }else{
                         clientSockets.sendAndClose(clientID, "cliii Command has not been implemented yet.");
                     }
