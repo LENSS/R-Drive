@@ -33,13 +33,13 @@ import static java.lang.Thread.sleep;
 //todo: stop all threads created here
 public class PacketExchanger extends Observable {
 	private static final String TAG = PacketExchanger.class.getSimpleName();
-	private TCPConnection tcpConnection;
-	private Sender sender;
-	private Receiver receiver;
-	private Queue<DataToObserver> messagesForObservers;
+	//private TCPConnection tcpConnection;
+	//private Sender sender;
+	//private Receiver receiver;
+	//private Queue<DataToObserver> messagesForObservers;
 	private volatile boolean keepRunning = true;
 	private static PacketExchanger instance = null;
-	private MessageQueueChecker checker;
+	//private MessageQueueChecker checker;
 
 
 	/**
@@ -47,11 +47,11 @@ public class PacketExchanger extends Observable {
 	 * @param nodeAddress
 	 */
 	private PacketExchanger(String nodeAddress) {
-		messagesForObservers = new ConcurrentLinkedQueue<DataToObserver>();
-		sender = new Sender(nodeAddress);
-		receiver = new Receiver(nodeAddress);
-		tcpConnection = new TCPConnection(tcpRcvListener);
-		checker = new MessageQueueChecker();
+		//messagesForObservers = new ConcurrentLinkedQueue<DataToObserver>();
+		//sender = new Sender(nodeAddress);
+		//receiver = new Receiver(nodeAddress);
+		//tcpConnection = new TCPConnection(tcpRcvListener);
+		//checker = new MessageQueueChecker();
 
 		//if file creation or retrieval is via rsock, then we need gns, so init gns first in GNS.java file		//RSOCK
 		if(Constants.file_creation_via_rsock_or_tcp.equals("rsock") || Constants.file_retrieval_via_rsock_or_tcp.equals("rsock")) {
@@ -101,18 +101,16 @@ public class PacketExchanger extends Observable {
 		return instance;
 	}
 
-	/**
-	 * Starts executing the AODV routing protocol
-	 */
+
+	//Starts executing the AODV routing protocol
 	protected synchronized void startThread(){
 		keepRunning = true;
-		sender.startThread();
-		receiver.addListener(udpRcvListener);
-		receiver.startThread();
-		tcpConnection.init();
+		//sender.startThread();
+		//receiver.addListener(udpRcvListener);
+		//receiver.startThread();
+		//tcpConnection.init();
 		//checker = new MessageQueueChecker();
-		checker.start();
-		Logger.i(TAG, "All TCP/UDP/RSOCK threads are running");  //RSOCK
+		//checker.start();
 	}
 
 	protected synchronized void resetAll(){
@@ -122,27 +120,28 @@ public class PacketExchanger extends Observable {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		sender = new Sender(ServiceHelper.getInstance().getNodeManager().getMyIpString());
-		receiver = new Receiver(ServiceHelper.getInstance().getNodeManager().getMyIpString());
-		tcpConnection = new TCPConnection(tcpRcvListener);
-		checker = new MessageQueueChecker();
+		//sender = new Sender(ServiceHelper.getInstance().getNodeManager().getMyIpString());
+		//receiver = new Receiver(ServiceHelper.getInstance().getNodeManager().getMyIpString());
+		//tcpConnection = new TCPConnection(tcpRcvListener);
+		//checker = new MessageQueueChecker();
 		startThread();
 	}
 
-	/**
-	 * Stops the UDP/TCP communication and release the Node singleton
-	 * Note: using this method tells the running threads to terminate.
-	 * This means that it does not ensure that any remaining userpackets is sent before termination.
-	 * Such behavior can be achieved by monitoring the notifications by registering as an observer.
-	 */
+
+
+
+	//Stops the UDP/TCP communication and release the Node singleton
+	//Note: using this method tells the running threads to terminate.
+	//This means that it does not ensure that any remaining userpackets is sent before termination.
+	//Such behavior can be achieved by monitoring the notifications by registering as an observer.
 	protected synchronized void stopThread(){
 		keepRunning = false;
-		receiver.stopThread();
-		sender.stopThread();
-		checker.interrupt();
-		tcpConnection.release();
-		messagesForObservers.clear();
-		Logger.i(TAG, "All TCP/UDP threads stop");
+		//receiver.stopThread();
+		//sender.stopThread();
+		//checker.interrupt();
+		//tcpConnection.release();
+		//messagesForObservers.clear();
+
 	}
 
 	protected void shutdown(){
@@ -155,13 +154,11 @@ public class PacketExchanger extends Observable {
 	public void sendMsgContainer(MessageContainer packet){
 		if(packet.isBroadcast()){
 			BroadcastPacket pkt = new BroadcastPacket(packet.getSource(), packet.getDest(), packet);
-			Logger.i(TAG, "Packet type " + packet.getPacketTypeReadable() + " is broadcasted");
-			sender.sendGlobalBrdcastPacket(pkt); // Hacky way. To handle multiple cast in Mesh Network
+			//sender.sendGlobalBrdcastPacket(pkt); // Hacky way. To handle multiple cast in Mesh Network
 		}
 		else{
 			UserDataPacket pkt = new UserDataPacket(packet.getSource(), packet.getDest(), packet);
-			Logger.i(TAG, "Packet type " + packet.getPacketTypeReadable() + " is sent to " + packet.getDestReadable());
-			sender.sendUnicastPacket(pkt);
+			//sender.sendUnicastPacket(pkt);
 		}
 	}
 
@@ -170,10 +167,10 @@ public class PacketExchanger extends Observable {
 
 		@Override
 		public void onNewPacket(String senderNodeAddess, MessageContainer data) {
-			messagesForObservers.add(new DataToObserver(DataToObserver.DataToObserver, data));
+			/*messagesForObservers.add(new DataToObserver(DataToObserver.DataToObserver, data));
 			synchronized (messagesForObservers) {
 				messagesForObservers.notify();
-			}
+			}*/
 		}
 	};
 
@@ -223,7 +220,7 @@ public class PacketExchanger extends Observable {
 		@Override
 		public void run() {
 			while(keepRunning){
-				try{
+				/*try{
 					synchronized (messagesForObservers) {
 						while(messagesForObservers.isEmpty()){
 							messagesForObservers.wait();
@@ -234,7 +231,7 @@ public class PacketExchanger extends Observable {
 					//Logger.i(TAG, "Packet  is sent to Observer");
 				}catch (InterruptedException e) {
 					// thread stopped
-				}
+				}*/
 			}
 		}
 	}

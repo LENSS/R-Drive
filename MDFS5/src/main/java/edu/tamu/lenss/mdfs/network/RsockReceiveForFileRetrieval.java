@@ -78,39 +78,12 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                     byte fragmentIndex = (byte) mdfsrsockblock.fragmentIndex;
 
 
-                    //create TCP on the same machine
-                    TCPSend send = TCPConnection.creatConnection(GNS.gnsServiceClient.getIPbyGUID(destGUID).get(0)); //todo:  dont make tcp fetch the fragment from disk
-                    if(send == null){ Logger.e(TAG, "Connection Failed"); return; }
-
-                    //send header
-                    ObjectOutputStream oos = new ObjectOutputStream(send.getOutputStream());
-                    oos.writeObject(header);
-
-                    //sleep for 10 millisec, allowing the other side to process header and decide whether to close the tcpSocket or nah
-                    try { sleep(5); } catch (InterruptedException e) { e.printStackTrace(); }
-
-
-                    //receive fileFragment from the same machine
-                    File tmp0 = null;
-                    byte[] buffer = new byte[Constants.TCP_COMM_BUFFER_SIZE];
-                    tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(fileName, fileId, blockIdx, fragmentIndex) + DOWNLOADING_SIGNATURE);
-                    FileOutputStream fos = new FileOutputStream(tmp0);
-                    int readLen = 0;
-                    DataInputStream din = send.getInputStream();
-                    while ((readLen = din.read(buffer)) >= 0) {
-                        fos.write(buffer, 0, readLen);
-                    }//this while loop breaks when readLen reads -1 due to other side closing the socket
-
-                    //close all
-                    fos.close();
-                    oos.close();
-                    din.close();
-                    send.close();
+                    //get the file fragment
+                    File tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(header.getFileName(), header.getCreatedTime(), header.getBlockIndex(), header.getFragIndex()));
 
 
                     //if fragment was fetched
                     if(tmp0.length()>0){
-                        System.out.println("hack tcp success");
 
                         //convert file tmp0 into byteArray
                         byteArray = new byte[(int) tmp0.length()];
@@ -154,29 +127,10 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                             e.printStackTrace();
                         }
                     }else{
-                        System.out.println("hack tcp failed");
-
-                        //now, make MDFSRsockBlockRetrieval object with the fragment byteArray
-                        mdfsrsockblock = new MDFSRsockBlockRetrieval(byteArray, (int) tmp0.length(), false, GNS.ownGUID );
-
-                        //convert mdfsrsockblock object into bytearray and do send
-                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                        ObjectOutputStream ooos = null;
-                        try {
-                            ooos = new ObjectOutputStream(bos);
-                            ooos.writeObject(mdfsrsockblock);
-                            ooos.flush();
-                            byte [] data = bos.toByteArray();
-
-                            //send the object over rsock
-                            String uuid = UUID.randomUUID().toString().substring(0,12);
-                            RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing","nothing", srcGUID, 0, "hdrRecv", receivedFile.getReplyEndpoint(), "nothing");
-                            System.out.println("fragment has been pushed to the rsock daemon (failure)");
-
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
+                        //file frag doesnt exist.
+                        //file frag wrong.
+                        //file frag invalid.
+                        //file frag fetching failed.
                     }
                 }
 

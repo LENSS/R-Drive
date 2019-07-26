@@ -66,7 +66,7 @@ public class ServiceHelper {
 		return instance;
 	}
 	
-	//if need directory call this fucntion to get a copy og MDFSDirectory..dont make a new copy of directory
+	//if need directory call this function to get a copy og MDFSDirectory..dont make a new object of MDFSdirectory
 	public MDFSDirectory getDirectory() {
 		return directory;
 	}
@@ -82,8 +82,6 @@ public class ServiceHelper {
 	public static void releaseService(){
 		//unregister GNS
 		boolean gnsUnreg = GNS.gnsServiceClient.removeService(GNSConstants.GNS_s);
-		System.out.println("gnsUnreg: " + gnsUnreg);
-
 		if(instance != null ){ 
 			Logger.v(TAG, "releaseService");
 			directory.saveDirectory();
@@ -95,8 +93,7 @@ public class ServiceHelper {
 			instance = null;
 		}
 	}
-	
-	
+
 	////////////////////////////////////////////////////////////////////////
 
 	public void broadcastJobRequest(JobReq jobReq, JobRequestListener lis){
@@ -129,8 +126,7 @@ public class ServiceHelper {
 	public void sendFileUpdate(NewFileUpdate update){
 		netObserver.sendMsgContainer(update);
 	}
-	
-	
+
 	public byte[] getEncryptKey() {
 		return encryptKey;
 	}

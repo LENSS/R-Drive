@@ -92,15 +92,11 @@ public class FragExchangeHelper {
 		byte [] mybytearray  = new byte [Constants.TCP_COMM_BUFFER_SIZE];
 		File fileFrag = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(header.getFileName(), 
 				header.getCreatedTime(), header.getBlockIndex(), header.getFragIndex()));
-		if(!fileFrag.exists() || fileFrag.length() < 1){	// Handle the situation that 0 byte file got stored...
-			Logger.e(TAG, "File Fragment does not exist");
-			fileFrag.delete();
-			data.close();  //closing socket without letting other side know that file frag doesnt exist
 
-			// Update directory
-			ServiceHelper.getInstance().getDirectory().removeBlockFragment(
-					header.getCreatedTime(), header.getBlockIndex(), header.getFragIndex());
-			return;
+		//if
+		if(!fileFrag.exists() || fileFrag.length() < 1){
+			fileFrag.delete();
+			data.close();  //closing socket without letting other side know that file frag doesnt exist.
 		}
 		
 		try {
