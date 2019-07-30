@@ -6,11 +6,9 @@ import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 
 public class DeleteFileHandler {
 	
-	public DeleteFileHandler(){
-	}
+	public DeleteFileHandler(){ }
 
 
-	//called by servicehelper.deletefile() , and netobserver.DELETE_FILE msg
 	public void processPacket(final DeleteFile delete){
 		if(delete.isDeleteAll()){
 			deleteAll();
@@ -41,9 +39,6 @@ public class DeleteFileHandler {
 		MDFSDirectory dir = ServiceHelper.getInstance().getDirectory();
 		dir.clearAll();
 	}
-	
-	public void sendFileDeletionPacket(DeleteFile delete){
-		PacketExchanger.getInstance().sendMsgContainer(delete);
-	}
-	
+
+
 }

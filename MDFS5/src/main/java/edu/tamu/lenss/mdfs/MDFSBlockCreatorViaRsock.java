@@ -51,7 +51,7 @@ public class MDFSBlockCreatorViaRsock {
     List<String> chosenNodes;       //list of GUIDs who will receive a fragment
     String[] permList;              //permission list for the file
     String uniqueReqID;             //unique req id fr file creation job
-    public boolean isFinished = false;
+    public boolean isFinished = false;  //this becomes true when the last thread pushes fragment to the rsock java api
     String clientID;                //client id who made the file creation request
     String filePathMDFS;            //mdfs directory in which the file will be virtually stored
 
@@ -280,20 +280,20 @@ public class MDFSBlockCreatorViaRsock {
                 if (!success) {
                     //do something
                 }
-                else if(fragCounter.incrementAndGet() >= n2){	// success!
-                    if(isFinished)
-                        return;
-                    if (fragCounter.get() > k2 || (fragCounter.get()==k2 && n2 == k2 )){
-                        Logger.v(TAG, fragCounter.get() + " fragments were distributed");
-                        listener.onComplete("fragments were distributed", clientID);
+                else if(success && fragCounter.incrementAndGet() >= n2){	// success!
 
-                    }
-                    else{
-                        // Delete fragments
+                    //chck if all work are already done by last thread
+                    if(isFinished){return;}
+
+                    //check if the job is done
+                    if (fragCounter.get() > k2 || (fragCounter.get()==k2 && n2 == k2 )){
+                        listener.onComplete("fragments were distributed", clientID);
+                    } else{
+                        //otherwise Delete fragments
                         DeleteFile deleteFile = new DeleteFile();
                         deleteFile.setFile(fileInfo.getFileName(), fileInfo.getCreatedTime());
                         ServiceHelper.getInstance().deleteFiles(deleteFile);
-                        listener.onError("Fail to distribute file fragments. " + "Only " + fragCounter.get() + " were successfully sent. Please try again later", clientID);
+                        listener.onError("Fail to distribute file fragments. " + "Only " + fragCounter.get() + " out of " + n2 + " were successfully sent. Please try again.", clientID);
                     }
                     isFinished = true;
 

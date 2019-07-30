@@ -19,11 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import android.util.Pair;
-import edu.tamu.lenss.mdfs.handler.PacketExchanger;
-import edu.tamu.lenss.mdfs.models.JobReq;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
-import edu.tamu.lenss.mdfs.models.NewFileUpdate;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
 import edu.tamu.lenss.mdfs.utils.Logger;
@@ -66,7 +62,6 @@ public class MDFSDirectory implements Serializable {
 	private LinkedList<MyPair<Long, Long>> recentDelete;
 	
 
-	private Map<Long, JobReq> jobMap;
 	
 	//fileID to BlockID to StartTime
 	private Map<Long, HashMap<Byte, Long>> downloadingBlocks;
@@ -81,7 +76,6 @@ public class MDFSDirectory implements Serializable {
 		decryptedFileSet = new HashSet<Long>();
 		recentUpdate = new LinkedList<MyPair<Long, Long>>();
 		recentDelete = new LinkedList<MyPair<Long, Long>>();
-		jobMap = new HashMap<Long, JobReq>();
 		downloadingBlocks = new HashMap<Long, HashMap<Byte, Long>>();
 	}
 
@@ -389,21 +383,6 @@ public class MDFSDirectory implements Serializable {
 	public boolean isDecryptedFileCached(long fileId) {
 		return decryptedFileSet.contains(fileId);
 	}
-	
-	public void addJob(Long jobId, JobReq jobReq){
-		jobMap.put(jobId, jobReq);
-	}
-
-	public Set<Long> getJobList(){ return jobMap.keySet(); }
-	
-	public List<JobReq> getJobReqList(){
-		List<JobReq> list;
-		if (!jobMap.isEmpty())
-			list = new ArrayList<JobReq>(jobMap.values());
-		else
-			list = new ArrayList<JobReq>();
-		return list;
-	}
 
 	public void clearAll() {
 		// Reset the maps
@@ -416,7 +395,6 @@ public class MDFSDirectory implements Serializable {
 		decryptedFileSet.clear();
 		recentUpdate.clear();
 		recentDelete.clear();
-		jobMap.clear();
 		
 		File rootDir = AndroidIOUtils.getExternalFile(Constants.DIR_ROOT); 
 		try {
@@ -426,32 +404,6 @@ public class MDFSDirectory implements Serializable {
 			e.printStackTrace();
 		}
 	}
-
-	//periodically called by scheduledTask.java to send out NEW_FILE_UPDATES for each files in the directory
-	//currently turned off from ScheduledTak.java class
-	public void broadcastMyDirectory(){
-		// Remove expired items
-		long curTime = System.currentTimeMillis();
-		while (!recentUpdate.isEmpty() && recentUpdate.getLast().second < (curTime - edu.tamu.lenss.mdfs.network.Constants.FILE_SYNC_PERIOD)) {
-			recentUpdate.removeLast();
-		}
-
-		for(MDFSFileInfo fInfo : getFileList()){
-			NewFileUpdate fUpdate = new NewFileUpdate(fInfo);
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			
-			// The file may be deleted within this delay
-			if(getFileInfo(fInfo.getCreatedTime()) != null &&
-					!isRecentUpdated(fInfo.getCreatedTime())){
-				PacketExchanger.getInstance().sendMsgContainer(fUpdate);
-			}			
-		}
-	}
-
 
 	//delete everything of a file from local mdfs directory
 	public void deleteFile(long fileId, String fName) {
@@ -586,7 +538,8 @@ public class MDFSDirectory implements Serializable {
 		}
 	}
 
-	//save mdfs directory object on local drive periodically
+	//save mdfs directory object on local drive.
+	// this function is called periodically.
 	public boolean saveDirectory() {
 		File tmp0 = AndroidIOUtils.getExternalFile(Constants.DIR_ROOT);
 		File tmp = IOUtilities.createNewFile(tmp0,

@@ -1,18 +1,6 @@
 package edu.tamu.lenss.mdfs;
 
 import java.io.File;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Handler;
-
-import edu.tamu.lenss.mdfs.GNS.GNS;
-import edu.tamu.lenss.mdfs.handler.ServiceHelper;
-import edu.tamu.lenss.mdfs.models.NodeInfo;
-import edu.tamu.lenss.mdfs.utils.IOUtilities;
-import example.Interface;
 
 public class Constants {
 	//public static final String IP_PREFIX = "192.168.2.";
@@ -62,6 +50,8 @@ public class Constants {
 	public static final int COMMON_DEVICE_WIDTH = 600;
 	public static final int COMMON_DEVICE_HEIGHT = 1024;
 	public static final long DOWNLOADING_BLOCK_TTL = 90*1000; // 1.5 MIN
+
+	public static final byte DELETE_FILE = 7;
 
 
 

@@ -9,7 +9,7 @@ import java.io.OptionalDataException;
 import java.io.Serializable;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-import edu.tamu.lenss.mdfs.models.MDFSPacketType;
+
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
 
 /**
@@ -22,6 +22,7 @@ public abstract class MessageContainer implements Serializable{
 	private byte packetType; 
 	private long dest, source;
 	private boolean broadcast=false;
+	public abstract byte[] toByteArray();
 	
 	public MessageContainer(){
 	}
@@ -35,11 +36,7 @@ public abstract class MessageContainer implements Serializable{
 		this.source = src;
 		this.dest = desti;
 	}
-	
-	
-	public String getPacketTypeReadable() {
-		return MDFSPacketType.TypeName[packetType];
-	}
+
 	
 	public byte getPacketType() {
 		return packetType;
@@ -85,11 +82,7 @@ public abstract class MessageContainer implements Serializable{
 	public <T extends MessageContainer> byte[] toByteArray(T type){
 		ByteArrayOutputStream byteStr = new ByteArrayOutputStream(8192);
 		try {
-			//ObjectOutputStream output = new ObjectOutputStream(byteStr);
-			/*
-			 * This is a Bug in KitKat (4.X.X). If calls GZIPOutputStream flush/finish, exception occurs! 
-			 * Can be removed in Android 5.0 or older devices
-			 */
+
 			GZIPOutputStream gout = new GZIPOutputStream(byteStr, false);
 			ObjectOutputStream output = new ObjectOutputStream(gout);
 			output.writeObject(type);
@@ -106,20 +99,8 @@ public abstract class MessageContainer implements Serializable{
 			return null; 
 		}
 	}
-	
-	/**
-	 * This method has to be overrode by children
-	 * @return
-	 */
-	public abstract byte[] toByteArray();
-	
-	
-	/**
-	 * Generic Method
-	 * @param packetData
-	 * @param type
-	 * @return
-	 */
+
+
 	public static <T extends MessageContainer> T parseFromByteArray(byte[] packetData, Class<T> type){
 		T packet=null;
 		try {

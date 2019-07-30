@@ -524,7 +524,7 @@ public class MDFSFileCreatorViaRsock {
 
 
     //this function updates own local directory about the created file
-    //and then calls updateEdgeKeeper() to send the updat to edgekeeper
+    //and then calls updateEdgeKeeper() to send the update to edgekeeper
     private void updateDirectory() {
 
         //set file creator

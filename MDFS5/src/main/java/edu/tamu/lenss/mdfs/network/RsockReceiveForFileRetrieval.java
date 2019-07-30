@@ -3,25 +3,20 @@ package edu.tamu.lenss.mdfs.network;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.UUID;
 
-import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.GNS.GNS;
-import edu.tamu.lenss.mdfs.MDFSBlockRetriever;
 import edu.tamu.lenss.mdfs.MDFSRsockBlockRetrieval;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.models.FragmentTransferInfo;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
-import edu.tamu.lenss.mdfs.utils.Logger;
 import example.*;
 
 import static java.lang.Thread.sleep;
@@ -29,9 +24,9 @@ import static java.lang.Thread.sleep;
 
 //this class is used for block retrieval via rsock, instead of tcp
 public class RsockReceiveForFileRetrieval implements Runnable {
-
-    private static final String TAG = MDFSBlockRetriever.class.getSimpleName();
+    
     private static final String DOWNLOADING_SIGNATURE = "_dOwN__lOaDiNg___";
+    static boolean isRunning = true;
 
     public RsockReceiveForFileRetrieval() {}
 
@@ -44,14 +39,12 @@ public class RsockReceiveForFileRetrieval implements Runnable {
 
             ReceivedFile receivedFile = null;
             byte[] byteArray = null;
-            boolean isRunning = true;
             ByteArrayInputStream bis;
             ObjectInputStream ois;
             while (isRunning) {
 
                 //blocking receive
-                ////receivedFile = intrfc.receive(0);
-                try { receivedFile = RSockConstants.intrfc_retrieval.receive(0,"hdrRecv");} catch (InterruptedException e) {e.printStackTrace(); }
+                try { receivedFile = RSockConstants.intrfc_retrieval.receive(100,"hdrRecv");} catch (InterruptedException e) {e.printStackTrace(); }
 
                 //if unblocked, check if received something
                 if (receivedFile != null) {
@@ -132,10 +125,22 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                         //file frag invalid.
                         //file frag fetching failed.
                     }
+                }else{
+                    //unblocked from rsock client library(roskc java api) due to timeout.
+                    //need to check if its time to break out of this while loop.
                 }
 
             }
-        }catch(IOException | ClassNotFoundException  e ){e.printStackTrace(); }  ////InterruptedException
 
+            //came out of while loop, now close the rsock client library object
+            RSockConstants.intrfc_retrieval.close();
+            RSockConstants.intrfc_retrieval = null;
+
+        }catch(IOException | ClassNotFoundException  e ){e.printStackTrace(); }
+
+    }
+
+    public static void stop(){
+        isRunning = false;
     }
 }

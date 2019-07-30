@@ -31,11 +31,7 @@ public class AndroidIOUtils {
 		return new File(Environment.getExternalStorageDirectory(), path);
 	}
 
-	public static boolean isExternalStorageAvailable() {
-		return Environment.MEDIA_MOUNTED.equals(Environment
-				.getExternalStorageState());
-		// return true;
-	}
+	public static boolean isExternalStorageAvailable() { return Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()); }
 
 	/**
 	 * Return the MAC Address of this device. <Br>

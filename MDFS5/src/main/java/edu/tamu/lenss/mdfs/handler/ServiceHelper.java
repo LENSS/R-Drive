@@ -9,19 +9,10 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 
-import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.GNS.GNS;
-import edu.tamu.lenss.mdfs.GNS.GNSConstants;
 import edu.tamu.lenss.mdfs.MDFSDirectory;
 import edu.tamu.lenss.mdfs.MDFSNodeStatusMonitor;
-import edu.tamu.lenss.mdfs.handler.BlockReplyHandler.BlockRepListener;
-import edu.tamu.lenss.mdfs.handler.JobProcessingHandler.JobRequestListener;
-import edu.tamu.lenss.mdfs.handler.TopologyHandler.TopologyListener;
-import edu.tamu.lenss.mdfs.models.AssignTaskReq;
-import edu.tamu.lenss.mdfs.models.BlockReq;
 import edu.tamu.lenss.mdfs.models.DeleteFile;
-import edu.tamu.lenss.mdfs.models.JobReq;
-import edu.tamu.lenss.mdfs.models.NewFileUpdate;
 import edu.tamu.lenss.mdfs.utils.AndroidDataLogger;
 import edu.tamu.lenss.mdfs.utils.Logger;
 
@@ -81,7 +72,7 @@ public class ServiceHelper {
 
 	public static void releaseService(){
 		//unregister GNS
-		boolean gnsUnreg = GNS.gnsServiceClient.removeService(GNSConstants.GNS_s);
+		boolean gnsUnreg = GNS.stop();
 		if(instance != null ){ 
 			Logger.v(TAG, "releaseService");
 			directory.saveDirectory();
@@ -92,39 +83,6 @@ public class ServiceHelper {
 			dataLogger.closeAllFiles();
 			instance = null;
 		}
-	}
-
-	////////////////////////////////////////////////////////////////////////
-
-	public void broadcastJobRequest(JobReq jobReq, JobRequestListener lis){
-		netObserver.getJobHandler().broadcastRequest(jobReq, lis);
-	}
-	
-	public void sendAssignTaskReq(AssignTaskReq tasReq){
-		netObserver.sendMsgContainer(tasReq);
-	}
-	
-	public void startTopologyDiscovery(TopologyListener lis){
-		netObserver.getTopologyHandler().broadcastRequest(lis);
-	}
-	
-	//sends topology discovery requests
-	//timeout = time in millisecond that I'm willing to wait for a successful topology reply
-	public void startTopologyDiscovery(TopologyListener lis, long timeout){
-		netObserver.getTopologyHandler().broadcastRequest(lis, timeout);
-	}
-	
-	public void startBlockRequest(BlockReq request, BlockRepListener lis){
-		netObserver.getBlockReplyHandler().sendBlockRequest(request, lis);
-	}
-	
-	public void deleteFiles(DeleteFile files){
-		netObserver.getDeleteFileHandler().sendFileDeletionPacket(files);
-		netObserver.getDeleteFileHandler().processPacket(files);
-	}
-	
-	public void sendFileUpdate(NewFileUpdate update){
-		netObserver.sendMsgContainer(update);
 	}
 
 	public byte[] getEncryptKey() {
@@ -138,17 +96,13 @@ public class ServiceHelper {
 	public NodeManager getNodeManager(){
 		return netObserver.getNodeManager();
 	}
-	
-	public MDFSNodeStatusMonitor getNodeStatusMonitor(){
-		return netObserver.getNodeStatusMonitor();
-	}
-	
 
-	//periodically called by scheduledTask.java to send out NEW_FILE_UPDATES for each files in the directory
-	public void broadcastMyDirectory(){
-		getDirectory().broadcastMyDirectory();
+
+	//deletes a file from local drive
+	public void deleteFiles(DeleteFile files){
+		netObserver.getDeleteFileHandler().processPacket(files);
 	}
-	
+
 	//submit a task to executorService
 	public void executeRunnableTask(Runnable task){
 		netObserver.executeRunnableTask(task);

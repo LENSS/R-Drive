@@ -5,7 +5,9 @@ import edu.tamu.cse.lenss.gnsService.client.GnsServiceClient;
 import static java.lang.Thread.sleep;
 
 
-//this class holds one and only GNS object for this app process
+//this class holds one and only GNS object for this app process.
+//GNS is needed for app registration, service discovery and ip-to-guid conversion.
+//learn more about GNS if youre interested.
 public class GNS {
 
     public static GnsServiceClient gnsServiceClient;
@@ -23,5 +25,9 @@ public class GNS {
             }
         }
         return gnsServiceClient;
+    }
+
+    public static boolean stop(){
+        return gnsServiceClient.removeService(GNSConstants.GNS_s);
     }
 }

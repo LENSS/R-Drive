@@ -3,6 +3,7 @@ package edu.tamu.lenss.mdfs.models;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.handler.NodeManager;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.pdu.MessageContainer;
@@ -27,23 +28,10 @@ public class DeleteFile extends MessageContainer {
 	 * This will be broadcasted to the entire network
 	 */
 	public DeleteFile(){
-		super(MDFSPacketType.DELETE_FILE, ServiceHelper.getInstance()
-				.getNodeManager().getMyIP(), NodeManager
-				.getClasCBroadcastIpLong(ServiceHelper.getInstance().getNodeManager().getMyIpString()));
+		super(Constants.DELETE_FILE, ServiceHelper.getInstance().getNodeManager().getMyIP(), NodeManager.getClasCBroadcastIpLong(ServiceHelper.getInstance().getNodeManager().getMyIpString()));
 		this.setBroadcast(true);
 	}
-	
-	/**
-	 * If this is sent to a specific node
-	 * @param destination
-	 * @param broadcast
-	 */
-	public DeleteFile(long destination){
-		super(MDFSPacketType.DELETE_FILE, ServiceHelper.getInstance()
-				.getNodeManager().getMyIP(), destination);
-		this.setBroadcast(false);
-	}
-	
+
 	public List<String> getFileNames() {
 		return fileNames;
 	}
@@ -65,7 +53,7 @@ public class DeleteFile extends MessageContainer {
 		this.fileIds = fileIds;
 		return true;
 	}
-	
+
 	public void setFiles(List<MDFSFileInfo> fileList) {
 		for(MDFSFileInfo fInfo : fileList){
 			setFile(fInfo.getFileName(), fInfo.getCreatedTime());

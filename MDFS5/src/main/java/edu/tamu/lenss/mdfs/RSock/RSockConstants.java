@@ -2,6 +2,8 @@ package edu.tamu.lenss.mdfs.RSock;
 
 import example.Interface;
 
+
+//this class contains constants for Rsock initialization.
 public class RSockConstants {
 
     //rsock api instances, initialized in PacketExchanger.java class
@@ -9,8 +11,8 @@ public class RSockConstants {
     public static Interface intrfc_retrieval;
 
     //appID using which above Rsock api objects are registered to the daemon.
-    public static String intrfc_creation_appid = "mdfsFileCreation";
-    public static String intrfc_retrieval_appid = "mdfsFileRetrieval";
+    public static final String intrfc_creation_appid = "mdfsFileCreation";
+    public static final String intrfc_retrieval_appid = "mdfsFileRetrieval";
 
     //RSOCK variables | (value: "rsock" or "tcp").
     //when "tcp", file creation happens using tcp,
@@ -22,6 +24,7 @@ public class RSockConstants {
     //takes place, and all data packet is GUID based.
     //using rsock, file metadata is stored i EdgeKeeper.
     //not a param to toggle between during runtime.
+    //NOTE: the tcp part has been stripped out.
     public static final String file_creation_via_rsock_or_tcp = "rsock";
 
     //RSOCK variables | (value: "rsock" or "tcp").
@@ -37,6 +40,7 @@ public class RSockConstants {
     //using rsock, file metadata is first fetched from EdgeKeeper
     //before fetching fragments.
     //not a param to toggle between during runtime.
+    //NOTE: the tcp part has been stripped out.
     public static final String file_retrieval_via_rsock_or_tcp = "rsock";
 
 }

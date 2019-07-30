@@ -14,7 +14,6 @@ import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
 import edu.tamu.lenss.mdfs.EdgeKeeper.FileMetadata;
 import edu.tamu.lenss.mdfs.EdgeKeeper.client;
 import edu.tamu.lenss.mdfs.GNS.GNS;
-import edu.tamu.lenss.mdfs.MDFSBlockCreator;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.models.FragmentTransferInfo;
@@ -28,15 +27,18 @@ import example.ReceivedFile;
 import static java.lang.Thread.sleep;
 
 
+
+//this class is used for receive packets for creating a file in MDFS.
+//this is the entry point of a file fragment to enter this node.
+//this class receives a packet from rsock cilent library(rsock java api),
+//and saves it.
 public class RsockReceiveForFileCreation implements Runnable{
 
-    private static final String TAG = MDFSBlockCreator.class.getSimpleName();
-
-    private boolean isTerminated;
+    private static boolean isTerminated = false;
 
     //constructor
     public RsockReceiveForFileCreation(){
-        isTerminated = false;
+
     }
 
 
@@ -49,8 +51,8 @@ public class RsockReceiveForFileCreation implements Runnable{
         ReceivedFile rcvdfile = null;
         while(!isTerminated){
             try {
-                //blocking on receving through rsock
-                try { rcvdfile = RSockConstants.intrfc_creation.receive(0, "default"); } catch (InterruptedException e) {e.printStackTrace(); }
+                //blocking on receiving through rsock
+                try { rcvdfile = RSockConstants.intrfc_creation.receive(100, "default"); } catch (InterruptedException e) {e.printStackTrace(); }
                 if(rcvdfile!=null) {
                     System.out.println("new incoming rsock");
 
@@ -96,6 +98,10 @@ public class RsockReceiveForFileCreation implements Runnable{
             }
         }
 
+        //came out of while loop, now close the rsock client library object
+        RSockConstants.intrfc_creation.close();
+        RSockConstants.intrfc_creation = null;
+
     }
 
     //part of this function basically copied from FragExchangeHelper.java receiveBlockFragment() function
@@ -108,7 +114,6 @@ public class RsockReceiveForFileCreation implements Runnable{
 
             if(!tmp0.exists()){
                 if(!tmp0.mkdirs()){
-                    Logger.e(TAG, "Fail to create block directory for " + header.getFileName());
                     return;
                 }
             }
@@ -166,6 +171,10 @@ public class RsockReceiveForFileCreation implements Runnable{
         }catch(IOException | NullPointerException | SecurityException e){
             e.printStackTrace();
         }
+    }
+
+    public static void stop(){
+        isTerminated = true;
     }
 
 }
