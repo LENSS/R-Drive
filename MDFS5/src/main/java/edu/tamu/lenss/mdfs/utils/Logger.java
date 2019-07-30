@@ -6,14 +6,6 @@ import android.util.Log;
 public final class Logger {
 	
 	private static java.util.logging.Logger JLOGGER = java.util.logging.Logger.getLogger("InfoLogging");
-	static{
-		/*try {
-			JLOGGER.addHandler(new FileHandler("MDFSLog.log"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}*/
-		//JLOGGER.addHandler(new ConsoleHandler());
-	}	 
 
 	public static final void d(String tag, String msg) {
 		Log.d(tag, msg);

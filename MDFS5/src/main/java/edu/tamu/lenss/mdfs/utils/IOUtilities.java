@@ -2,23 +2,18 @@
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OptionalDataException;
-import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.StreamCorruptedException;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,91 +22,8 @@ import java.util.regex.Pattern;
 
 public final class IOUtilities {
 	private static final String TAG = "IOUtilities";
-	
-	private static final int IO_BUFFER_SIZE = 8 * 1024;
-	
-	
-	 /**
-     * Copy the content of the input stream into the output stream, using a temporary
-     * byte array buffer whose size is defined by {@link #IO_BUFFER_SIZE}.
-     *
-     * @param in The input stream to copy from.
-     * @param out The output stream to copy to.
-     *
-     * @throws
-     */
-	
-	public static void copy(InputStream in, OutputStream out) throws IOException {
-		byte[] b = new byte[IO_BUFFER_SIZE];
-		int read;
-		while ((read = in.read()) != -1) {
-			out.write(b, 0, read);
-		}
-	}
-	
-	/**
-     * Closes the specified stream.
-     *
-     * @param stream The stream to close.
-     */
-	public static void closeStream(Closeable stream) {
-		if (stream != null) {
-			try {
-				stream.close();
-			} catch (IOException e) {
-				Logger.e(TAG, "Could not close stream");
-			}
-		}
-	}
-	
-	public static String streamToString(java.io.InputStream is) {		
-		java.io.DataInputStream din = new java.io.DataInputStream(is);
-		StringBuffer sb = new StringBuffer();
-		try {
-			String line = null;
-			while ((line = din.readLine()) != null) { 
-				sb.append(line + "\n");
-			}
-			
-		} catch (Exception ex) {
-			ex.getMessage();
-		} finally {
-			try {
-				is.close();
-			} catch (Exception ex) {
-			}
-		}
-		return sb.toString();
-	}
-	
-	/**
-	 * 
-	 * @param file	A valid file handler.
-	 * @param inputStream
-	 */
-	public static void streamToFile(File file, InputStream inputStream){
-		// write the inputStream to a FileOutputStream
-		try {
-			OutputStream out = new FileOutputStream(file);
-			int read = 0;
-			byte[] bytes = new byte[1024];
-			while ((read = inputStream.read(bytes)) != -1) {
-				out.write(bytes, 0, read);
-			}
-		 
-			inputStream.close();
-			out.flush();
-			out.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			Logger.e(TAG, e.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
-			Logger.e(TAG, e.toString());
-	    }
-		
-	}
-	
+
+
 	/**
 	 * Create a new file and directory in the specified directory <br>
 	 * Return the file handler if the file already exists <br>
@@ -143,88 +55,24 @@ public final class IOUtilities {
 		return f;
 	}
 	
-	/**
-	 * Create a new file and its parent directories in the specified path <br>
-	 * Return the file handler if the file already exists <br>
-	 * Create one if it does not exist
-	 */
+	//Create a new file and its parent directories in the specified path <br>
+	//Return the file handler if the file already exists <br>
 	public static File createNewFile(String path){
 		File f = new File(path);
 		return createNewFile(f.getParentFile(), f.getName());
 	}
 	
-	/**
-	 * Create a new file and its parent directories<br>
-	 * Return the file handler if the file already exists <br>
-	 * Create one if it does not exist
-	 */
+
+	//Create a new file and its parent directories.
+	//Return the file handler if the file already exists.
+	//Create one if it does not exist.
 	public static File createNewFile(File filePath){
 		return createNewFile(filePath.getParentFile(), filePath.getName());
 	}
 	
+
 	
-	/**
-	 * Get the local IP Address
-	 * @return null if the IP is not available
-	 */
-	/*public static String getLocalIpAddress() {
-		try {
-			for (Enumeration<NetworkInterface> en = NetworkInterface
-					.getNetworkInterfaces(); en.hasMoreElements();) {
-				NetworkInterface intf = en.nextElement();
-				for (Enumeration<InetAddress> enumIpAddr = intf
-						.getInetAddresses(); enumIpAddr.hasMoreElements();) {
-					InetAddress inetAddress = enumIpAddr.nextElement();
-					// Ignore IPv6 address.
-					if (!inetAddress.isLoopbackAddress() && !inetAddress.isAnyLocalAddress() && !inetAddress.isLinkLocalAddress()) {
-						//Logger.v(TAG, "Address: " + inetAddress.getHostAddress().toString());
-						return inetAddress.getHostAddress().toString();						
-					}
-				}
-			}
-		} catch (SocketException ex) {
-			Logger.e("ServerActivity", ex.toString());
-		}
-		return null;
-	}*/
-	
-	/**
-	 * Parse the last part of the IP and return as an int
-	 * @param IP
-	 * @return	-1 if fails to parse the IP
-	 */
-	public static int parseNodeNumber(String IP){
-		try{
-			//int id = Integer.parseInt(IP.substring(IP.lastIndexOf(".")+1));
-			return Integer.parseInt(IP.substring(IP.lastIndexOf(".")+1));
-		}
-		catch(NumberFormatException e){
-			Logger.e(TAG, "Fail to parse the IP. " + e.toString());
-			return -1;
-		}
-	}
-	
-	/**
-	 * Parse the first part of the IP (i.e. network segment address) and return as an int
-	 * @param IP
-	 * @return	-1 if fails to parse the IP
-	 */
-	public static int parseNetSegment(String IP){
-		try{
-			//int id = Integer.parseInt(IP.substring(IP.lastIndexOf(".")+1));
-			return Integer.parseInt(IP.substring(0, IP.indexOf(".")));
-		}
-		catch(NumberFormatException e){
-			Logger.e(TAG, "Fail to parse the IP. " + e.toString());
-			return -1;
-		}
-	}	
-	
-	/**
-	 * Parse the first 3 parts of the IP address, including the last dot, . 
-	 * @param IP
-	 * @return	-1 if fails to parse the IP
-	 */
+	//Parse the first 3 parts of the IP address, including the last dot, .
 	public static String parsePrefix(String IP){
 		try{
 			//String prefix = IP.substring(0,IP.lastIndexOf("."));
@@ -236,12 +84,7 @@ public final class IOUtilities {
 		}
 	}
 	
-	/**
-	 * Convert byte array to a file
-	 * @param data
-	 * @param name
-	 * @return
-	 */
+	//Convert byte array to a file
 	public static File byteToFile(byte[] data, File dir, String name){
 		File f = createNewFile(dir, name);
 		try {
@@ -257,11 +100,9 @@ public final class IOUtilities {
 		}
 		return f;
 	}
-	/**
-	 * Convert a File to a byte array
-	 * @param file
-	 * @return null if the conversion fails
-	 */
+
+
+	//Convert a File to a byte array
 	public static byte[] fileToByte(File file){
 		try {
 			RandomAccessFile randF = new RandomAccessFile(file, "r");
@@ -277,22 +118,10 @@ public final class IOUtilities {
 		}
 		return null;
 	}
+
 	
-	public static byte[] chartoBytes(char[] chars) {
-	    CharBuffer charBuffer = CharBuffer.wrap(chars);
-	    ByteBuffer byteBuffer = Charset.forName("UTF-8").encode(charBuffer);
-	    byte[] bytes = Arrays.copyOfRange(byteBuffer.array(),
-	            byteBuffer.position(), byteBuffer.limit());
-	    Arrays.fill(charBuffer.array(), '\u0000'); // clear sensitive data
-	    Arrays.fill(byteBuffer.array(), (byte) 0); // clear sensitive data
-	    return bytes;
-	}
-	
-	/**
-	 * Covert a Serializable Object to a byte array
-	 * @param
-	 * @return
-	 */
+
+	//Covert a Serializable Object to a byte array
 	public static <T extends Object> byte[] objectToByteArray(T object){
 		ByteArrayOutputStream byteStr = new ByteArrayOutputStream(10240);
 		try {
@@ -319,7 +148,7 @@ public final class IOUtilities {
 			ByteArrayInputStream byteStr = new ByteArrayInputStream(packetData);
 			ObjectInputStream input = new ObjectInputStream(byteStr);
 			packet = type.cast(input.readObject());
-			
+
 		} catch (OptionalDataException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
@@ -331,7 +160,7 @@ public final class IOUtilities {
 		}
 		return packet;
 	}
-	
+
 	/**
 	 * Write a serializable object to a file
 	 * @param <T>

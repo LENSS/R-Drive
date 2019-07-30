@@ -56,7 +56,6 @@ public class handlePutCommand {
                 File tmpF = AndroidIOUtils.getExternalFile(Constants.DIR_CACHE);
                 final File compressedFile = IOUtilities.createNewFile(tmpF, newFileName);
                 FileOutputStream out = new FileOutputStream(compressedFile);
-                ///AndroidIOUtils.decodeSampledBitmapFromFile(renamedFile.getAbsolutePath(), Constants.COMMON_DEVICE_WIDTH, Constants.COMMON_DEVICE_HEIGHT).compress(Bitmap.CompressFormat.JPEG, 85, out);
                 renamedFile.delete();
                 sendFile(compressedFile, filePathMDFS, perm, clientID);
             } catch (Exception e) {

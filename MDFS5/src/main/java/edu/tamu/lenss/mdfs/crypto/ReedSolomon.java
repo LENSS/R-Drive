@@ -2,12 +2,6 @@ package edu.tamu.lenss.mdfs.crypto;
 
 import edu.tamu.lenss.mdfs.utils.Logger;
 
-
-/**
- *
- * @author shuchton
- */
-
 public class ReedSolomon {
 	private static final String DEBUG_TAG = "ReedSolomon";
     private final int WORDSIZE = 8;

@@ -120,7 +120,7 @@ public class MDFSBlockRetrieverViaRsock {
             List<String> blockNums = metadata.getBlockNumbersHeldByNode(nodes.get(i));
             for(int j=0; j<blockNums.size(); j++){
 
-                //get list of fragments for a node(index i ) and a blocknum(index j)
+                //get list of fragments for a node(index i) and a blocknum(index j)
                 List<String> fragListStr = metadata.getFragmentListByNodeAndBlockNumber(nodes.get(i), blockNums.get(j));
 
                 //convert list<String> in list<byte>
