@@ -25,7 +25,6 @@ import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 import edu.tamu.lenss.mdfs.utils.CallableTask;
-import edu.tamu.lenss.mdfs.utils.AndroidDataLogger.LogFileInfo.LogFileName;
 import edu.tamu.lenss.mdfs.utils.CallableTask.CallableCallback;
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
 import edu.tamu.lenss.mdfs.utils.Logger;
@@ -207,16 +206,6 @@ public class MDFSFileRetrieverViaRsock {
         // update directory
         ServiceHelper.getInstance().getDirectory().addDecryptedFile(fileInfo.getCreatedTime());
         fileListener.onComplete(to, fileInfo, clientID);  //this is where execution of this file ends
-
-        StringBuilder logStr = new StringBuilder();
-        logStr.append(System.currentTimeMillis() + ", ");
-        logStr.append(ServiceHelper.getInstance().getNodeManager().getMyMacString() + ", ");
-        logStr.append("end, ");
-        logStr.append(fileInfo.getFileName() + ", ");
-        logStr.append(fileInfo.getFileSize() + ", ");
-        logStr.append(fileInfo.getNumberOfBlocks()+ ", ");
-        logStr.append("\n\n");
-        ServiceHelper.getInstance().getDataLogger().appendSensorData(LogFileName.FILE_RETRIEVAL, logStr.toString());
     }
 
     private void mergeBlocks(){
@@ -242,16 +231,6 @@ public class MDFSFileRetrieverViaRsock {
                     // Update directory
                     ServiceHelper.getInstance().getDirectory().addDecryptedFile(fileInfo.getCreatedTime());
                     fileListener.onComplete(AndroidIOUtils.getExternalFile(getDecryptedFilePath()), fileInfo, clientID);  //this is where execution of this file ends
-
-                    StringBuilder logStr = new StringBuilder();
-                    logStr.append(System.currentTimeMillis() + ", ");
-                    logStr.append(ServiceHelper.getInstance().getNodeManager().getMyMacString() + ", ");
-                    logStr.append("end, ");
-                    logStr.append(fileInfo.getFileName() + ", ");
-                    logStr.append(fileInfo.getFileSize() + ", ");
-                    logStr.append(fileInfo.getNumberOfBlocks()+ ", ");
-                    logStr.append("\n");
-                    ServiceHelper.getInstance().getDataLogger().appendSensorData(LogFileName.FILE_RETRIEVAL, logStr.toString());
                 }
                 else{
                     Logger.e(TAG, "xxx::: Fail to merge video.");

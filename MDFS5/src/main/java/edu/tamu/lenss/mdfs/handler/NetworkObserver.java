@@ -10,14 +10,9 @@ import java.util.concurrent.Future;
 
 import android.app.Service;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Binder;
-import android.os.Environment;
-import android.os.Handler;
+
 import android.os.IBinder;
-import android.os.Message;
-import android.preference.PreferenceManager;
-import android.widget.Toast;
 
 import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
 import edu.tamu.lenss.mdfs.ScheduledTask;

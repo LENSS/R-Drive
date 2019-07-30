@@ -80,122 +80,7 @@ public class MDFSDirectory implements Serializable {
 	}
 
 
-	//get fileInfo
-	public MDFSFileInfo getFileInfo(long fileId) {
-		return fileInfoMap.get(fileId);
-	}
 
-
-	//Check if this file (fileId) was updated within the past FILE_SYNC_PERIOD
-	public synchronized boolean isRecentUpdated(long fileId) {
-		for (MyPair<Long, Long> pair : recentUpdate) {
-			if (pair.first.equals(fileId))
-				return true;
-		}
-		return false;
-	}
-
-
-	//return A List of all available files. The List may be empty
-	public synchronized List<MDFSFileInfo> getFileList() {
-		List<MDFSFileInfo> list;
-		if (fileInfoMap!=null && !fileInfoMap.isEmpty())
-			list = new ArrayList<MDFSFileInfo>(fileInfoMap.values());
-		else
-			list = new ArrayList<MDFSFileInfo>();
-		return list;
-	}
-
-	/**
-	 * @param name
-	 * @return -1 if the the id is not available
-	 */
-	public synchronized long getFileIdByName(String name) {
-		Long id = nameToIDMap.get(name);
-		if (id != null)
-			return id;
-		else
-			return -1;
-	}
-
-	/**
-	 * Return the blocks that I have cached fragments
-	 * 
-	 * @param fileId
-	 * @return null if there is no cache
-	 */
-	public synchronized Set<Byte> getStoredBlockIndex(long fileId) {
-		try {
-			return fileBlockFragMap.get(fileId).keySet();
-		} catch (NullPointerException o) {
-			return null;
-		}
-	}
-	
-	/**
-	 * Return the fragments of each block that this node carries
-	 * @param fileId
-	 * @param reCheck  set to true if forcing to inspect the files in external storage <Br> 
-	 * and sync with MDFSDirectory. This can take some time.
-	 * @return null if there is no cached fragments of this file
-	 */
-	public synchronized HashMap<Byte, HashSet<Byte>> getStoredFragments(long fileId, boolean reCheck){
-		MDFSFileInfo fInfo = getFileInfo(fileId);
-		
-		if(!reCheck || fInfo == null){
-			// no way to verify
-			return fileBlockFragMap.get(fileId);
-		}
-		
-		// Verify that there are indeed cached fragments
-		try {
-			File tmpF = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFileDirPath(fInfo.getFileName(), fileId));
-			if(tmpF.exists() && tmpF.isDirectory()){
-				HashMap<Byte, HashSet<Byte>> blockAndFrags = fileBlockFragMap.get(fileId);
-				for(Iterator<Byte> blkIter = blockAndFrags.keySet().iterator(); blkIter.hasNext();){
-					byte block = blkIter.next();					
-					tmpF = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fInfo.getFileName(), fileId, block));
-					if(tmpF.exists() && tmpF.isDirectory()){
-						HashSet<Byte> frags = blockAndFrags.get(block);
-						for(Iterator<Byte> fragIter = frags.iterator(); fragIter.hasNext();){
-							byte frag = fragIter.next();
-							tmpF = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(fInfo.getFileName(), fileId, block, frag));
-							if(!tmpF.exists() || !tmpF.isFile()){
-								//fileBlockFragMap.get(fileId).get(block).remove(frag);
-								// We are removing elements while iterating a Collection. Need to use iterator.remove();
-								fragIter.remove();
-								Logger.w(TAG, "Remove out of sync frag from cache: " 
-										+ fInfo.getFileName() + ", block " + block + ", frag " + frag);
-							}
-						}
-					}
-					else{
-						//fileBlockFragMap.get(fileId).remove(block);
-						// We are removing elements while iterating a Collection. Need to use iterator.remove();
-						blkIter.remove();
-						Logger.w(TAG, "Remove out of sync block from cache: " + fInfo.getFileName() + ", block " + block);
-					}
-				}
-			}
-			else{
-				fileBlockFragMap.remove(fileId);
-				Logger.w(TAG, "Remove out of sync file from cache: " + fInfo.getFileName() );
-			}
-			
-			return fileBlockFragMap.get(fileId);
-		} catch (NullPointerException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	/**
-	 * Return the cahced fragments of a given fileId(file creation time) and block index
-	 * 
-	 * @param fileId
-	 * @param blockIdx
-	 * @return null if the file or the block does not exist
-	 */
 	public synchronized Set<Byte> getStoredFragIndex(long fileId, byte blockIdx) {
 		try {
 			return fileBlockFragMap.get(fileId).get(blockIdx);
@@ -204,22 +89,7 @@ public class MDFSDirectory implements Serializable {
 		}
 	}
 
-
-
 	public synchronized void addFile(MDFSFileInfo file) {
-
-		//for any incoming NEW_FILE_UPDATE msg, this block is executed and checks some time-mechanism
-		//if check fails, it triggers a DELETE_FILE msg which deletes the file from entire network
-		//commenting this block prevents that delete from taking place - Mohammad Sagor
-		/*for (MyPair<Long, Long> pair : recentDelete) {
-			if (pair.first.equals(file.getCreatedTime())) {
-				// This file has been deleted
-				DeleteFile deleteFile = new DeleteFile();
-				deleteFile.setFile(file.getFileName(), file.getCreatedTime());
-				ServiceHelper.getInstance().deleteFiles(deleteFile);
-				return;
-			}
-		}*/
 
 		fileInfoMap.put(file.getCreatedTime(), file);
 		nameToIDMap.put(file.getFileName(), file.getCreatedTime());
@@ -232,14 +102,11 @@ public class MDFSDirectory implements Serializable {
 		}
 	}
 
-	/**
-	 * Remove this file from the fileInfoMap. This is just for directory purpose,
-	 * and the actual files in SDCard <Br>
-	 * and other fragment information are NOT removed <Br>
-	 * FileId is just the file created time.
-	 * 
-	 * @param fileId
-	 */
+
+	//Remove this file from the fileInfoMap. This is just for directory purpose,
+	//and the actual files in SDCard <Br>
+	//and other fragment information are NOT removed <Br>
+	//FileId is just the file created time.
 	public synchronized void removeFile(long fileId) {
 		if (fileInfoMap.containsKey(fileId)) {
 			String name = fileInfoMap.get(fileId).getFileName();
@@ -249,26 +116,13 @@ public class MDFSDirectory implements Serializable {
 	}
 
 
-
-	/**
-	 * Add one fragment of a block to our local cache
-	 * 
-	 * @param fileId
-	 * @param blockIdx
-	 * @param fragIdx
-	 */
+	//Add one fragment of a block to our local cache
 	public synchronized void addBlockFragment(long fileId, byte blockIdx, byte fragIdx) {
 		addBlockFragments(fileId, blockIdx, new HashSet<Byte>(Arrays.asList(fragIdx)));
 	}
 
 
-	/**
-	 * Add a set of fragments index to our local cache
-	 * 
-	 * @param fileId
-	 * @param blockIdx
-	 * @param fragIdxSet
-	 */
+	//Add a set of fragments index to our local cache
 	public synchronized void addBlockFragments(long fileId, byte blockIdx, HashSet<Byte> fragIdxSet) {
 		if (fileBlockFragMap.containsKey(fileId)) {
 			if (fileBlockFragMap.get(fileId).containsKey(blockIdx)) {
@@ -285,104 +139,31 @@ public class MDFSDirectory implements Serializable {
 	}
 
 
-	/**
-	 * Remove a single cached fragment
-	 * 
-	 * @param fileId
-	 * @param blockIdx
-	 */
-	public synchronized void removeBlockFragment(long fileId, byte blockIdx,
-			byte fragIdx) {
-		if (fileBlockFragMap.containsKey(fileId)
-				&& fileBlockFragMap.get(fileId).containsKey(blockIdx)) {
-			fileBlockFragMap.get(fileId).get(blockIdx).remove(fragIdx);
-		}
-	}
-
-	/**
-	 * Remove a set of cached fragments
-	 * 
-	 * @param fileId
-	 * @param blockIdx
-	 * @param fragIdxSet
-	 */
-	public synchronized void removeBlockFragments(long fileId, byte blockIdx,
-			HashSet<Byte> fragIdxSet) {
-		if (fileBlockFragMap.containsKey(fileId)
-				&& fileBlockFragMap.get(fileId).containsKey(blockIdx)) {
-			fileBlockFragMap.get(fileId).get(blockIdx).removeAll(fragIdxSet);
-		}
-	}
-
-	/**
-	 * Remove a block and all its fragments from the cache
-	 * 
-	 * @param fileId
-	 * @param blockIdx
-	 */
-	public synchronized void removeBlock(long fileId, byte blockIdx) {
-		if (fileBlockFragMap.containsKey(fileId)) {
-			fileBlockFragMap.get(fileId).remove(blockIdx);
-		}
-	}
-
-	/**
-	 * Completely remove a file and all its blocks from the local cache
-	 * 
-	 * @param fileId
-	 */
 	public synchronized void removeFileAndBlock(long fileId) {
 		fileBlockFragMap.remove(fileId);
 	}
-
-
-	public synchronized void addEncryptedFile(long fileId) {
-		encryptedFileSet.add(fileId);
-	}
-
 	public synchronized void addEncryptedFile(String fileName) {
 		Long fileId = nameToIDMap.get(fileName);
 		if (fileId != null)
 			encryptedFileSet.add(fileId);
 	}
-
 	public synchronized void removeEncryptedFile(long fileId) {
 		encryptedFileSet.remove(fileId);
 	}
-
-	public synchronized void removeEncryptedFile(String fileName) {
-		Long fileId = nameToIDMap.get(fileName);
-		if (fileId != null)
-			encryptedFileSet.remove(fileId);
-	}
-
 	public synchronized void addDecryptedFile(long fileId) {
 		decryptedFileSet.add(fileId);
 	}
-
 	public synchronized void addDecryptedFile(String fileName) {
 		Long fileId = nameToIDMap.get(fileName);
 		if (fileId != null)
 			decryptedFileSet.add(fileId);
 	}
-
 	public synchronized void removeDecryptedFile(long fileId) {
 		decryptedFileSet.remove(fileId);
 	}
 
-	public synchronized void removeDecryptedFile(String fileName) {
-		Long fileId = nameToIDMap.get(fileName);
-		if (fileId != null)
-			decryptedFileSet.remove(fileId);
-	}
 
-	public boolean isEncryptedFileCached(long fileId) {
-		return encryptedFileSet.contains(fileId);
-	}
 
-	public boolean isDecryptedFileCached(long fileId) {
-		return decryptedFileSet.contains(fileId);
-	}
 
 	public void clearAll() {
 		// Reset the maps

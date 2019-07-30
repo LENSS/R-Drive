@@ -11,9 +11,7 @@ import android.os.IBinder;
 
 import edu.tamu.lenss.mdfs.GNS.GNS;
 import edu.tamu.lenss.mdfs.MDFSDirectory;
-import edu.tamu.lenss.mdfs.MDFSNodeStatusMonitor;
 import edu.tamu.lenss.mdfs.models.DeleteFile;
-import edu.tamu.lenss.mdfs.utils.AndroidDataLogger;
 import edu.tamu.lenss.mdfs.utils.Logger;
 
 import static java.lang.Thread.sleep;
@@ -26,7 +24,6 @@ public class ServiceHelper {
 	private static ServiceHelper instance = null;
 	private static NetworkObserver netObserver;
 	private static MDFSDirectory directory;
-	private static AndroidDataLogger dataLogger;
 	private static Context context;
 	private byte[] encryptKey = new byte[32];
 	
@@ -40,8 +37,6 @@ public class ServiceHelper {
 		context.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 		directory = MDFSDirectory.readDirectory();
 		directory.syncLocal();
-		dataLogger = new AndroidDataLogger();
-		dataLogger.init();
 	}
 	
 	public static ServiceHelper getInstance(Context context) {
@@ -65,10 +60,6 @@ public class ServiceHelper {
 	public static void setDirectory(MDFSDirectory directory) {
 		ServiceHelper.directory = directory;
 	}
-	
-	public AndroidDataLogger getDataLogger(){
-		return dataLogger;
-	}
 
 	public static void releaseService(){
 		//unregister GNS
@@ -80,7 +71,6 @@ public class ServiceHelper {
 				context.unbindService(mConnection);
 			Intent intent = new Intent(context, NetworkObserver.class);
 			context.stopService(intent);
-			dataLogger.closeAllFiles();
 			instance = null;
 		}
 	}

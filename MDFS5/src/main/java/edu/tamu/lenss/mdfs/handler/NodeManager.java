@@ -43,10 +43,6 @@ public class NodeManager {
 		return IOUtilities.long2mac(myMAC);
 	}
 
-	public void setMyMAC(long myMAC) {
-		this.myMAC = myMAC;
-	}
-	
 	public static long getClasCBroadcastIpLong(String ipAddress){
 		String brdIp = IOUtilities.parsePrefix(ipAddress.trim()) + "255";
 		return IOUtilities.ipToLong(brdIp);

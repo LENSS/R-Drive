@@ -305,7 +305,7 @@ class RequestHandler implements Runnable{
                             }else {
 
                                 //check if its a subDir deletion request or a file deletion request
-                                //split the dir in tokens
+                                //split the dir in tokensnamely
                                 String[] dirTokens = dir.split("/");
 
                                 //remove empty strings
@@ -357,7 +357,7 @@ class RequestHandler implements Runnable{
                         //do the job
                         handleCOPYTOLOCALcommand.handleCOPYTOLOCALcommand(clientID, cmd);
                     }else if(cmd[1].equals("-hdfs")){
-                        handleHDFSjobs.handleHDFSjobs(clientID);  //todo: testing
+                        clientSockets.sendAndClose(clientID, "Hadoop HDFS commands are not supported.");
                     }else{
                         clientSockets.sendAndClose(clientID, "cliii Command has not been implemented yet.");
                     }

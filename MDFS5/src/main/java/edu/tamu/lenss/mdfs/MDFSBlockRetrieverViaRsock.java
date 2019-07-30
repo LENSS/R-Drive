@@ -26,7 +26,7 @@ import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.crypto.FragmentInfo;
 import edu.tamu.lenss.mdfs.crypto.MDFSDecoder;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
-import edu.tamu.lenss.mdfs.models.BlockReplyDumb;
+import edu.tamu.lenss.mdfs.models.BlOcKrEpLy;
 import edu.tamu.lenss.mdfs.models.FragmentTransferInfo;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
@@ -114,7 +114,7 @@ public class MDFSBlockRetrieverViaRsock {
     private void doTheThing() {
 
         List<String> nodes = metadata.getAllUniqueFragmentHolders();
-        Set<BlockReplyDumb> blockrepdumbSet = new HashSet<>();
+        Set<BlOcKrEpLy> blockrepdumbSet = new HashSet<>();
 
         for(int i=0; i< nodes.size(); i++){
             List<String> blockNums = metadata.getBlockNumbersHeldByNode(nodes.get(i));
@@ -130,7 +130,7 @@ public class MDFSBlockRetrieverViaRsock {
                 }
 
                 //create BlockReplyDumb object
-                BlockReplyDumb blockReplyDumb = new BlockReplyDumb(metadata.filename, metadata.fileID, (byte) Integer.parseInt(blockNums.get(j)), nodes.get(i), GNS.ownGUID);
+                BlOcKrEpLy blockReplyDumb = new BlOcKrEpLy(metadata.filename, metadata.fileID, (byte) Integer.parseInt(blockNums.get(j)), nodes.get(i), GNS.ownGUID);
 
                 //put fragListByte in blockReplyDumb object
                 blockReplyDumb.setBlockFragIndex(fragListByte);
@@ -146,7 +146,7 @@ public class MDFSBlockRetrieverViaRsock {
 
 
     //this function prepares a list of GUIDs from which fragments will be requested.
-    private void doAnotherThing(Set<BlockReplyDumb> blockREPs){
+    private void doAnotherThing(Set<BlOcKrEpLy> blockREPs){
 
         // Retrieve block fragments info
         Set<Byte> myfrags = serviceHelper.getDirectory().getStoredFragIndex(fileId, blockIdx);	// Get the fragments I have
@@ -154,7 +154,7 @@ public class MDFSBlockRetrieverViaRsock {
         Set<Byte> uniqueFrags = new HashSet<Byte>();				// all the available fragments, including mine and others
 
         // add fragments from other nodes
-        for(BlockReplyDumb rep : blockREPs){
+        for(BlOcKrEpLy rep : blockREPs){
             List<Byte> tmpList = rep.getBlockFragIndex();
             if(tmpList != null){
                 uniqueFrags.addAll(tmpList);
@@ -519,7 +519,7 @@ public class MDFSBlockRetrieverViaRsock {
         public BlockRetrieveLog(){}
         public long discStart, discEnd, retStart, retEnd, decryStart, decryEnd;
         public List<MyPair<Long, Byte>> fileSources = new ArrayList<MyPair<Long, Byte>>(); // <NodeIp, FragNum>
-        public Set<BlockReplyDumb> fileReps;
+        public Set<BlOcKrEpLy> fileReps;
         public String getDiff(long l1, long l2){
             return Long.toString(Math.abs(l2-l1));
         }
