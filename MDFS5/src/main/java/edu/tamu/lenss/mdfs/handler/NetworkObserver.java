@@ -1,6 +1,5 @@
 package edu.tamu.lenss.mdfs.handler;
 
-import java.io.IOException;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.Callable;

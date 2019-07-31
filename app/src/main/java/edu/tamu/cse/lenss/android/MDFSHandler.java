@@ -44,7 +44,7 @@ public class MDFSHandler extends Thread {
     public void startMDFS(){
 
         //init serviceHelper
-        ServiceHelper.getInstance(appContext);  //sagor
+        ServiceHelper.getInstance(appContext);
         try {
             //Set encryption key
             byte[] encryptKey = new byte[32];
@@ -57,7 +57,6 @@ public class MDFSHandler extends Thread {
             e.printStackTrace();
         }
         LocalBroadcastManager.getInstance(appContext).registerReceiver(mMessageReceiver, new IntentFilter("current_ip"));  //sagor
-
 
     }
 
