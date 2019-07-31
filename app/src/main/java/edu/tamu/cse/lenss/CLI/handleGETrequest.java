@@ -26,7 +26,6 @@ public class handleGETrequest {
 
             //re-create MDFSFileInfo object
             MDFSFileInfo fileInfo  = new MDFSFileInfo(metadata.filename, metadata.fileID);
-            fileInfo.setCreator(metadata.creatorMAC);
             fileInfo.setFileSize(metadata.filesize);
             fileInfo.setNumberOfBlocks((byte)metadata.numOfBlocks);
             fileInfo.setFragmentsParms((byte)metadata.n2,  (byte)metadata.k2);

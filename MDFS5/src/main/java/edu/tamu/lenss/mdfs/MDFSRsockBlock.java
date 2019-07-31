@@ -7,18 +7,18 @@ package edu.tamu.lenss.mdfs;
 
 public class MDFSRsockBlock {
     public String type;
-    public MDFSRsockBlockCreator mdfsrsockblockcreator;
-    public MDFSRsockBlockRetrieval mdfsrsockblockretrieval;
+    public MDFSRsockBlockForFileCreate mdfsrsockblockcreator;
+    public MDFSRsockBlockForFileRetrieve mdfsrsockblockretrieval;
 
     //constructor for file creation/block uploading
-    public MDFSRsockBlock(String type, MDFSRsockBlockCreator mdfsrsockblockcreator){
+    public MDFSRsockBlock(String type, MDFSRsockBlockForFileCreate mdfsrsockblockcreator){
         this.type = type;
         this.mdfsrsockblockcreator = mdfsrsockblockcreator;
         this.mdfsrsockblockretrieval = null;
     }
 
     //constructor for file retrieval/ block downloading
-    public MDFSRsockBlock(String type, MDFSRsockBlockRetrieval mdfsrsockblockretrieval ){
+    public MDFSRsockBlock(String type, MDFSRsockBlockForFileRetrieve mdfsrsockblockretrieval ){
         this.type = type;
         this.mdfsrsockblockcreator = null;
         this.mdfsrsockblockretrieval = mdfsrsockblockretrieval;

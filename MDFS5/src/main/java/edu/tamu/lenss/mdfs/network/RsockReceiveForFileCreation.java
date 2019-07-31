@@ -19,8 +19,7 @@ import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.models.FragmentTransferInfo;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
-import edu.tamu.lenss.mdfs.utils.Logger;
-import edu.tamu.lenss.mdfs.MDFSRsockBlockCreator;
+import edu.tamu.lenss.mdfs.MDFSRsockBlockForFileCreate;
 import example.Interface;
 import example.ReceivedFile;
 
@@ -61,7 +60,7 @@ public class RsockReceiveForFileCreation implements Runnable{
                     //convert byteArray into MDFSRsockBlockCreator object
                     ByteArrayInputStream bis = new ByteArrayInputStream(rcvdfile.getFileArray());
                     ObjectInputStream ois = new ObjectInputStream(bis);
-                    MDFSRsockBlockCreator mdfsrsockblock = (MDFSRsockBlockCreator) ois.readObject();
+                    MDFSRsockBlockForFileCreate mdfsrsockblock = (MDFSRsockBlockForFileCreate) ois.readObject();
                     bis.close();
                     ois.close();
 

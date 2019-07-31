@@ -78,7 +78,7 @@ public class MDFSFileCreatorViaRsock {
         this.permList = permList;
         this.clientID = clientID;
         this.chosenNodes = new ArrayList<>();
-        this.metadata = new FileMetadata(EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, GNS.ownGUID, fileInfo.getCreatedTime(), new String[1], new Date().getTime(), uniqueReqID, fileInfo.getFileName(), fileInfo.getFileSize(), fileInfo.getCreator(), filePathMDFS ,blockCount, (byte)0,(byte) 0);
+        this.metadata = new FileMetadata(EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST, EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, GNS.ownGUID, fileInfo.getCreatedTime(), new String[1], new Date().getTime(), uniqueReqID, fileInfo.getFileName(), fileInfo.getFileSize(), 0000, filePathMDFS ,blockCount, (byte)0,(byte) 0);
 
     }
 
@@ -529,7 +529,6 @@ public class MDFSFileCreatorViaRsock {
 
         //set file creator
         ServiceHelper serviceHelper = ServiceHelper.getInstance();
-        fileInfo.setCreator(serviceHelper.getNodeManager().getMyMAC());
 
         //NewFileUpdate update = new NewFileUpdate(fileInfo);
         //serviceHelper.sendFileUpdate(update);  (commented by mohammad sagor/// reason: no need to send update dir commands to other nodes)

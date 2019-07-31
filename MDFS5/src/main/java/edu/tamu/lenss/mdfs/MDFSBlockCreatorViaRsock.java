@@ -1,6 +1,5 @@
 package edu.tamu.lenss.mdfs;
 
-import static android.os.Environment.getExternalStoragePublicDirectory;
 import static java.lang.Thread.sleep;
 
 import java.io.ByteArrayOutputStream;
@@ -9,7 +8,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -22,7 +20,6 @@ import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.crypto.FragmentInfo;
 import edu.tamu.lenss.mdfs.crypto.MDFSEncoder;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
-import edu.tamu.lenss.mdfs.models.DeleteFile;
 import edu.tamu.lenss.mdfs.models.FragmentTransferInfo;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
@@ -246,7 +243,7 @@ public class MDFSBlockCreatorViaRsock {
                 System.out.println("sizeee of bytearray send: " + byteArray.length);
 
                 //make MDFSRsockBlockCreator obj
-                MDFSRsockBlockCreator mdfsrsockblock = new MDFSRsockBlockCreator(header, byteArray, fileInfo.getFileName(), fileInfo.getFileSize(), fileInfo.getCreator(), filePathMDFS, fileFrag.length(), fileInfo.getNumberOfBlocks(), fileInfo.getN2(), fileInfo.getK2(), fileCreatedTime, permList, uniqueReqID,  GNS.ownGUID, destGUID);
+                MDFSRsockBlockForFileCreate mdfsrsockblock = new MDFSRsockBlockForFileCreate(header, byteArray, fileInfo.getFileName(), fileInfo.getFileSize(), 0000, filePathMDFS, fileFrag.length(), fileInfo.getNumberOfBlocks(), fileInfo.getN2(), fileInfo.getK2(), fileCreatedTime, permList, uniqueReqID,  GNS.ownGUID, destGUID);
 
                 //get byteArray and size of the MDFSRsockBlockCreator obj and do send over rsock
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -267,12 +264,11 @@ public class MDFSBlockCreatorViaRsock {
                     RSockConstants.intrfc_creation.send(uuid, data, data.length, "nothing", "nothing", destGUID, 0, "default", "default", "default");
                     System.out.println("fragment has been pushed to the rsock daemon to : " + destGUID);
 
+                    success = true;
 
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-                success = true;
 
             } catch (NullPointerException nulp) {
                 nulp.printStackTrace();
@@ -282,18 +278,14 @@ public class MDFSBlockCreatorViaRsock {
                 }
                 else if(success && fragCounter.incrementAndGet() >= n2){	// success!
 
-                    //chck if all work are already done by last thread
+                    //check if all work are already done by last thread
                     if(isFinished){return;}
 
                     //check if the job is done
                     if (fragCounter.get() > k2 || (fragCounter.get()==k2 && n2 == k2 )){
                         listener.onComplete("fragments were distributed", clientID);
                     } else{
-                        //otherwise Delete fragments
-                        DeleteFile deleteFile = new DeleteFile();
-                        deleteFile.setFile(fileInfo.getFileName(), fileInfo.getCreatedTime());
-                        ServiceHelper.getInstance().deleteFiles(deleteFile);
-                        listener.onError("Fail to distribute file fragments. " + "Only " + fragCounter.get() + " out of " + n2 + " were successfully sent. Please try again.", clientID);
+                        //otherwise Delete fragments fro mthis node local drive
                     }
                     isFinished = true;
 

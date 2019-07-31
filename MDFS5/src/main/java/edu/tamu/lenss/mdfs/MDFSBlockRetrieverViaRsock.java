@@ -265,7 +265,7 @@ public class MDFSBlockRetrieverViaRsock {
                 header.setNeedReply(false);
 
                 //make an object of MDFSRsockBlockRetrieval
-                MDFSRsockBlockRetrieval mdfsrsockblock = new MDFSRsockBlockRetrieval(header, destGUID, GNS.ownGUID, fileName, fileId, blockIdx, fragmentIndex);
+                MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(header, destGUID, GNS.ownGUID, fileName, fileId, blockIdx, fragmentIndex);
 
                 //get byteArray and size of the MDFSRsockBlockRetreival obj
                 byte[] data;
@@ -308,7 +308,7 @@ public class MDFSBlockRetrieverViaRsock {
                         //get the byteArray[] from the receivedFile obj and convert into MDFSRsockBlockRetrieval object
                         ByteArrayInputStream bis = new ByteArrayInputStream(receivedFile.getFileArray());
                         ObjectInputStream ois = new ObjectInputStream(bis);
-                        mdfsrsockblock = (MDFSRsockBlockRetrieval) ois.readObject();
+                        mdfsrsockblock = (MDFSRsockBlockForFileRetrieve) ois.readObject();
                         bis.close();
                         ois.close();
 

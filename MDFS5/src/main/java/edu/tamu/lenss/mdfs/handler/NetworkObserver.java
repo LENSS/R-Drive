@@ -26,8 +26,6 @@ public class NetworkObserver extends Service implements Observer {
 	private static final String TAG = NetworkObserver.class.getSimpleName();
 	private boolean firstStarted = false;
 	private runGNSandRsock rungnsandrsock;
-	private NodeManager nodeManager;
-	private DeleteFileHandler deleteFileHandler = new DeleteFileHandler();
 	private ScheduledTask scheduledTask = new ScheduledTask();
 	private ExecutorService pool;
 	private final IBinder mBinder = new LocalBinder();
@@ -35,19 +33,11 @@ public class NetworkObserver extends Service implements Observer {
 	public void init(){
 		EdgeKeeperConstants.my_wifi_ip_temp = AndroidIOUtils.getWifiIP(this);
 		this.rungnsandrsock = new runGNSandRsock();
-		nodeManager = new NodeManager(this);
 		pool = Executors.newCachedThreadPool();
 		scheduledTask.startAll();
 		firstStarted = true;
 	}
-	
-	protected NodeManager getNodeManager(){
-		return nodeManager;
-	}
 
-	protected DeleteFileHandler getDeleteFileHandler(){
-		return deleteFileHandler;
-	}
 
 	protected void executeRunnableTask(Runnable task){
 		pool.execute(task);

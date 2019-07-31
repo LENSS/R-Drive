@@ -14,7 +14,6 @@ public class MDFSFileInfo implements Serializable {
 	private final long createdTime;  //fileID
 	private final String fileName;
 	private long fileSize;
-	private long creatorMAC;
 	private byte k2, n2;
 	private byte numberOfBlocks;
 	
@@ -31,14 +30,6 @@ public class MDFSFileInfo implements Serializable {
 	public MDFSFileInfo(String fileName, long createdTime){
 		this.fileName = fileName;
 		this.createdTime = createdTime;
-	}
-
-	public long getCreator() {
-		return creatorMAC;
-	}
-
-	public void setCreator(long creator) {
-		this.creatorMAC = creator;
 	}
 
 	public long getCreatedTime() {

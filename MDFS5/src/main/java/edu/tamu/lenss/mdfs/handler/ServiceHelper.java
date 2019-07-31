@@ -11,7 +11,6 @@ import android.os.IBinder;
 
 import edu.tamu.lenss.mdfs.GNS.GNS;
 import edu.tamu.lenss.mdfs.MDFSDirectory;
-import edu.tamu.lenss.mdfs.models.DeleteFile;
 import edu.tamu.lenss.mdfs.utils.Logger;
 
 import static java.lang.Thread.sleep;
@@ -81,16 +80,6 @@ public class ServiceHelper {
 
 	public void setEncryptKey(byte[] encryptKey) {
 		this.encryptKey = encryptKey;
-	}
-
-	public NodeManager getNodeManager(){
-		return netObserver.getNodeManager();
-	}
-
-
-	//deletes a file from local drive
-	public void deleteFiles(DeleteFile files){
-		netObserver.getDeleteFileHandler().processPacket(files);
 	}
 
 	//submit a task to executorService

@@ -42,24 +42,22 @@ public class MDFSHandler extends Thread {
     }
 
     public void startMDFS(){
-        if(AndroidIOUtils.isConnectedToWifi(appContext)) {
-            //init serviceHelper
-            ServiceHelper.getInstance(appContext);  //sagor
-            try {
-                //Set encryption key
-                byte[] encryptKey = new byte[32];
-                int[] keyValues = {121, 108, 85, 100, -17, 52, 31, 65, -106, 82, 116, -94, -71, 50, -80, -90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-                int index = 0;
-                for(int i: keyValues){encryptKey[index] = (byte)i; index++;}
-                ServiceHelper.getInstance().setEncryptKey(encryptKey);
 
-            } catch (NullPointerException /*|| IOException*/ e) {
-                e.printStackTrace();
-            }
-            LocalBroadcastManager.getInstance(appContext).registerReceiver(mMessageReceiver, new IntentFilter("current_ip"));  //sagor
+        //init serviceHelper
+        ServiceHelper.getInstance(appContext);  //sagor
+        try {
+            //Set encryption key
+            byte[] encryptKey = new byte[32];
+            int[] keyValues = {121, 108, 85, 100, -17, 52, 31, 65, -106, 82, 116, -94, -71, 50, -80, -90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+            int index = 0;
+            for(int i: keyValues){encryptKey[index] = (byte)i; index++;}
+            ServiceHelper.getInstance().setEncryptKey(encryptKey);
 
+        } catch (NullPointerException /*|| IOException*/ e) {
+            e.printStackTrace();
         }
-        System.out.println(" onetime ServiceHelper is created");
+        LocalBroadcastManager.getInstance(appContext).registerReceiver(mMessageReceiver, new IntentFilter("current_ip"));  //sagor
+
 
     }
 
