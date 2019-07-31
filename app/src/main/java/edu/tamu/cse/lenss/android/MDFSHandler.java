@@ -44,7 +44,7 @@ public class MDFSHandler extends Thread {
     public void startMDFS(){
 
         //init serviceHelper
-        ServiceHelper.getInstance(appContext);
+        ServiceHelper.getInstance();
         try {
             //Set encryption key
             byte[] encryptKey = new byte[32];

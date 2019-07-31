@@ -45,7 +45,7 @@ public class runGNSandRsock {
 
         //todo: you are not the edgekeeper so delete it
         //check if I am the dummy EdgeKeeper server.
-        if(EdgeKeeperConstants.dummy_EdgeKeeper_ip.equals(EdgeKeeperConstants.my_wifi_ip_temp)){
+        if(EdgeKeeperConstants.dummy_EdgeKeeper_ip.equals(EdgeKeeperConstants.getWifiIP(EdgeKeeperConstants.context))){
             EdgeKeeperServer EdgeKeeperServer = new EdgeKeeperServer(EdgeKeeperConstants.dummy_EdgeKeeper_port);
         }
     }

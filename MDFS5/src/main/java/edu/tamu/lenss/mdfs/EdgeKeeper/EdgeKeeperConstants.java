@@ -1,20 +1,33 @@
 package edu.tamu.lenss.mdfs.EdgeKeeper;
 
 
+import android.content.Context;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
+
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import edu.tamu.lenss.mdfs.GNS.GNS;
+import edu.tamu.lenss.mdfs.utils.Logger;
 
 //this class contains request and reply codes for all edgekeeper communications.
 //these codes are used in EdgeKeeperMetadata class.
 public class EdgeKeeperConstants {
 
+    //app context
+    public static Context context;
+
     //EdgeKeeper variables
-    public static String my_wifi_ip_temp = "";
     public static final String dummy_EdgeKeeper_ip = "192.168.1.45";
     public static final int dummy_EdgeKeeper_port = 9995;
+
+    //guid variables
     public static String dummyGUID = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
     public static int GUID_LENGTH = 40;
 
@@ -88,6 +101,31 @@ public class EdgeKeeperConstants {
         return new ArrayList<>();
     }
 
+    public static String getWifiIP(Context context) {
+        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        if(wifiManager == null)
+            return null;
 
+        WifiInfo wInfo = wifiManager.getConnectionInfo();
+        if(wInfo == null)
+            return null;
+
+        int ipAddress = wInfo.getIpAddress();
+
+        // Convert little-endian to big-endianif needed
+        if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
+            ipAddress = Integer.reverseBytes(ipAddress);
+        }
+
+        byte[] ipByteArray = BigInteger.valueOf(ipAddress).toByteArray();
+
+        String ipAddressString;
+        try {
+            ipAddressString = InetAddress.getByAddress(ipByteArray).getHostAddress();
+        } catch (UnknownHostException ex) {
+            ipAddressString = null;
+        }
+        return ipAddressString;
+    }
 
 }

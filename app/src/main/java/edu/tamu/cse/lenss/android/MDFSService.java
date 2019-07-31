@@ -7,6 +7,8 @@ import android.os.Environment;
 import android.app.Service;
 import android.os.IBinder;
 
+import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
+
 public class MDFSService extends Service {
 
     public static final String loggerLocation = Environment.getExternalStorageDirectory().toString() + "/distressnet/mdfs.log";
@@ -20,7 +22,14 @@ public class MDFSService extends Service {
 
     @Override
     public void onCreate(){
+
+        //get the app context
         appContext = getApplication().getApplicationContext();
+
+        //set the app context to a secure place for future use
+        EdgeKeeperConstants.context = appContext;
+
+        //proceed
         mdfsHandler = new MDFSHandler(appContext);
     }
 

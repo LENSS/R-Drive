@@ -17,40 +17,26 @@ import static java.lang.Thread.sleep;
 
 
 public class ServiceHelper {
-	private static final String TAG = ServiceHelper.class.getSimpleName();
 	
 	/* Global Shared Instances */
 	private static ServiceHelper instance = null;
 	private static NetworkObserver netObserver;
 	private static MDFSDirectory directory;
-	private static Context context;
 	private byte[] encryptKey = new byte[32];
 	
-	private static volatile boolean connected = false;
-	
-	private ServiceHelper(final Context cont) {
-		// start service here
-		context = cont;
-		Intent intent = new Intent(context, NetworkObserver.class);
-		context.startService(intent);
-		context.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-		directory = MDFSDirectory.readDirectory();
-		directory.syncLocal();
+	private ServiceHelper() {
+		this.netObserver = new NetworkObserver();
+		this.directory = MDFSDirectory.readDirectory();
+		this.directory.syncLocal();
 	}
 	
-	public static ServiceHelper getInstance(Context context) {
+	public static ServiceHelper getInstance() {
 		if (instance == null) {
-			instance = new ServiceHelper(context);
-			Logger.v(TAG, "New Instance Created");
+			instance = new ServiceHelper();
 		}
-		System.out.println("service Helper initialized");
 		return instance;
 	}
-	
-	public static synchronized ServiceHelper getInstance() {
-		return instance;
-	}
-	
+
 	//if need directory call this function to get a copy og MDFSDirectory..dont make a new object of MDFSdirectory
 	public MDFSDirectory getDirectory() {
 		return directory;
@@ -61,15 +47,16 @@ public class ServiceHelper {
 	}
 
 	public static void releaseService(){
+
 		//unregister GNS
 		boolean gnsUnreg = GNS.stop();
-		if(instance != null ){ 
-			Logger.v(TAG, "releaseService");
+
+		//close netobserver
+		netObserver.shutdown();
+
+		//save directory and null servicehelper instance
+		if(instance != null ){
 			directory.saveDirectory();
-			if(connected)
-				context.unbindService(mConnection);
-			Intent intent = new Intent(context, NetworkObserver.class);
-			context.stopService(intent);
 			instance = null;
 		}
 	}
@@ -91,23 +78,5 @@ public class ServiceHelper {
 	public Future<?> submitCallableTask(Callable<?> task){
 		return netObserver.submitCallableTask(task);
 	}
-	
-	/////////////////////////////////////////////////////////////////////
-	
-	private static final ServiceConnection mConnection = new ServiceConnection() {
-		@Override
-		public void onServiceConnected(ComponentName className, IBinder iBinder) {
-			netObserver = ((NetworkObserver.LocalBinder) iBinder).getService();
-			Logger.i(TAG, "Service Connected!");
-			netObserver.init();
-			connected = true;
-			//service.init();
-		}
-		
-		@Override
-		public void onServiceDisconnected(ComponentName className) {
-			Logger.i(TAG, "Service Disonnected!");
-			connected = false;
-		}
-	};
+
 }

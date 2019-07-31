@@ -21,17 +21,16 @@ import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 
 //this class is the first class that is run as a service.
 //this class is basically the networking execution starting point of mdfs library
-public class NetworkObserver extends Service implements Observer {
+public class NetworkObserver{
 	private static final String TAG = NetworkObserver.class.getSimpleName();
 	private boolean firstStarted = false;
 	private runGNSandRsock rungnsandrsock;
-	private ScheduledTask scheduledTask = new ScheduledTask();
+	private ScheduledTask scheduledTask;
 	private ExecutorService pool;
-	private final IBinder mBinder = new LocalBinder();
 
-	public void init(){
-		EdgeKeeperConstants.my_wifi_ip_temp = AndroidIOUtils.getWifiIP(this);
+	public NetworkObserver(){
 		this.rungnsandrsock = new runGNSandRsock();
+		this.scheduledTask = new ScheduledTask();
 		pool = Executors.newCachedThreadPool();
 		scheduledTask.startAll();
 		firstStarted = true;
@@ -46,14 +45,6 @@ public class NetworkObserver extends Service implements Observer {
 		return pool.submit(task);
 	}
 
-	@Override
-	public void update(Observable observable, Object arg) {}
-	
-	
-	@Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-		return START_STICKY;
-	}
 	
 	public void shutdown(){
 		pool.shutdown();
@@ -61,23 +52,6 @@ public class NetworkObserver extends Service implements Observer {
 		rungnsandrsock.stopAll();
 	}
 
-	@Override
-	public IBinder onBind(Intent intent) {
-		return mBinder;
-	}
-
-	public class LocalBinder extends Binder {
-    	NetworkObserver getService() {
-            return NetworkObserver.this;
-        }
-    }
-
-	@Override
-	public void onDestroy() {
-		super.onDestroy();
-		shutdown();
-	}
-	
 
 }
 
