@@ -3,18 +3,8 @@ package edu.tamu.lenss.mdfs.handler;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.os.IBinder;
-
 import edu.tamu.lenss.mdfs.GNS.GNS;
 import edu.tamu.lenss.mdfs.MDFSDirectory;
-import edu.tamu.lenss.mdfs.utils.Logger;
-
-import static java.lang.Thread.sleep;
-
 
 public class ServiceHelper {
 	
