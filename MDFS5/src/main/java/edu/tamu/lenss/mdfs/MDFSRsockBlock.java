@@ -5,6 +5,9 @@ package edu.tamu.lenss.mdfs;
 //depending on the type of object this class contains, different job is done.
 //see MDFSRsockBlockCreator.java and MDFSRsockBlockRetriever.java files for more details.
 
+import edu.tamu.lenss.mdfs.models.MDFSRsockBlockForFileCreate;
+import edu.tamu.lenss.mdfs.models.MDFSRsockBlockForFileRetrieve;
+
 public class MDFSRsockBlock {
     public String type;
     public MDFSRsockBlockForFileCreate mdfsrsockblockcreator;

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.AssetManager;
-import android.support.v4.content.LocalBroadcastManager;
 
 import java.io.IOException;
 
@@ -16,8 +15,6 @@ import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 
 public class MDFSHandler extends Thread {
-
-    public final String CHANNEL_ID = "edu.tamu.cse.lenss.android.CHANNEL";
 
     public cli_processor cli;
     Context appContext;
@@ -53,10 +50,9 @@ public class MDFSHandler extends Thread {
             for(int i: keyValues){encryptKey[index] = (byte)i; index++;}
             ServiceHelper.getInstance().setEncryptKey(encryptKey);
 
-        } catch (NullPointerException /*|| IOException*/ e) {
+        } catch (NullPointerException  e) {
             e.printStackTrace();
         }
-        LocalBroadcastManager.getInstance(appContext).registerReceiver(mMessageReceiver, new IntentFilter("current_ip"));  //sagor
 
     }
 
@@ -66,17 +62,6 @@ public class MDFSHandler extends Thread {
         cli.start();
     }
 
-
-
-
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            //todo
-            //myIP = intent.getStringExtra("message");
-            //displayIP.setText(myIP);
-        }
-    };
 
 
 

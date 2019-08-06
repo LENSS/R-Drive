@@ -12,7 +12,7 @@ import java.io.ObjectOutputStream;
 import java.util.UUID;
 
 import edu.tamu.lenss.mdfs.GNS.GNS;
-import edu.tamu.lenss.mdfs.MDFSRsockBlockForFileRetrieve;
+import edu.tamu.lenss.mdfs.models.MDFSRsockBlockForFileRetrieve;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.models.FragmentTransferInfo;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;

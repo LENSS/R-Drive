@@ -19,7 +19,7 @@ import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.models.FragmentTransferInfo;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
-import edu.tamu.lenss.mdfs.MDFSRsockBlockForFileCreate;
+import edu.tamu.lenss.mdfs.models.MDFSRsockBlockForFileCreate;
 import example.Interface;
 import example.ReceivedFile;
 
@@ -32,6 +32,8 @@ import static java.lang.Thread.sleep;
 //this class receives a packet from rsock cilent library(rsock java api),
 //and saves it.
 public class RsockReceiveForFileCreation implements Runnable{
+
+    private static final long serialVersionUID = 8L;
 
     private static boolean isTerminated = false;
 

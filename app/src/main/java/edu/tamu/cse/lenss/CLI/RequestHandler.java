@@ -92,7 +92,7 @@ class RequestHandler implements Runnable{
         //for(int i=0; i<cmd.length; i++){ System.out.println("tokens: " + cmd[i]); }
 
         //check if the first token is "mdfs"
-        if(cmd.length>0 && cmd[0].equals("mdfs")){
+        if(cmd.length>0 && cmd[0].equals("mdfs") || cmd.length>0 && cmd[0].equals("./mdfs")){
 
             //check if there is any second token
             if(cmd.length>1){

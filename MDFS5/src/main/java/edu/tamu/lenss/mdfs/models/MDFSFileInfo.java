@@ -62,7 +62,7 @@ public class MDFSFileInfo implements Serializable {
 	}
 	
 	public static String getFileDirPath(String fileName, long createdTime){
-		return Constants.DIR_ROOT + File.separator 
+		return Constants.ANDROID_DIR_ROOT + File.separator
 				+ getFileDirName(fileName, createdTime);
 	}
 	
@@ -108,7 +108,7 @@ public class MDFSFileInfo implements Serializable {
 	 * @return
 	 */
 	public static String getBlockDirPath(String fileName, long creationTime, byte blockIdx){
-		return Constants.DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(fileName, creationTime) + File.separator + MDFSFileInfo.getBlockDirName(fileName, blockIdx);
+		return Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(fileName, creationTime) + File.separator + MDFSFileInfo.getBlockDirName(fileName, blockIdx);
 	}
 	
 	/**

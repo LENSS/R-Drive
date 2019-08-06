@@ -9,13 +9,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.io.StreamCorruptedException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -177,7 +174,7 @@ public class MDFSDirectory implements Serializable {
 		recentUpdate.clear();
 		recentDelete.clear();
 		
-		File rootDir = AndroidIOUtils.getExternalFile(Constants.DIR_ROOT); 
+		File rootDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT);
 		try {
 			IOUtilities.deleteRecursively(rootDir);
 		} catch (IOException e) {
@@ -188,7 +185,7 @@ public class MDFSDirectory implements Serializable {
 
 	//delete everything of a file from local mdfs directory
 	public void deleteFile(long fileId, String fName) {
-		File rootDir = AndroidIOUtils.getExternalFile(Constants.DIR_ROOT);
+		File rootDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT);
 		if (!rootDir.exists())
 			return;
 
@@ -233,7 +230,7 @@ public class MDFSDirectory implements Serializable {
 
 	//sync local mdfs directory and load at the beginning when application booots up
 	public void syncLocal() {
-		File rootDir = AndroidIOUtils.getExternalFile(Constants.DIR_ROOT);
+		File rootDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT);
 		if (!rootDir.exists())
 			return; // Don't need to sync at all
 		File[] directories = rootDir.listFiles(); // list file directories
@@ -322,7 +319,7 @@ public class MDFSDirectory implements Serializable {
 	//save mdfs directory object on local drive.
 	// this function is called periodically.
 	public boolean saveDirectory() {
-		File tmp0 = AndroidIOUtils.getExternalFile(Constants.DIR_ROOT);
+		File tmp0 = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT);
 		File tmp = IOUtilities.createNewFile(tmp0,
 				Constants.NAME_MDFS_DIRECTORY);
 		if (tmp == null) {
@@ -345,7 +342,7 @@ public class MDFSDirectory implements Serializable {
 
 	//read local mdfs directory and load at the beginning when application booots up
 	public static MDFSDirectory readDirectory() {
-		File tmp = AndroidIOUtils.getExternalFile(Constants.DIR_ROOT + "/"
+		File tmp = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + "/"
 				+ Constants.NAME_MDFS_DIRECTORY);
 		// File tmp = IOUtilities.createNewFile(tmp0,
 		// Constants.NAME_MDFS_DIRECTORY);

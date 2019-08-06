@@ -3,10 +3,7 @@ package edu.tamu.lenss.mdfs;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.Callable;
@@ -16,11 +13,7 @@ import com.google.common.io.Files;
 
 import android.os.Environment;
 
-import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
 import edu.tamu.lenss.mdfs.EdgeKeeper.FileMetadata;
-import edu.tamu.lenss.mdfs.EdgeKeeper.client;
-import edu.tamu.lenss.mdfs.GNS.GNS;
-import edu.tamu.lenss.mdfs.GNS.GNSConstants;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
@@ -167,7 +160,7 @@ public class MDFSFileRetrieverViaRsock {
     }
 
     private MergeVideo prepareBlocks(){
-        File fileDir = AndroidIOUtils.getExternalFile(Constants.DIR_ROOT + File.separator
+        File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator
                 + MDFSFileInfo.getFileDirName(fileInfo.getFileName(), fileInfo.getCreatedTime()));
         File[] blockFiles = fileDir.listFiles(new FileFilter(){
             @Override
@@ -246,15 +239,15 @@ public class MDFSFileRetrieverViaRsock {
     private String getDecryptedFilePath(){
 
         //first set the path where the file ought to be saved
-        Constants.DIR_DECRYPTED = localDir.replace("/storage/emulated/0/", "/");
+        Constants.ANDROID_DIR_DECRYPTED = localDir.replace("/storage/emulated/0/", "/");
 
         return Environment.getExternalStorageDirectory().getAbsolutePath()
-                + File.separator + Constants.DIR_DECRYPTED
+                + File.separator + Constants.ANDROID_DIR_DECRYPTED
                 + File.separator + fileInfo.getFileName();
     }
 
     private void deleteBlocks(){
-        File fileDir = AndroidIOUtils.getExternalFile(Constants.DIR_ROOT + File.separator
+        File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator
                 + MDFSFileInfo.getFileDirName(fileInfo.getFileName(), fileInfo.getCreatedTime()));
         File[] blockFiles = fileDir.listFiles(new FileFilter(){
             @Override

@@ -15,11 +15,6 @@
         android:largeHeap="true"
         android:debuggable="true"  >
 
-        <service
-			android:name="edu.tamu.lenss.mdfs.handler.NetworkObserver"
-			android:stopWithTask="true">
-		</service>
-
     </application>
 
 </manifest>

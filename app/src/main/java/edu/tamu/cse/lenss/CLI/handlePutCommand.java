@@ -1,7 +1,5 @@
 package edu.tamu.cse.lenss.CLI;
 
-import android.graphics.Bitmap;
-
 import java.io.File;
 import java.io.FileOutputStream;
 
@@ -53,7 +51,7 @@ public class handlePutCommand {
 
         if(compressed){
             try {
-                File tmpF = AndroidIOUtils.getExternalFile(Constants.DIR_CACHE);
+                File tmpF = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE);
                 final File compressedFile = IOUtilities.createNewFile(tmpF, newFileName);
                 FileOutputStream out = new FileOutputStream(compressedFile);
                 renamedFile.delete();

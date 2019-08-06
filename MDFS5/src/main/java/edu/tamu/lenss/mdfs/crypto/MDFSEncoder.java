@@ -28,7 +28,7 @@ public class MDFSEncoder {
 	
 	
 	public List<FragmentInfo> encodeNow(){
-		File tmpFile = AndroidIOUtils.getExternalFile(Constants.DIR_CACHE + File.separator + "encrypt_" + clearFile.getName());
+		File tmpFile = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE + File.separator + "encrypt_" + clearFile.getName());
 		IOUtilities.createNewFile(tmpFile);
 		MDFSCipher myCipher = MDFSCipher.getInstance();
 		if(rawSecretKey == null){
@@ -37,7 +37,7 @@ public class MDFSEncoder {
 		if(myCipher.encrypt(clearFile.getAbsolutePath(), tmpFile.getAbsolutePath(), rawSecretKey)){
 			byte[] encryptedByte = IOUtilities.fileToByte(tmpFile); 
 			tmpFile.delete();
-			return generateFileShares(encryptedByte);
+			return generateFileShards(encryptedByte);
 		}
 		tmpFile.delete();
 		return null;
@@ -60,9 +60,9 @@ public class MDFSEncoder {
 	
 	
 	/*
-	 * Need encryptedByteFile, k2, n2
+	 * Need encryptedByteFile, k2, n2 | entry point of ReedSolomon.java
 	 */
-	private List<FragmentInfo> generateFileShares(byte[] encryptedByteFile){
+	private List<FragmentInfo> generateFileShards(byte[] encryptedByteFile){
 		List<FragmentInfo> fileFragments = new ArrayList<FragmentInfo>();
 		
 		try{

@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import android.util.Log;
 
 import com.coremedia.iso.boxes.Container;
 import com.googlecode.mp4parser.authoring.Movie;
@@ -51,7 +50,6 @@ public class SplitVideo {
 		try {  
 			Movie movie = MovieCreator.build(mediaPath); 
 			movieEndTime = getMovieDuration(movie);
-			Log.i(TAG, "Movie Duration: " + movieEndTime);
 			splitTime[0] = 0;
 			double gap = movieEndTime/(double)splitCnt;
 			for(int i=1; i < splitCnt+1; i++){
@@ -80,7 +78,6 @@ public class SplitVideo {
 	                
 	                for(int i=0; i < splitCnt+1; i++){
 	                	splitTime[i] = correctTimeToSyncSample(track, splitTime[i], (i==splitCnt)?true:false);
-	                	Log.v(TAG, "Split time:" + splitTime[i]);
 	                }
 	                timeCorrected = true;
 	            }
@@ -118,7 +115,6 @@ public class SplitVideo {
 							sampleTime[trackCnt][j], sampleTime[trackCnt][j+1])));
 					trackCnt++;
 				}
-				Log.v(TAG, "Finish movie " + j);
 				Container out = new DefaultMp4Builder().build(movie);
 				File tmpF = IOUtilities.createNewFile(outputDirPath + File.separator 
 						+ MDFSFileInfo.getBlockName(movieFile.getName(), (byte)j));

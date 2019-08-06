@@ -34,6 +34,7 @@ import edu.tamu.lenss.mdfs.utils.IOUtilities;
 import edu.tamu.lenss.mdfs.utils.Logger;
 import edu.tamu.lenss.mdfs.utils.MyPair;
 import example.*;
+import edu.tamu.lenss.mdfs.models.MDFSRsockBlockForFileRetrieve;
 
 //rsock imports
 
@@ -420,7 +421,7 @@ public class MDFSBlockRetrieverViaRsock {
             File tmp = IOUtilities.createNewFile(tmp0, MDFSFileInfo.getBlockName(fileInfo.getFileName(), blockIdx));
 
             //check if decoding completed
-            if (decoder.decodeNow(blockFragments, tmp.getAbsolutePath())) {
+            if (decoder.decodeNow(blockFragments, tmp.getAbsolutePath())) {  //takes bunch of file fragments and returns file block
                 System.out.println("xxx Block Decryption Complete");
                 isFinished = true;
                 listener.onComplete(tmp, fileInfo, clientID);

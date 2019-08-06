@@ -100,7 +100,7 @@ public class MDFSCipher {
 			fis.close();
 			
 			//////// Test //////////////////
-			/*File testFile = AndroidIOUtils.getExternalFile(Constants.DIR_CACHE + File.separator + "test.jpg");
+			/*File testFile = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE + File.separator + "test.jpg");
 			IOUtilities.createNewFile(testFile);
 			decrypt(ciphertextFile, testFile.getAbsolutePath(), rawSecretKey);*/
 			/////////////////////////////////

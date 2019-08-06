@@ -25,6 +25,7 @@ import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
 import edu.tamu.lenss.mdfs.utils.Logger;
+import edu.tamu.lenss.mdfs.models.MDFSRsockBlockForFileCreate;
 
 //rsock imports
 
@@ -94,7 +95,7 @@ public class MDFSBlockCreatorViaRsock {
         MDFSEncoder encoder = new MDFSEncoder(blockFile, n2, k2);
         if(encryptKey != null)
             encoder.setKey(encryptKey);
-        List<FragmentInfo> fragInfos = encoder.encodeNow();   //here we have all the fragments of this blocks
+        List<FragmentInfo> fragInfos = encoder.encodeNow();   ///takes a file block as input, cipher it and returns bunch of file fragments
 
         //if (!encoder.encode()) {
         if(fragInfos == null) {

@@ -26,7 +26,7 @@ public class MDFSDecoder {
 		if(encryptedBytes == null)
 			return false;
 		File tmpEncryptFile = IOUtilities.byteToFile(encryptedBytes, 
-				AndroidIOUtils.getExternalFile(Constants.DIR_CACHE), "decodercache_" + System.nanoTime());
+				AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE), "decodercache_" + System.nanoTime());
 		// Decrypt
 		MDFSCipher myCipher = MDFSCipher.getInstance();
 		boolean isSuccess = myCipher.decrypt(tmpEncryptFile.getAbsolutePath(), decodedFilePath, rawSecretKey);

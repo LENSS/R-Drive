@@ -1,14 +1,13 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 26//27
+    compileSdkVersion 26
 
     defaultConfig {
-        //minSdkVersion 21
-        targetSdkVersion 26//27
+        targetSdkVersion 26
         buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
         multiDexEnabled  true
-        minSdkVersion 23 //19
+        minSdkVersion 23
 
     }
 
@@ -37,7 +36,6 @@ android {
 }
 
 dependencies {
-    //implementation fileTree(include: '*.jar', dir: 'libs')
     api 'com.google.guava:guava:18.0'
     api 'com.android.support:multidex:1.0.2'
     api files('libs/aspectjrt-1.7.3.jar')

@@ -132,7 +132,7 @@ public class MDFSFileCreatorViaRsock {
             @Override
             public Boolean call() throws Exception {
                 String outputDirPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator
-                        + edu.tamu.lenss.mdfs.Constants.DIR_ROOT + File.separator
+                        + edu.tamu.lenss.mdfs.Constants.ANDROID_DIR_ROOT + File.separator
                         + MDFSFileInfo.getFileDirName(file.getName(), file.lastModified());
                 SplitVideo splitVideo = new SplitVideo(file.getAbsolutePath(), outputDirPath, blockCount);
                 return splitVideo.splitVideo();
@@ -182,7 +182,7 @@ public class MDFSFileCreatorViaRsock {
         // Read all blocks from the directory
         final Queue<MDFSBlockCreatorViaRsock> uploadQ = new ConcurrentLinkedQueue<MDFSBlockCreatorViaRsock>();
 
-        final File fileDir = AndroidIOUtils.getExternalFile(edu.tamu.lenss.mdfs.Constants.DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(file.getName(), file.lastModified()));
+        final File fileDir = AndroidIOUtils.getExternalFile(edu.tamu.lenss.mdfs.Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(file.getName(), file.lastModified()));
 
         //array of blocks
         final File[] blocks = fileDir.listFiles(new FileFilter(){
@@ -244,7 +244,7 @@ public class MDFSFileCreatorViaRsock {
                 @Override
                 public void onError(String error, String clientID) {
                     Logger.w(TAG, "Send block failure.  " + error);
-                    fileCreatorListener.onError("file creation unsuccessful..some blocks failed to be sent", clientID);
+                    fileCreatorListener.onError("file creation unsuccessful..some blocks failed to be sent...reason: " + error, clientID);
                     try {
                         sleep(sleepPeriod);
                     } catch (InterruptedException e) {
