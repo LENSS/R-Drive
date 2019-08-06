@@ -17,7 +17,9 @@ public class MDFSEncoder {
 	private byte  n2, k2;
 	private byte[] rawSecretKey;
 	private long timeStamp;
-	
+
+
+
 	public MDFSEncoder(File file, byte n2, byte k2){
 		this.clearFile = file;
 		this.timeStamp = file.lastModified();

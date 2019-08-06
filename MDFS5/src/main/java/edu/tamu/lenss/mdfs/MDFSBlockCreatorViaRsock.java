@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -22,6 +23,7 @@ import edu.tamu.lenss.mdfs.crypto.MDFSEncoder;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.models.FragmentTransferInfo;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
+import edu.tamu.lenss.mdfs.testCrypto.EnCoDer;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
 import edu.tamu.lenss.mdfs.utils.Logger;
@@ -92,15 +94,14 @@ public class MDFSBlockCreatorViaRsock {
         if(blockFile == null || !blockFile.exists())
             return;
 
-        MDFSEncoder encoder = new MDFSEncoder(blockFile, n2, k2);
-        if(encryptKey != null)
-            encoder.setKey(encryptKey);
-        List<FragmentInfo> fragInfos = encoder.encodeNow();   ///takes a file block as input, cipher it and returns bunch of file fragments
-
-        //if (!encoder.encode()) {
+        EnCoDer encoder = new EnCoDer(encryptKey, n2, k2, blockFile);
+        List<FragmentInfo> fragInfos = encoder.ifYouSmellWhatTheRockIsCooking();   ///takes a file block as input, cipher it and returns bunch of file fragments
+        
         if(fragInfos == null) {
             listener.onError("File Encryption Failed", clientID);
             return;
+        }else{
+            System.out.println("sizeee of fragments: " + fragInfos.size());
         }
 
 
