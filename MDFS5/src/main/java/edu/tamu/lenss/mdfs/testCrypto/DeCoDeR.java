@@ -5,8 +5,8 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import edu.tamu.lenss.mdfs.Constants;
-import edu.tamu.lenss.mdfs.crypto.FragmentInfo;
-import edu.tamu.lenss.mdfs.crypto.MDFSCipher;
+import edu.tamu.lenss.mdfs.cipher.FragmentInfo;
+import edu.tamu.lenss.mdfs.cipher.MDFSCipher;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
 
