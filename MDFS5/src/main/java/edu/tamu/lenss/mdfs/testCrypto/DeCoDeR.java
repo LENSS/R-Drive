@@ -1,6 +1,7 @@
 package edu.tamu.lenss.mdfs.testCrypto;
 
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import edu.tamu.lenss.mdfs.Constants;
@@ -17,7 +18,7 @@ public class DeCoDeR {
     private List<FragmentInfo> fileFragments;
     private String decodedFilePath;
     private int PARITY_SHARDS;
-    private byte[] decryptedBytes;   //contains only fileBytes
+    private byte[] decryptedBytes;   //contains only fileBytes (in this case, file is the block)
     private static final int BYTES_IN_INT = 4;
 
     public DeCoDeR(byte[] encryptKey, byte n2, byte k2, List<FragmentInfo> fileFragments, String decodedFilePath){
@@ -30,6 +31,9 @@ public class DeCoDeR {
     }
 
     public boolean ifYouSmellWhatTheRockIsCooking(){
+
+        System.out.println("nn22: " + N2);
+        System.out.println("kk22: " + K2);
 
 
         //print all the file fragment numbers
@@ -73,9 +77,13 @@ public class DeCoDeR {
             System.arraycopy(shards[i], 0, allBytes, shardSize * i, shardSize);
         }
 
+        // Extract the file length
+        int fileSize = ByteBuffer.wrap(allBytes).getInt();
+
         //copy all the bytes, except the first four bytes to encryptedByes array
         int index = 0;
-        for(int i=BYTES_IN_INT; i<allBytes.length; i++){
+        decryptedBytes = new byte[fileSize];
+        for(int i=BYTES_IN_INT; i<fileSize; i++){
             decryptedBytes[index] = allBytes[i];
             index++;
         }

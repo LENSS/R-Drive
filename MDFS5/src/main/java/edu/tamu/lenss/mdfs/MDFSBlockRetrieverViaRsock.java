@@ -421,7 +421,7 @@ public class MDFSBlockRetrieverViaRsock {
             File tmp = IOUtilities.createNewFile(tmp0, MDFSFileInfo.getBlockName(fileInfo.getFileName(), blockIdx));
 
             //make decoder object
-            DeCoDeR decoder = new DeCoDeR(decryptKey, fileInfo.getK2(), fileInfo.getN2(), blockFragments, tmp.getAbsolutePath() );
+            DeCoDeR decoder = new DeCoDeR(decryptKey, fileInfo.getN2(), fileInfo.getK2(), blockFragments, tmp.getAbsolutePath() );
 
             //check if decoding completed
             if (decoder.ifYouSmellWhatTheRockIsCooking()) {  //takes bunch of file fragments and returns file block

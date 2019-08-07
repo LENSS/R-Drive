@@ -89,6 +89,45 @@ public class MDFSBlockCreatorViaRsock {
         this.encryptKey = key;
     }
 
+
+    private void encryptFile1() {
+        isEncryptComplete = false;
+        if(blockFile == null || !blockFile.exists())
+            return;
+
+        MDFSEncoder encoder = new MDFSEncoder(blockFile, n2, k2);
+        if(encryptKey != null)
+            encoder.setKey(encryptKey);
+        List<FragmentInfo> fragInfos = encoder.encodeNow();   //here we have all the fragments of this blocks
+
+        //if (!encoder.encode()) {
+        if(fragInfos == null) {
+            listener.onError("File Encryption Failed", clientID);
+            return;
+        }
+
+
+        // Store the file fragments in local SDCard
+        File fragsDir = AndroidIOUtils.getExternalFile(MDFSFileInfo
+                .getBlockDirPath(fileInfo.getFileName(), fileInfo.getCreatedTime(),	blockIdx));
+
+        HashSet<Byte> frags = new HashSet<Byte>();
+
+        // Write file fragments to SD Card
+        for (FragmentInfo frag : fragInfos) {
+            File tmp = IOUtilities.createNewFile(fragsDir, MDFSFileInfo.getFragName(fileInfo.getFileName(), blockIdx, frag.getFragmentNumber()));
+
+            if (tmp != null && IOUtilities.writeObjectToFile(frag, tmp)) {
+                frags.add(frag.getFragmentNumber());
+            }
+        }
+        serviceHelper.getDirectory().addBlockFragments(fileInfo.getCreatedTime(), blockIdx, frags);
+        listener.statusUpdate("Encryption Complete");
+        Logger.i(TAG + " encryptFile()", "Encryption Complete");
+        isEncryptComplete = true;
+    }
+
+
     private void encryptFile() {
         isEncryptComplete = false;
         if(blockFile == null || !blockFile.exists())

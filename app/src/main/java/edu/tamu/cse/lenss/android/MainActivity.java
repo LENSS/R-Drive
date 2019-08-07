@@ -18,7 +18,8 @@ import android.widget.Toast;
 
 
 import java.io.IOException;
-
+import java.lang.reflect.Array;
+import java.util.Arrays;
 
 
 //this is the main actiivty and where the executio of this app starts.
@@ -28,6 +29,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
+        /*//test
+        byte[] src = {10, 20, 30, 40, 50};
+        byte[] dest = new byte[10];
+        System.arraycopy(src, 0, dest, 0, src.length);
+        System.out.println("destitute: " + Arrays.toString(dest));
+        System.out.println("Hello World");*/
 
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
