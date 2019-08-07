@@ -30,9 +30,9 @@ import java.nio.ByteBuffer;
  */
 public class SampleEncoder {
 
-    public static final int K2 = 4; //data shards
+    public static final int K2 = 4;
     public static final int PARITY_SHARDS = 2;
-    public static final int N2 = 6;  //total shards
+    public static final int N2 = 6;
 
     public static final int BYTES_IN_INT = 4;
 

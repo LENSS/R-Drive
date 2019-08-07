@@ -96,7 +96,7 @@ public class MDFSBlockCreatorViaRsock {
 
         EnCoDer encoder = new EnCoDer(encryptKey, n2, k2, blockFile);
         List<FragmentInfo> fragInfos = encoder.ifYouSmellWhatTheRockIsCooking();   ///takes a file block as input, cipher it and returns bunch of file fragments
-        
+
         if(fragInfos == null) {
             listener.onError("File Encryption Failed", clientID);
             return;

@@ -12,14 +12,14 @@ import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
 
 public class EnCoDer {
-    public byte[] encryptKey;
-    public byte N2;
-    public byte K2;
-    public File clearFile;
-    public File tmpFile;
-    public byte[] encryptedByte;
-    public int PARITY_SHARDS;
-    public static final int BYTES_IN_INT = 4;
+    private byte[] encryptKey;
+    private byte N2;
+    private byte K2;
+    private File clearFile;
+    private File tmpFile;
+    private byte[] encryptedByte;  //contains only fileBytes
+    private int PARITY_SHARDS;
+    private static final int BYTES_IN_INT = 4;
 
 
     public EnCoDer(byte[] encryptKey, byte n2, byte k2, File file){
@@ -51,17 +51,17 @@ public class EnCoDer {
 
         // Get the size of the input file.  (Files bigger that
         // Integer.MAX_VALUE will fail here!)
-        final int fileSize = (int) encryptedByte.length;
+        int fileSize = (int) encryptedByte.length;
 
         // Figure out how big each shard will be.  The total size stored
         // will be the file size (8 bytes) plus the file.
-        final int storedSize = fileSize + BYTES_IN_INT;
-        final int shardSize = (storedSize + K2 - 1) / K2;
+        int storedSize = fileSize + BYTES_IN_INT;
+        int shardSize = (storedSize + K2 - 1) / K2;
 
         // Create a buffer holding the file size, followed by
         // the contents of the file.
-        final int bufferSize = shardSize * K2;
-        final byte [] allBytes = new byte[bufferSize];
+        int bufferSize = shardSize * K2;
+        byte [] allBytes = new byte[bufferSize];
         ByteBuffer.wrap(allBytes).putInt(fileSize);
 
         int index = BYTES_IN_INT;

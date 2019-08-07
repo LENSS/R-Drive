@@ -29,6 +29,7 @@ import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.models.BlOcKrEpLy;
 import edu.tamu.lenss.mdfs.models.FragmentTransferInfo;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
+import edu.tamu.lenss.mdfs.testCrypto.DeCoDeR;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
 import edu.tamu.lenss.mdfs.utils.Logger;
@@ -416,12 +417,14 @@ public class MDFSBlockRetrieverViaRsock {
 
             //if enough fragments available, isFinished is False, decoding is False and decryptKey is valid, then
             //decode and store the file
-            MDFSDecoder decoder = new MDFSDecoder(fileInfo.getK2(), fileInfo.getN2(), decryptKey);
             File tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFileDirPath(fileInfo.getFileName(), fileInfo.getCreatedTime()));
             File tmp = IOUtilities.createNewFile(tmp0, MDFSFileInfo.getBlockName(fileInfo.getFileName(), blockIdx));
 
+            //make decoder object
+            DeCoDeR decoder = new DeCoDeR(decryptKey, fileInfo.getK2(), fileInfo.getN2(), blockFragments, tmp.getAbsolutePath() );
+
             //check if decoding completed
-            if (decoder.decodeNow(blockFragments, tmp.getAbsolutePath())) {  //takes bunch of file fragments and returns file block
+            if (decoder.ifYouSmellWhatTheRockIsCooking()) {  //takes bunch of file fragments and returns file block
                 System.out.println("xxx Block Decryption Complete");
                 isFinished = true;
                 listener.onComplete(tmp, fileInfo, clientID);

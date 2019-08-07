@@ -60,7 +60,8 @@ public class MDFSFileInfo implements Serializable {
 	public void setFileSize(long fileLength) {
 		this.fileSize = fileLength;
 	}
-	
+
+
 	public static String getFileDirPath(String fileName, long createdTime){
 		return Constants.ANDROID_DIR_ROOT + File.separator
 				+ getFileDirName(fileName, createdTime);

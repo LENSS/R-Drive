@@ -12,7 +12,7 @@ public class FragmentInfo implements Serializable {
 	
 	private String _filename;
 	private byte _type;
-	private long _filesize;
+	private long _filesize;   //entire file/block size
 	private byte[] _fragment;
 	private long _lastModifiedTS;
 	public byte _fragmentNumber;
