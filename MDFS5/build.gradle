@@ -19,11 +19,13 @@ android {
     }
     packageBuildConfig(false)
 
+/*
     externalNativeBuild {
         cmake {
             path 'src/main/jni/CMakeLists.txt'
         }
     }
+*/
 
     compileOptions {
         incremental true
