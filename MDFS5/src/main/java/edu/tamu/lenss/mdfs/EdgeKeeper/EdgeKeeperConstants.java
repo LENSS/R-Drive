@@ -24,7 +24,7 @@ public class EdgeKeeperConstants {
     public static Context context;
 
     //EdgeKeeper variables
-    public static final String dummy_EdgeKeeper_ip = "192.168.1.45";
+    public static final String dummy_EdgeKeeper_ip = "192.168.1.100";
     public static final int dummy_EdgeKeeper_port = 9995;
 
     //guid variables

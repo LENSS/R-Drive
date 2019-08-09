@@ -158,9 +158,13 @@ public class FileMetadata implements Serializable {
 
     //convertion of json string to metadata object
     public static FileMetadata parse(String incoming){
+
         ObjectMapper Obj = new ObjectMapper();
         FileMetadata metadata = null;
-        try { metadata = Obj.readValue(incoming, FileMetadata.class); } catch (IOException e) { e.printStackTrace(); }
+        try {
+            metadata = Obj.readValue(incoming, FileMetadata.class);
+
+        } catch (IOException e) { e.printStackTrace(); }
         return metadata;
     }
 

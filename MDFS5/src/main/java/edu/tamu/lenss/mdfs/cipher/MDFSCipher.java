@@ -37,7 +37,7 @@ public class MDFSCipher {
 		// Get the KeyGenerator
 		KeyGenerator kgen = null;
 		try {
-			kgen = KeyGenerator.getInstance("AES");
+			kgen = KeyGenerator.getInstance("AES/CBC/PKCS5Padding");
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}

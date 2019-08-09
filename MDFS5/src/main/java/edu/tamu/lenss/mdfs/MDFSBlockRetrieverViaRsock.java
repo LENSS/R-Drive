@@ -28,7 +28,7 @@ import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.models.BlOcKrEpLy;
 import edu.tamu.lenss.mdfs.models.FragmentTransferInfo;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
-import edu.tamu.lenss.mdfs.testCrypto.DeCoDeR;
+import edu.tamu.lenss.mdfs.ReedSolomon.DeCoDeR;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
 import edu.tamu.lenss.mdfs.utils.Logger;

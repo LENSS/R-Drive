@@ -21,7 +21,7 @@ import edu.tamu.lenss.mdfs.cipher.FragmentInfo;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.models.FragmentTransferInfo;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
-import edu.tamu.lenss.mdfs.testCrypto.EnCoDer;
+import edu.tamu.lenss.mdfs.ReedSolomon.EnCoDer;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
 import edu.tamu.lenss.mdfs.utils.Logger;

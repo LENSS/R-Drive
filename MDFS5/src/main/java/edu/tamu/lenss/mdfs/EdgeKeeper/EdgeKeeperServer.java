@@ -1,7 +1,7 @@
 package edu.tamu.lenss.mdfs.EdgeKeeper;
-import java.io.*;
+
+import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -68,7 +68,7 @@ public class EdgeKeeperServer {
 
                                 //check for command
                                 if((metadataRec.command == EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST) || (metadataRec.command == EdgeKeeperConstants.FRAGMENT_RECEIVER_METADATA_DEPOSIT_REQUEST)){
-                                    System.out.println("EdgeKeeper server got metadata Deposit request from fragment receiver");
+                                    System.out.println("EdgeKeeper server got metadata Deposit request from fragment receiver " + socketChannel.getRemoteAddress());
 
                                     //first check if the metadataRec reqUniqueID belongs to deleted files,
                                     //that means that file has been deleted.
@@ -111,7 +111,7 @@ public class EdgeKeeperServer {
 
 
                                 }else if (metadataRec.command == EdgeKeeperConstants.METADATA_WITHDRAW_REQUEST) {
-                                    System.out.println("EdgeKeeper server got metadata Withdraw request");
+                                    System.out.println("EdgeKeeper server got metadata Withdraw request " + socketChannel.getRemoteAddress());
 
                                     //return object
                                     FileMetadata metadataRet = null;
@@ -204,7 +204,7 @@ public class EdgeKeeperServer {
                                     //send back
                                     send(sendBuf);
                                 }else if(metadataRec.command == EdgeKeeperConstants.REMOVE_MDFS_DIR_REQUEST){
-                                    System.out.println("EdgeKeeper server got remove directory request");
+                                    System.out.println("EdgeKeeper server got remove directory request " + socketChannel.getRemoteAddress());
                                     //note: a dir deletion means all of both files and folders to be deleted
 
                                     //reply object
@@ -214,7 +214,7 @@ public class EdgeKeeperServer {
                                     if(metadataRec.filePathMDFS.equals("/*")){
 
                                         //request for deleting all the files and folders in root dir
-                                       boolean result = directory.removeDirectory(metadataRec.filePathMDFS);
+                                        boolean result = directory.removeDirectory(metadataRec.filePathMDFS);
 
                                         if (result) {
 
@@ -273,7 +273,7 @@ public class EdgeKeeperServer {
                                     send(sendBuf);
 
                                 }else if(metadataRec.command == EdgeKeeperConstants.REMOVE_MDFS_FILE_REQUEST){
-                                    System.out.println("EdgeKeeper server got remove file request");
+                                    System.out.println("EdgeKeeper server got remove file request " + socketChannel.getRemoteAddress());
                                     //note: a file deletion means only that file to be deleted, but nothing else in that dir.
 
                                     //reply object
@@ -326,7 +326,7 @@ public class EdgeKeeperServer {
 
 
                                 }else if(metadataRec.command == EdgeKeeperConstants.GET_MDFS_FILES_AND_DIR_REQUEST){
-                                    System.out.println("EdgeKeeper server got list files and folders request");
+                                    System.out.println("EdgeKeeper server got list files and folders request " + socketChannel.getRemoteAddress());
 
                                     //reply object
                                     FileMetadata metadataRet;

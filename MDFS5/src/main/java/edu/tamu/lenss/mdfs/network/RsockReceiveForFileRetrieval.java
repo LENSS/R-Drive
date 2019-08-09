@@ -113,7 +113,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                             System.out.println("fragment has been pushed to the rsock daemon (success)");
 
                             //delete tmp0 file
-                            tmp0.delete();
+                            //tmp0.delete();
 
 
                         } catch (IOException e) {
@@ -124,6 +124,8 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                         //file frag wrong.
                         //file frag invalid.
                         //file frag fetching failed.
+                        System.out.println("could not meet fragment retrirval request read file size 0.." + tmp0.getName());
+
                     }
                 }else{
                     //unblocked from rsock client library(roskc java api) due to timeout.
