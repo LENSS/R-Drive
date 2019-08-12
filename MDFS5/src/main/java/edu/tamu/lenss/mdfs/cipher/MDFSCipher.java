@@ -37,7 +37,7 @@ public class MDFSCipher {
 		// Get the KeyGenerator
 		KeyGenerator kgen = null;
 		try {
-			kgen = KeyGenerator.getInstance("AES/CBC/PKCS5Padding");
+			kgen = KeyGenerator.getInstance("AES");
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}
@@ -137,11 +137,13 @@ public class MDFSCipher {
 		try {
 			plainMessage = cipher.doFinal(encryptedMessage);
 		} catch (IllegalBlockSizeException e) {
+			System.out.println("xxyyzz illegal blocksize exception");
 			e.printStackTrace();
 		} catch (BadPaddingException e) {
 			e.printStackTrace();
+			System.out.println("xxyyzz bad padding exception");
 		} catch(OutOfMemoryError e){
-			// the doFinal() uses a lot of memory...
+			System.out.println("xxyyzz out of memory exception");
 			e.printStackTrace();
 		}
 		

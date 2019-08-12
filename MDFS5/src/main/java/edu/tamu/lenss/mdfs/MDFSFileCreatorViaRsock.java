@@ -217,7 +217,7 @@ public class MDFSFileCreatorViaRsock {
                 int reTryLimit = uploadQ.size() * edu.tamu.lenss.mdfs.Constants.FILE_CREATION_RETRIALS;
                 synchronized(uploadQ){
                     while(!uploadQ.isEmpty() && reTryLimit > 0){
-                        curBlock = uploadQ.poll();
+                        curBlock = uploadQ.poll(); //retrieve and remove
                         curBlock.setEncryptKey(encryptKey);
                         curBlock.start();
                         uploadQ.wait();	// Current thread releases the lock when wait() is called and Regain the lock once it is notified.

@@ -92,6 +92,7 @@ public class MDFSBlockCreatorViaRsock {
         if(blockFile == null || !blockFile.exists())
             return;
 
+        System.out.println("blockfile dirdirdir: " + blockFile.getAbsolutePath() + "       blockfilename: " + blockFile.getName());
         EnCoDer encoder = new EnCoDer(encryptKey, n2, k2, blockFile);
         List<FragmentInfo> fragInfos = encoder.ifYouSmellWhatTheRockIsCooking();   ///takes a file block as input, cipher it and returns bunch of file fragments
 
@@ -104,8 +105,7 @@ public class MDFSBlockCreatorViaRsock {
 
 
         // Store the file fragments in local SDCard
-        File fragsDir = AndroidIOUtils.getExternalFile(MDFSFileInfo
-                .getBlockDirPath(fileInfo.getFileName(), fileInfo.getCreatedTime(),	blockIdx));
+        File fragsDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileInfo.getFileName(), fileInfo.getCreatedTime(),	blockIdx));
 
         HashSet<Byte> frags = new HashSet<Byte>();
 

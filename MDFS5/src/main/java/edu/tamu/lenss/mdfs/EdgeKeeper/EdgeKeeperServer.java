@@ -68,7 +68,7 @@ public class EdgeKeeperServer {
 
                                 //check for command
                                 if((metadataRec.command == EdgeKeeperConstants.FILE_CREATOR_METADATA_DEPOSIT_REQUEST) || (metadataRec.command == EdgeKeeperConstants.FRAGMENT_RECEIVER_METADATA_DEPOSIT_REQUEST)){
-                                    System.out.println("EdgeKeeper server got metadata Deposit request from fragment receiver " + socketChannel.getRemoteAddress());
+                                    System.out.println("EdgeKeeper server got metadata Deposit request from fragment creator/receiver" + socketChannel.getRemoteAddress());
 
                                     //first check if the metadataRec reqUniqueID belongs to deleted files,
                                     //that means that file has been deleted.

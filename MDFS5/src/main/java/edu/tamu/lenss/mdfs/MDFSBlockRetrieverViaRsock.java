@@ -420,6 +420,7 @@ public class MDFSBlockRetrieverViaRsock {
             File tmp = IOUtilities.createNewFile(tmp0, MDFSFileInfo.getBlockName(fileInfo.getFileName(), blockIdx));
 
             //make decoder object
+            System.out.println("tmp.getabsolutepath dirdirdir: " + tmp.getAbsolutePath());
             DeCoDeR decoder = new DeCoDeR(decryptKey, fileInfo.getN2(), fileInfo.getK2(), blockFragments, tmp.getAbsolutePath() );
 
             //check if decoding completed
