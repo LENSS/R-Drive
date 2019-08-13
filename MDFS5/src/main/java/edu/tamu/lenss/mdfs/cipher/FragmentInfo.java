@@ -4,7 +4,9 @@ import java.io.Serializable;
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
 
 
-
+//This class is used only during erasure coding.
+//aka, when a fileBlock(a block of an actual file) is divided into fragments(multiple smaller files),
+// we use this class to identify each file fragments.
 public class FragmentInfo implements Serializable {
 	private static final long serialVersionUID = 1L;
 	public static final byte DATA_TYPE = 0;
@@ -12,7 +14,7 @@ public class FragmentInfo implements Serializable {
 	
 	private String _filename;
 	private byte _type;
-	private long _filesize;   //entire file/block size
+	private long _filesize;   //entire block size
 	private byte[] _fragment;
 	private long _lastModifiedTS;
 	public byte _fragmentNumber;

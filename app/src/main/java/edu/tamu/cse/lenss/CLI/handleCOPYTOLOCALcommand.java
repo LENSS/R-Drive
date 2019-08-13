@@ -10,6 +10,7 @@ import java.io.IOException;
 
 import static java.lang.Thread.sleep;
 
+//copy a file from android phone/linux machine, where mdfs is running, to the cli client side linux machine
 public class handleCOPYTOLOCALcommand {
 
     public static boolean readyToSend = false;
@@ -20,7 +21,7 @@ public class handleCOPYTOLOCALcommand {
         String androidDir = cmd[2];
         String filename = cmd[3];
 
-        //check if the androidDir has the slash in it al the end
+        //check if the androidDir has the slash in it al the end, if not add it.
         if(androidDir.charAt(androidDir.length()-1)!='/'){androidDir = androidDir + "/";}
 
         //prepare android directory
@@ -60,8 +61,8 @@ public class handleCOPYTOLOCALcommand {
             readyToSend = true;
         }
 
-        if(readyToSend) {
 
+        if(readyToSend) {
             //separate the reply string into different 1000 pieces
             //the first piece contains numOfPieces + "_" + 1000 bytes
             if(reply.length()>1000) {
@@ -107,13 +108,11 @@ public class handleCOPYTOLOCALcommand {
                 //send the reply tokens one by one
                 int count = 0;
                 for(int i=0; i< replyTokens.length; i++){
-
                     clientSockets.send(clientID, replyTokens[i]);
-
-                    System.out.println("cliii rep token sent: " + count +  " " + replyTokens[i]); count++;
                     Sleep(100);
                 }
 
+                //when done, close the socket
                 clientSockets.close(clientID);
 
             }else{

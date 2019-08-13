@@ -57,12 +57,6 @@ public class MDFSDirectory implements Serializable {
 
 	private LinkedList<MyPair<Long, Long>> recentUpdate;
 	private LinkedList<MyPair<Long, Long>> recentDelete;
-	
-
-	
-	//fileID to BlockID to StartTime
-	private Map<Long, HashMap<Byte, Long>> downloadingBlocks;
-
 
 	//constructor
 	public MDFSDirectory() {
@@ -73,7 +67,6 @@ public class MDFSDirectory implements Serializable {
 		decryptedFileSet = new HashSet<Long>();
 		recentUpdate = new LinkedList<MyPair<Long, Long>>();
 		recentDelete = new LinkedList<MyPair<Long, Long>>();
-		downloadingBlocks = new HashMap<Long, HashMap<Byte, Long>>();
 	}
 
 
@@ -228,7 +221,7 @@ public class MDFSDirectory implements Serializable {
 		}
 	}
 
-	//sync local mdfs directory and load at the beginning when application booots up
+	//sync local mdfs directory and load at the beginning when application boots up
 	public void syncLocal() {
 		File rootDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT);
 		if (!rootDir.exists())
@@ -317,7 +310,7 @@ public class MDFSDirectory implements Serializable {
 	}
 
 	//save mdfs directory object on local drive.
-	// this function is called periodically.
+	// this function is called periodically and when app is closing.
 	public boolean saveDirectory() {
 		File tmp0 = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT);
 		File tmp = IOUtilities.createNewFile(tmp0,
@@ -340,7 +333,7 @@ public class MDFSDirectory implements Serializable {
 		return false;
 	}
 
-	//read local mdfs directory and load at the beginning when application booots up
+	//read local mdfs directory and load at the beginning when application boots up.
 	public static MDFSDirectory readDirectory() {
 		File tmp = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + "/"
 				+ Constants.NAME_MDFS_DIRECTORY);

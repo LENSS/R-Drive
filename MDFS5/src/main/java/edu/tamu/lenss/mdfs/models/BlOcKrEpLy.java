@@ -2,18 +2,16 @@ package edu.tamu.lenss.mdfs.models;
 
 import java.util.List;
 
-
-//This class is copied and modified from BlockReply.java class
-//THis class object is only used in MDFSBlockRetrieverViaRsock.java class
+//This class object is only used in MDFSBlockRetrieverViaRsock.java class
 public class BlOcKrEpLy {
     private String fileName;
-    private long fileCreatedTime;  //note fileCReatedTime is fileID
+    private long fileCreatedTime;  //note: fileCReatedTime is fileID
     private byte blockIdx;
     private List<Byte> fileFragIndex;
     private String source;
     private String destination;
 
-    public BlOcKrEpLy(String name, long time, byte blockIndex, String source, String destination){ //source = who is sending back the reply  | destination  = who originally made the request
+    public BlOcKrEpLy(String name, long time, byte blockIndex, String source, String destination){
         this.fileName = name;
         this.fileCreatedTime = time;
         this.blockIdx = blockIndex;

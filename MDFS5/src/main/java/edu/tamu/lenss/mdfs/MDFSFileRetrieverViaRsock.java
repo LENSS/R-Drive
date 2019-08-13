@@ -118,7 +118,6 @@ public class MDFSFileRetrieverViaRsock {
 
                 @Override
                 public void onComplete(File decryptedFile, MDFSFileInfo fileInfo, String clientID) {
-                    System.out.println("xxx::: Complete Retrieving One Block");
                     synchronized(downloadQ){
                         sleepPeriod = Constants.IDLE_BTW_FAILURE;
                         downloadQ.notify();
@@ -155,7 +154,6 @@ public class MDFSFileRetrieverViaRsock {
             }
         };
 
-        System.out.println("xxx about to place job");
         ServiceHelper.getInstance().submitCallableTask(new CallableTask<Boolean>(downloadTask, callback));
     }
 
@@ -202,7 +200,6 @@ public class MDFSFileRetrieverViaRsock {
     }
 
     private void mergeBlocks(){
-        System.out.println("xxx::: mergeblock");
         Callable<Boolean> mergeJob = new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
@@ -226,7 +223,6 @@ public class MDFSFileRetrieverViaRsock {
                     fileListener.onComplete(AndroidIOUtils.getExternalFile(getDecryptedFilePath()), fileInfo, clientID);  //this is where execution of this file ends
                 }
                 else{
-                    Logger.e(TAG, "xxx::: Fail to merge video.");
                     fileListener.onError("Fail to merge video.", fileInfo, clientID);
                     return;
                 }

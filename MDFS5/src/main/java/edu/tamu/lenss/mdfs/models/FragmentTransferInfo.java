@@ -4,11 +4,6 @@ import java.io.Serializable;
 
 import edu.tamu.lenss.mdfs.models.MDFSTCPHeader;
 
-
-/**
- * A Header sent before transferring a block fragment through TCP. It contains the information of the transferred fragment
- * @author Jay
- */
 public class FragmentTransferInfo extends MDFSTCPHeader implements Serializable {
 	private static final long serialVersionUID = 1L;
 	public static final byte REQ_TO_SEND = 0;

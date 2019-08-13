@@ -22,7 +22,7 @@ import java.lang.reflect.Array;
 import java.util.Arrays;
 
 
-//this is the main actiivty and where the executio of this app starts.
+//this is the main actiivty and where the execution of this app starts.
 public class MainActivity extends AppCompatActivity {
 
 

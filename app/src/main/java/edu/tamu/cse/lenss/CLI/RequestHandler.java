@@ -72,7 +72,7 @@ class RequestHandler implements Runnable{
 
         //check if its an empty string
         if(command.equals("")){
-            clientSockets.sendAndClose(clientID, "No command found...Type \"mdfs help\" for more information.");
+            clientSockets.sendAndClose(clientID, "No such command found. Type \"mdfs help\" for more information.");
             return;
         }
 
@@ -167,7 +167,7 @@ class RequestHandler implements Runnable{
                                                 handlePutCommand.handleCreateCommand(filepathLocal, filePathMDFS, filename, perm, clientID);
 
                                             } else {
-                                                clientSockets.sendAndClose(clientID, "Error! " + "MDFS" + dirValidCheck);
+                                                clientSockets.sendAndClose(clientID, "Error! " + "MDFS " + dirValidCheck);
                                             }
 
                                         } else {
@@ -180,10 +180,10 @@ class RequestHandler implements Runnable{
                                     clientSockets.sendAndClose(clientID, "Directory/file does not exist.");
                                 }
                             }else{
-                                clientSockets.sendAndClose(clientID, "Error! " + isValLocDir);
+                                clientSockets.sendAndClose(clientID, "Error! " + "Android " + isValLocDir);
                             }
                         } else {
-                            clientSockets.sendAndClose(clientID, "Command not complete, mention a filename with absolute path..ex:/storage/emulated/0/.../test.jpg ");
+                            clientSockets.sendAndClose(clientID, "Command not complete, mention a filename with absolute path...ex:/storage/emulated/0/.../test.jpg ");
                         }
                     }else if(cmd[1].equals("-get")){
 
@@ -250,7 +250,7 @@ class RequestHandler implements Runnable{
 
 
                                     }else{
-                                        clientSockets.sendAndClose(clientID, "Invalid MDFS directory, " + isMDFSdirValid);
+                                        clientSockets.sendAndClose(clientID, "Error! MDFS " + isMDFSdirValid);
                                     }
 
                                 }else{
@@ -277,7 +277,7 @@ class RequestHandler implements Runnable{
                                 handleMkdirCommand.handleMkdirCommand(clientID, mdfsDir);
 
                             }else{
-                                clientSockets.sendAndClose(clientID, "Provided MDFS " + isDirValid);
+                                clientSockets.sendAndClose(clientID, "Error! MDFS " + isDirValid);
                             }
                         } else {
                             clientSockets.sendAndClose(clientID, "Command not complete, mention a new MDFS directory.");
@@ -325,7 +325,7 @@ class RequestHandler implements Runnable{
                             }
 
                         }else{
-                            clientSockets.sendAndClose(clientID, "Mention a MDFS directory or a MDFS filepath with file name to delete.");
+                            clientSockets.sendAndClose(clientID, "Mention a MDFS directory or a MDFS filepath with filename to delete.");
                         }
                     }else if(cmd[1].equals("-ls")){
 
@@ -359,7 +359,7 @@ class RequestHandler implements Runnable{
                     }else if(cmd[1].equals("-hdfs")){
                         clientSockets.sendAndClose(clientID, "Hadoop HDFS commands are not supported.");
                     }else{
-                        clientSockets.sendAndClose(clientID, "cliii Command has not been implemented yet.");
+                        clientSockets.sendAndClose(clientID, "Command has not been implemented yet.");
                     }
                 }else{
                     clientSockets.sendAndClose(clientID, "No command "+ cmd[1] + " found.");

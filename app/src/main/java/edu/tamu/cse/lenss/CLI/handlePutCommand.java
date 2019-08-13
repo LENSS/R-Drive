@@ -34,7 +34,7 @@ public class handlePutCommand {
             compressAndsendFile(file, filePathMDFS,null, false, perm, clientID);
 
         }else{
-            clientSockets.sendAndClose(clientID, "file not found.");
+            clientSockets.sendAndClose(clientID, "-put Failed! File not found.");
             return;
         }
     }
@@ -67,8 +67,9 @@ public class handlePutCommand {
     }
 
     private static void sendFile(final File file, String filePathMDFS, String[] perm, String clientID){
+
         //check whether file creation via rsock or tcp
-        if(Constants.file_creation_via_rsock_or_tcp.equals("rsock")){  //RSOCK
+        if(Constants.file_creation_via_rsock_or_tcp.equals("rsock")){
             MDFSFileCreatorViaRsock creator = new MDFSFileCreatorViaRsock(file, filePathMDFS, Constants.MAX_BLOCK_SIZE, Constants.K_N_RATIO, perm, clientID);
             creator.setEncryptKey(ServiceHelper.getInstance().getEncryptKey());
             creator.setListener(fileCreatorListenerviarsock);
@@ -85,13 +86,13 @@ public class handlePutCommand {
 
         @Override
         public void onError(String error, String clientID) {
-            clientSockets.sendAndClose(clientID, "CLIII Error! File Creation Failed. Reason: " + error);
+            clientSockets.sendAndClose(clientID, "Error! File Creation Failed. " + error);
             return;
         }
 
         @Override
         public void onComplete(String msg, String clientID) {
-            clientSockets.sendAndClose(clientID, "CLIII Success! File Create Success.");
+            clientSockets.sendAndClose(clientID, "Success! File Creation Success.");
             return;
         }
     };

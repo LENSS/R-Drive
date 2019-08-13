@@ -25,7 +25,7 @@ public class handleMkdirCommand {
 
         //check if connection succeeded..if not, return with error msg
         if(!connected){
-            clientSockets.sendAndClose(clientID, "mkdir Error! Could not connect to EdgeKeeper.");
+            clientSockets.sendAndClose(clientID, "-mkdir Error! Could not connect to EdgeKeeper.");
             return;
         }
 
@@ -54,7 +54,7 @@ public class handleMkdirCommand {
         if(recvBuf==null){
             //close client socket
             client.close();
-            clientSockets.sendAndClose(clientID, "CLIII -mkdir Info. Did not receive a reply from Edgekeeper, request might/might not succeed.");
+            clientSockets.sendAndClose(clientID, "-mkdir Info: Did not receive a reply from Edgekeeper, request might/might not succeed.");
             return;
         }else{
             //close client socket
@@ -72,12 +72,12 @@ public class handleMkdirCommand {
             if(metadataRet.command==EdgeKeeperConstants.CREATE_MDFS_DIR_REPLY_SUCCESS){
 
                 //reply with success
-                clientSockets.sendAndClose(clientID, "CLIII Success! Directory Created.");
+                clientSockets.sendAndClose(clientID, "-mkdir Success! Directory Created.");
 
             }else if(metadataRet.command==EdgeKeeperConstants.CREATE_MDFS_DIR_REPLY_FAILED){
 
                 //reply with failure
-                clientSockets.sendAndClose(clientID, "CLIII Failed! Directory Creation failed. Reason: " + metadataRet.message);
+                clientSockets.sendAndClose(clientID, "-mkdir Failed!  " + metadataRet.message);
 
             }
         }

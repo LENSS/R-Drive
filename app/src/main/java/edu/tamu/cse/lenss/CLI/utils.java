@@ -71,7 +71,7 @@ public class utils {
 
     ///takes a filename and checks if the filename contains the desired file extension
     public static boolean checkFileExtension(String filename){
-        if(filename.contains(".jpg")  || filename.contains(".mp4") || filename.contains(".txt") || filename.contains(".pdf")){
+        if(filename.contains(".jpg")  || filename.contains(".mp4") || filename.contains(".txt") || filename.contains(".pdf") || filename.contains(".jar")){
             return true;
         }else{
             return false;
@@ -84,7 +84,7 @@ public class utils {
     public static String isValidMDFSDir(String dir){
 
         //check if dir is empty string
-        if(dir.equals("")){return "dir is empty";}
+        if(dir.equals("")){return "dir is empty.";}
 
         //check if dir is just root
         if(dir.equals("/")){return "OK";}

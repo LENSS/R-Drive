@@ -10,12 +10,12 @@ public class ServiceHelper {
 	
 	/* Global Shared Instances */
 	private static ServiceHelper instance = null;
-	private static NetworkObserver netObserver;
+	private static StartAll netObserver;
 	private static MDFSDirectory directory;
 	private byte[] encryptKey = new byte[32];
 	
 	private ServiceHelper() {
-		this.netObserver = new NetworkObserver();
+		this.netObserver = new StartAll();
 		this.directory = MDFSDirectory.readDirectory();
 		this.directory.syncLocal();
 	}

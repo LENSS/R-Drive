@@ -76,7 +76,7 @@ public class handleRMcommand {
 
             //close client socket
             client.close();
-            clientSockets.sendAndClose(clientID, "CLIII -rm Info. Did not receive a reply from Edgekeeper, request might/might not succeed.");
+            clientSockets.sendAndClose(clientID, "-rm Info: Did not receive a reply from Edgekeeper, request might/might not succeed.");
             return;
 
         }else{
@@ -96,12 +96,12 @@ public class handleRMcommand {
             if(metadataRet.command==EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_SUCCESS || metadataRet.command==EdgeKeeperConstants.REMOVE_MDFS_FILE_REPLY_SUCCESS ){
 
                 //reply with success
-                clientSockets.sendAndClose(clientID, "CLIII Success! remove succeed.");
+                clientSockets.sendAndClose(clientID, "-rm Success!");
 
             }else if(metadataRet.command==EdgeKeeperConstants.REMOVE_MDFS_DIR_REPLY_FAILED || metadataRet.command==EdgeKeeperConstants.REMOVE_MDFS_FILE_REPLY_FAILED){
 
                 //reply with failure
-                clientSockets.sendAndClose(clientID, "CLIII Failed! remove failed. Reason: " + metadataRet.message);
+                clientSockets.sendAndClose(clientID, "-rm Failed! " + metadataRet.message);
 
             }
         }

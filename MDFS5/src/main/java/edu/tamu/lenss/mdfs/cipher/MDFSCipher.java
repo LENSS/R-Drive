@@ -18,12 +18,11 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 
+//this class is used for ciphering a file block/ byteArray.
 public class MDFSCipher {
 	private static MDFSCipher instance = null;
 	
-	/**
-	 * Singleton class
-	 */
+
 	private MDFSCipher() {}
 	
 	public static MDFSCipher getInstance() {
@@ -33,27 +32,7 @@ public class MDFSCipher {
 		return instance;
 	}
 	
-	public SecretKey generateSecretKey() {
-		// Get the KeyGenerator
-		KeyGenerator kgen = null;
-		try {
-			kgen = KeyGenerator.getInstance("AES");
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
-	    kgen.init(128);
-	    
-	    // Generate the secret key specs.
-	    SecretKey skey = kgen.generateKey();
-	    //return skey.getEncoded();
-	    return skey;
-	}
-	
-	/**
-	 * @param rawSecretKey
-	 * @param mode : Cipher.ENCRYPT_MODE or Cipher.DECRYPT_MODE
-	 * @return
-	 */
+
 	private Cipher getCipher(byte[] rawSecretKey, int mode){
 		SecretKeySpec skeySpec = new SecretKeySpec(rawSecretKey, "AES");
 		// Instantiate the cipher
@@ -73,14 +52,7 @@ public class MDFSCipher {
 		}
 		return null;
 	}
-	
-	/**
-	 * 
-	 * @param cleartextFile
-	 * @param ciphertextFile : make sure the File exisits already
-	 * @param rawSecretKey
-	 * @return
-	 */
+
 	public boolean encrypt(String cleartextFile , String ciphertextFile,  byte[] rawSecretKey ) {
 		Cipher cipher = getCipher(rawSecretKey, Cipher.ENCRYPT_MODE);
 		try {
@@ -93,18 +65,12 @@ public class MDFSCipher {
 			while ((len = fis.read(block)) >= 0) {
 				cos.write(block, 0, len);
 			}
-			
+
 			cos.flush();
 			cos.close();
 			fos.close();
 			fis.close();
-			
-			//////// Test //////////////////
-			/*File testFile = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE + File.separator + "test.jpg");
-			IOUtilities.createNewFile(testFile);
-			decrypt(ciphertextFile, testFile.getAbsolutePath(), rawSecretKey);*/
-			/////////////////////////////////
-			
+
 			return true;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -149,14 +115,7 @@ public class MDFSCipher {
 		
 		return plainMessage;
 	}
-	
-	/**
-	 * 
-	 * @param ciphertextFile
-	 * @param cleartextFile : ensure that the file does exist
-	 * @param rawSecretKey
-	 * @return
-	 */
+
 	public boolean decrypt(String ciphertextFile, String cleartextFile,  byte[] rawSecretKey ) {
 		Cipher cipher = getCipher(rawSecretKey, Cipher.DECRYPT_MODE);
 		try {

@@ -30,26 +30,14 @@ public class handleGETrequest {
             fileInfo.setNumberOfBlocks((byte)metadata.numOfBlocks);
             fileInfo.setFragmentsParms((byte)metadata.n2,  (byte)metadata.k2);
 
-/*            //do the job
-            ServiceHelper.getInstance().executeRunnableTask(new Runnable() {
-                @Override
-                public void run(){
-                    MDFSFileRetrieverViaRsock retriever = new MDFSFileRetrieverViaRsock(fileInfo, metadata, clientID);  //RSOCK
-                    retriever.setDecryptKey(ServiceHelper.getInstance().getEncryptKey());
-                    retriever.setListener(fileRetrieverListenerviarsock);
-                    retriever.start();
-                }
-            });*/
-
-
+            //make mdfsfileretriever object
             MDFSFileRetrieverViaRsock retriever = new MDFSFileRetrieverViaRsock(fileInfo, metadata, clientID, localDir);  //RSOCK
             retriever.setDecryptKey(ServiceHelper.getInstance().getEncryptKey());
             retriever.setListener(fileRetrieverListenerviarsock);
             retriever.start();
 
-
-            //send reply tto cli client
-            clientSockets.sendAndClose(clientID, "CLIII Info! -get request has been place.");
+            //send reply to cli client
+            clientSockets.sendAndClose(clientID, "-get Info: request has been place.");
 
         }else{
             //dont do anything here..errors have been handled already
@@ -57,7 +45,7 @@ public class handleGETrequest {
     }
 
 
-    //fetched file metadata from EdgeKeeper
+    //fetches file metadata from EdgeKeeper.
     //returns FileMetadata object or null.
     private static FileMetadata fetchFileMetadataFromEdgeKeeper(String clientID, String filename, String mdfsDir) {
 
@@ -102,12 +90,12 @@ public class handleGETrequest {
 
             //close client socket
             client.close();
-            clientSockets.sendAndClose(clientID, "CLIII -get Info. Did not receive a reply from Edgekeeper, request might/might not succeed.");
+            clientSockets.sendAndClose(clientID, "-get Info: Did not receive a reply from Edgekeeper, request might/might not succeed.");
             return null;
 
         }else{
 
-            //close client socket
+            //close edgekeeper client socket
             client.close();
 
             //get data from recvBuf and make string
@@ -127,13 +115,13 @@ public class handleGETrequest {
             }else if(metadataRet.command==EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_FILENOTEXIST){
 
                 //reply with failure as file dont exist
-                clientSockets.sendAndClose(clientID, "CLIII Failed! -get failed. Reason: File doesnt exist.");
+                clientSockets.sendAndClose(clientID, "-get Failed! File doesnt exist.");
                 return null;
 
             }else if(metadataRet.command==EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_PERMISSIONDENIED){
 
                 //reply with failure as permission denied
-                clientSockets.sendAndClose(clientID, "CLIII Failed! -get failed. Reason: File permission denied.");
+                clientSockets.sendAndClose(clientID, "-get Failed! File permission denied.");
                 return null;
             }
         }

@@ -27,7 +27,7 @@ import static java.lang.Thread.sleep;
 
 
 
-//this class is used for receive packets for creating a file in MDFS.
+//this class is used for receiving packets for creating a file in MDFS.
 //this is the entry point of a file fragment to enter this node.
 //this class receives a packet from rsock cilent library(rsock java api),
 //and saves it.
@@ -57,7 +57,8 @@ public class RsockReceiveForFileCreation implements Runnable{
                 if(rcvdfile!=null) {
                     System.out.println("new incoming rsock");
 
-                    System.out.println("print: " + Arrays.toString(rcvdfile.getFileArray()));
+                    //print
+                    //System.out.println("print: " + Arrays.toString(rcvdfile.getFileArray()));
 
                     //convert byteArray into MDFSRsockBlockCreator object
                     ByteArrayInputStream bis = new ByteArrayInputStream(rcvdfile.getFileArray());
@@ -99,13 +100,14 @@ public class RsockReceiveForFileCreation implements Runnable{
             }
         }
 
-        //came out of while loop, now close the rsock client library object
+        //execution only comes here when the above while loop is broken.
+        //above while loop is only broken when mdfs is closing.
+        //came out of while loop, now close the rsock client library object.
         RSockConstants.intrfc_creation.close();
         RSockConstants.intrfc_creation = null;
 
     }
 
-    //part of this function basically copied from FragExchangeHelper.java receiveBlockFragment() function
     //this function does two jobs one: save the filefrag locally in this device, two: submits fragment metadata to EdgeKeeper
     private void saveTheFileFragAndUpdateMetadataToEdgeKeeper(String filename, long filesize, long creatorMAC, String filePathMDFS, long fileCreatedTime, String[] permList, String uniquereqid, int numOfBlocks, byte n2, byte k2, FragmentTransferInfo header, byte[] byteArray, String fileCreatorGUID, String destGUID) {  //note: destGUID was never used
         //create file

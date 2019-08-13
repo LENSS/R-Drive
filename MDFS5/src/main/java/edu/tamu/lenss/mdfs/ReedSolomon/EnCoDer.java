@@ -4,9 +4,25 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
+
+import org.apache.commons.crypto.*;
+import org.apache.commons.crypto.cipher.CryptoCipher;
+import org.apache.commons.crypto.cipher.CryptoCipherFactory;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.ShortBufferException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.cipher.FragmentInfo;
@@ -34,10 +50,6 @@ public class EnCoDer {
     }
 
     public List<FragmentInfo> ifYouSmellWhatTheRockIsCooking(){
-        //first write the file in cache directory
-        tmpFile = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE + File.separator + "encrypt_" + clearFile.getName());
-        System.out.println("tmpfile dirdirdir: " + tmpFile.getAbsolutePath() + "      "  + tmpFile.getName());
-        IOUtilities.createNewFile(tmpFile);
 
         //cipher/encrypt the file
         nocipher();
@@ -51,12 +63,23 @@ public class EnCoDer {
         return getFragmantsFromBlockFile();
     }
 
-    private void cipher(){
+    private void javaCipher(){
+
+        //first write a temporary file in cache directory
+        tmpFile = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE + File.separator + "encrypt_" + clearFile.getName());
+        System.out.println("tmpfile dirdirdir: " + tmpFile.getAbsolutePath() + "      "  + tmpFile.getName());
+        IOUtilities.createNewFile(tmpFile);
+
+
         MDFSCipher myCipher = MDFSCipher.getInstance();
         if(myCipher.encrypt(clearFile.getAbsolutePath(), tmpFile.getAbsolutePath(), encryptKey)){
             encryptedByte = IOUtilities.fileToByte(tmpFile);
             tmpFile.delete();
         }
+    }
+
+    private void apacheCipher(){
+
     }
 
     private List<FragmentInfo> getFragmantsFromBlockFile(){
@@ -111,84 +134,7 @@ public class EnCoDer {
     }
 
     private void nocipher(){
-
         encryptedByte = IOUtilities.fileToByte(new File(clearFile.getAbsolutePath()));
-
-        //print without encrypt
-        System.out.print("xxyyzz without encrypt length: " + encryptedByte.length);
-        System.out.println();
-        System.out.print("xxyyzz without encrypt first 30: ");
-        for(int i=0; i< 30; i++){ System.out.print(encryptedByte[i] + ", "); }
-        System.out.println();
-        System.out.print("xxyyzz without encrypt last 30: ");
-        for(int i = encryptedByte.length-31; i < encryptedByte.length; i++){ System.out.print(encryptedByte[i] + ", "); }
-        System.out.println();
-
-        //write on a file
-        try {
-            FileWriter writer = new FileWriter("/storage/emulated/0/MDFS/cipher.txt", true);
-            for(int i=0; i< encryptedByte.length; i++){
-                writer.write(Integer.toString(encryptedByte[i]) + "\n");
-            }
-            writer.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
     }
 
-
-
-
-    private void cipherr(){
-        MDFSCipher myCipher = MDFSCipher.getInstance();
-        if(myCipher.encrypt(clearFile.getAbsolutePath(), tmpFile.getAbsolutePath(), encryptKey)){
-            encryptedByte = IOUtilities.fileToByte(tmpFile);
-            tmpFile.delete();
-        }
-
-        //print after encrypt
-        System.out.print("xxyyzz afterrr encrypt length: " + encryptedByte.length);
-        System.out.println();
-        System.out.print("xxyyzz afterrr encrypt first 30: ");
-        for(int i=0; i< 30; i++){ System.out.print(encryptedByte[i] + ", "); }
-        System.out.println();
-        System.out.print("xxyyzz afterrr encrypt last 30: ");
-        for(int i = encryptedByte.length-31; i < encryptedByte.length; i++){ System.out.print(encryptedByte[i] + ", "); }
-        System.out.println();
-    }
-
-    private void cipher1(){
-
-        //read the file from the disk
-        File blockFile = new File(clearFile.getAbsolutePath());
-        byte[] unencryptedByte = IOUtilities.fileToByte(blockFile);
-
-        //print before encrypt
-        System.out.print("xxyyzz beforeee encrypt length: " + unencryptedByte.length);
-        System.out.println();
-        System.out.print("xxyyzz beforeee encrypt first 30: ");
-        for(int i=0; i< 30; i++){ System.out.print(unencryptedByte[i] + ", "); }
-        System.out.println();
-        System.out.print("xxyyzz beforeee encrypt last 30: ");
-        for(int i = unencryptedByte.length-31; i < unencryptedByte.length; i++){ System.out.print(unencryptedByte[i] + ", ") ; }
-        System.out.println();
-
-        //create cipher instance
-        MDFSCipher myCipher = MDFSCipher.getInstance().getInstance();
-
-        //get encrypted bytes
-        encryptedByte = myCipher.encrypt(unencryptedByte, encryptKey);
-
-        //print after encrypt
-        System.out.print("xxyyzz afterrr encrypt length: " + encryptedByte.length);
-        System.out.println();
-        System.out.print("xxyyzz afterrr encrypt first 30: ");
-        for(int i=0; i< 30; i++){ System.out.print(encryptedByte[i] + ", "); }
-        System.out.println();
-        System.out.print("xxyyzz afterrr encrypt last 30: ");
-        for(int i = encryptedByte.length-31; i < encryptedByte.length; i++){ System.out.print(encryptedByte[i] + ", "); }
-        System.out.println();
-    }
 }

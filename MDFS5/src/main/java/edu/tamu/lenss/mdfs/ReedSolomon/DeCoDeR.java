@@ -100,7 +100,7 @@ public class DeCoDeR {
         return nocipher();
     }
 
-    private boolean cipher(){
+    private boolean javaCipher(){
 
         File tmpEncryptFile = IOUtilities.byteToFile(encryptedByte, AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE), "decodercache_" + System.nanoTime());
         // Decrypt
@@ -113,16 +113,6 @@ public class DeCoDeR {
 
     private boolean nocipher(){
 
-        //print without decrypt
-        System.out.print("xxyyzz without decrypt length: " + encryptedByte.length);
-        System.out.println();
-        System.out.print("xxyyzz without decrypt first 30: ");
-        for(int i=0; i< 30; i++){ System.out.print(encryptedByte[i] + ", "); }
-        System.out.println();
-        System.out.print("xxyyzz without decrypt last 30: ");
-        for(int i = encryptedByte.length-31; i < encryptedByte.length; i++){ System.out.print(encryptedByte[i] + ", "); }
-        System.out.println();
-
         System.out.println("decodefilepath dirdirdir: " + decodedFilePath);
         File tmpEncryptFile1 = IOUtilities.byteToFile(encryptedByte, AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE), "decodercache_" + System.nanoTime());
         File newFile = IOUtilities.createNewFile(decodedFilePath);
@@ -132,57 +122,4 @@ public class DeCoDeR {
 
     }
 
-    private boolean cipherr(){
-
-        //print before decrypt
-        System.out.print("xxyyzz beforeee decrypt length: " + encryptedByte.length);
-        System.out.println();
-        System.out.print("xxyyzz before decrypt first 30: ");
-        for(int i=0; i< 30; i++){ System.out.print(encryptedByte[i] + ", "); }
-        System.out.println();
-        System.out.print("xxyyzz before decrypt last 30: ");
-        for(int i = encryptedByte.length-31; i < encryptedByte.length; i++){ System.out.print(encryptedByte[i] + ", "); }
-        System.out.println();
-
-       File tmpEncryptFile = IOUtilities.byteToFile(encryptedByte, AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE), "decodercache_" + System.nanoTime());
-        // Decrypt
-        MDFSCipher myCipher = MDFSCipher.getInstance();
-        boolean isSuccess = myCipher.decrypt(tmpEncryptFile.getAbsolutePath(), decodedFilePath, decryptKey);
-        tmpEncryptFile.delete();
-        return isSuccess;
-    }
-
-    private boolean cipher1(){
-
-        //print before decrypt
-        System.out.print("xxyyzz beforeee decrypt length: " + encryptedByte.length);
-        System.out.println();
-        System.out.print("xxyyzz before decrypt first 30: ");
-        for(int i=0; i< 30; i++){ System.out.print(encryptedByte[i] + ", "); }
-        System.out.println();
-        System.out.print("xxyyzz before decrypt last 30: ");
-        for(int i = encryptedByte.length-31; i < encryptedByte.length; i++){ System.out.print(encryptedByte[i] + ", "); }
-        System.out.println();
-
-        //create cipher instance
-        MDFSCipher myCipher = MDFSCipher.getInstance();
-
-        byte[] decryptedByte = myCipher.decrypt(encryptedByte, decryptKey);
-
-        //print after decrypt
-        System.out.print("xxyyzz afterrr decrypt length: " + decryptedByte.length);
-        System.out.println();
-        System.out.print("xxyyzz afterrr decrypt first 30: ");
-        for(int i=0; i< 30; i++){ System.out.print(decryptedByte[i] + ", "); }
-        System.out.println();
-        System.out.print("xxyyzz afterrr decrypt last 30: ");
-        for(int i = decryptedByte.length-31; i < decryptedByte.length; i++){ System.out.print(decryptedByte[i] + ", "); }
-        System.out.println();
-
-
-        //create a file at the provided decode location
-        File newFile = IOUtilities.byteToFile(decryptedByte, AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE), "decodercache_" + System.nanoTime());
-
-        return true;
-    }
 }

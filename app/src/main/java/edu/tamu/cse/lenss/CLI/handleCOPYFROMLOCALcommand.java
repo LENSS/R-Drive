@@ -6,10 +6,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+
+//copy a file from cli client side to the android phone/linux machine where mdfs is running
 public class handleCOPYFROMLOCALcommand {
 
     public static void handleCOPYFROMLOCALcommand(String clientID, String[] cmd){
-        //this command has already been verified and parsed form the client side
+
+        //this command has already been verified and parsed from the client side
         //get all the variables
         String filename = cmd[2];
         int filesize = Integer.parseInt(cmd[3]);
@@ -33,7 +36,7 @@ public class handleCOPYFROMLOCALcommand {
         File dir = new File(androidDir);
         if(!dir.exists()){
             boolean mkdir = dir.mkdirs();
-            if(!mkdir){ clientSockets.sendAndClose(clientID, "CLIII Error! Cannot make directory in android phone."); }
+            if(!mkdir){ clientSockets.sendAndClose(clientID, "Error! Cannot make directory in android phone."); }
         }
 
         //check if the file already exists, if does, delete it first
@@ -53,6 +56,6 @@ public class handleCOPYFROMLOCALcommand {
         }
 
         //send back reply
-        clientSockets.sendAndClose(clientID, "CLIII Info! File copy success.");
+        clientSockets.sendAndClose(clientID, "Info! File copy success.");
     }
 }

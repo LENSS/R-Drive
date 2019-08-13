@@ -65,8 +65,9 @@ dependencies {
     implementation files('libs/jackson-core-2.9.4.jar')
     implementation files('libs/jackson-databind-2.9.4.jar')
     //hadoop dependencies
-    implementation group: 'org.codehaus.woodstox', name: 'woodstox-core-asl', version: '4.4.1'
-    implementation group: 'commons-collections', name: 'commons-collections', version: '3.2.2'
+    implementation 'org.codehaus.woodstox:woodstox-core-asl:4.4.1'
+    implementation 'commons-collections:commons-collections:3.2.2'
+    implementation files('libs/commons-crypto-1.0.0.jar')
 }
 
 

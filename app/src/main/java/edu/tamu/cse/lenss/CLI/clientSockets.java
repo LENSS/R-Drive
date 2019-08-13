@@ -60,7 +60,7 @@ public class clientSockets {
         send(clientID, reply);
         close(clientID);
 
-        //remeove the entry from the map
+        //remove the entry from the map
         sockets.remove(clientID);
     }
 

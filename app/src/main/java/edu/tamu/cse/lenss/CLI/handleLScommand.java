@@ -17,14 +17,14 @@ public class handleLScommand {
         FileMetadata metadataReq = new FileMetadata(EdgeKeeperConstants.GET_MDFS_FILES_AND_DIR_REQUEST, new Date().getTime(), EdgeKeeperConstants.getMyGroupName(), GNS.ownGUID, mdfsDir, "dummyMessage");
 
         ///create client connection
-        edu.tamu.lenss.mdfs.EdgeKeeper.client client = new client(EdgeKeeperConstants.dummy_EdgeKeeper_ip, EdgeKeeperConstants.dummy_EdgeKeeper_port);
+        client client = new client(EdgeKeeperConstants.dummy_EdgeKeeper_ip, EdgeKeeperConstants.dummy_EdgeKeeper_port);
 
         //connect
         boolean connected = client.connect();
 
         //check if connection succeeded..if not, return with error msg
         if(!connected){
-            clientSockets.sendAndClose(clientID, "mkdir Error! Could not connect to EdgeKeeper.");
+            clientSockets.sendAndClose(clientID, "-ls Error! Could not connect to EdgeKeeper.");
             return;
         }
 
@@ -54,7 +54,7 @@ public class handleLScommand {
 
             //close client socket
             client.close();
-            clientSockets.sendAndClose(clientID, "CLIII -ls Info. Did not receive a reply from Edgekeeper, request might/might not succeed.");
+            clientSockets.sendAndClose(clientID, "-ls Info: Did not receive a reply from Edgekeeper, request might/might not succeed.");
             return;
 
         }else{
@@ -74,12 +74,12 @@ public class handleLScommand {
             if(metadataRet.command==EdgeKeeperConstants.GET_MDFS_FILES_AND_DIR_REPLY_SUCCESS){
 
                 //reply with success
-                clientSockets.sendAndClose(clientID, "CLIII Success!<newline>" + metadataRet.message);
+                clientSockets.sendAndClose(clientID, "Success!<newline>" + metadataRet.message);
 
             }else if(metadataRet.command==EdgeKeeperConstants.GET_MDFS_FILES_AND_DIR_REPLY_FAILED){
 
                 //reply with failure
-                clientSockets.sendAndClose(clientID, "CLIII Failed! -ls command failed. Reason: " + metadataRet.message);
+                clientSockets.sendAndClose(clientID, "-ls Failed! " + metadataRet.message);
 
             }
         }
