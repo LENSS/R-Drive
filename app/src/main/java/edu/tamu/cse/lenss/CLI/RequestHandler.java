@@ -164,7 +164,8 @@ class RequestHandler implements Runnable{
                                                 String[] perm = utils.checkPermittedNodes("WORLD");  //dummy
 
                                                 //do the job
-                                                handlePutCommand.handleCreateCommand(filepathLocal, filePathMDFS, filename, perm, clientID);
+                                                handlePutCommand hand = new handlePutCommand();
+                                                hand.handleCreateCommand(filepathLocal, filePathMDFS, filename, perm, clientID);
 
                                             } else {
                                                 clientSockets.sendAndClose(clientID, "Error! " + "MDFS " + dirValidCheck);

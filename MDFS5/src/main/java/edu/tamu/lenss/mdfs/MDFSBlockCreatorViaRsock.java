@@ -24,7 +24,6 @@ import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.ReedSolomon.EnCoDer;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
-import edu.tamu.lenss.mdfs.utils.Logger;
 import edu.tamu.lenss.mdfs.models.MDFSRsockBlockForFileCreate;
 
 //rsock imports
@@ -99,12 +98,13 @@ public class MDFSBlockCreatorViaRsock {
             listener.onError("File Encryption Failed", clientID);
             return;
         }else{
-
+            System.out.println("sizeee of fragments: " + fragInfos.size());
         }
 
 
         // Store the file fragments in local SDCard
-        File fragsDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileInfo.getFileName(), fileInfo.getCreatedTime(),	blockIdx));
+        File fragsDir = AndroidIOUtils.getExternalFile(MDFSFileInfo
+                .getBlockDirPath(fileInfo.getFileName(), fileInfo.getCreatedTime(),	blockIdx));
 
         HashSet<Byte> frags = new HashSet<Byte>();
 
@@ -118,7 +118,6 @@ public class MDFSBlockCreatorViaRsock {
         }
         serviceHelper.getDirectory().addBlockFragments(fileInfo.getCreatedTime(), blockIdx, frags);
         listener.statusUpdate("Encryption Complete");
-        Logger.i(TAG + " encryptFile()", "Encryption Complete");
         isEncryptComplete = true;
     }
 
@@ -140,7 +139,6 @@ public class MDFSBlockCreatorViaRsock {
         // Scan through all files in the folder and upload them
         File fileFragDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileInfo.getFileName(), fileInfo.getCreatedTime(), blockIdx));
         if(!fileFragDir.exists()){
-            Logger.e(TAG, "Can't find fragments directory of the block");
             listener.onError("No block directory", clientID);
             return;
         }
@@ -160,7 +158,7 @@ public class MDFSBlockCreatorViaRsock {
                         fragCounter.incrementAndGet();
                         continue; // Don't need to send to myself again
                     }
-                     //upload via rsock by creating new threads
+                    //upload via rsock by creating new threads
                     //Thread t1 = new Thread(new FragmentUploaderViaRsock(f, fileInfo.getCreatedTime(), destNode, !nodesIter.hasNext()), "t1");
                     //t1.start();
 
@@ -216,7 +214,6 @@ public class MDFSBlockCreatorViaRsock {
 
         @Override
         public void run() {
-            Logger.d(TAG, "FragmentUploaderRsock thread is running");
             boolean success = false;
             try {
 
@@ -238,6 +235,9 @@ public class MDFSBlockCreatorViaRsock {
                     e1.printStackTrace();
                 }
 
+                System.out.println("sizeee of filefrag send: " + fileFrag.length());
+                System.out.println("sizeee of bytearray send: " + byteArray.length);
+
                 //make MDFSRsockBlockCreator obj
                 MDFSRsockBlockForFileCreate mdfsrsockblock = new MDFSRsockBlockForFileCreate(header, byteArray, fileInfo.getFileName(), fileInfo.getFileSize(), 0000, filePathMDFS, fileFrag.length(), fileInfo.getNumberOfBlocks(), fileInfo.getN2(), fileInfo.getK2(), fileCreatedTime, permList, uniqueReqID,  GNS.ownGUID, destGUID);
 
@@ -252,7 +252,7 @@ public class MDFSBlockCreatorViaRsock {
 
 
                     //print
-                    System.out.println(Arrays.toString(data));
+                    //System.out.println(Arrays.toString(data));
 
 
                     //send the object over rsock. only send people who are not me

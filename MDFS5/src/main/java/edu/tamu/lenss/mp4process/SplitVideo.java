@@ -116,8 +116,7 @@ public class SplitVideo {
 					trackCnt++;
 				}
 				Container out = new DefaultMp4Builder().build(movie);
-				File tmpF = IOUtilities.createNewFile(outputDirPath + File.separator 
-						+ MDFSFileInfo.getBlockName(movieFile.getName(), (byte)j));
+				File tmpF = IOUtilities.createNewFile(outputDirPath + File.separator + MDFSFileInfo.getBlockName(movieFile.getName(), (byte)j));
 				
 				FileOutputStream fos = new FileOutputStream(tmpF);
 				FileChannel fc = fos.getChannel();

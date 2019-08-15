@@ -126,6 +126,7 @@ public class handleGETrequest {
             }
         }
 
+        clientSockets.sendAndClose(clientID, "-get Error! EdgeKeeper has no metadata for this file.");
         return null;
     }
 
