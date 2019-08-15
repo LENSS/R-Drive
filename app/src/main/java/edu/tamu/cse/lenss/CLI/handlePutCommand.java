@@ -4,9 +4,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 
 import edu.tamu.lenss.mdfs.Constants;
-import edu.tamu.lenss.mdfs.MDFSBlockCreatorViaRsock;
-import edu.tamu.lenss.mdfs.MDFSBlockCreatorViaRsockNG;
-import edu.tamu.lenss.mdfs.MDFSFileCreatorViaRsock;
 import edu.tamu.lenss.mdfs.MDFSFileCreatorViaRsockNG;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
@@ -72,36 +69,10 @@ public class handlePutCommand {
 
     private void sendFile(final File file, String filePathMDFS, String[] perm, String clientID){
 
-        /*//old school
-        MDFSFileCreatorViaRsock creator = new MDFSFileCreatorViaRsock(file, filePathMDFS, Constants.MAX_BLOCK_SIZE, Constants.K_N_RATIO, perm, clientID);
-        creator.setEncryptKey(ServiceHelper.getInstance().getEncryptKey());
-        creator.setListener(fileCreatorListenerviarsock);
-        creator.start();*/
-
         //new school
         new FileCreatorThread(new MDFSFileCreatorViaRsockNG(file, filePathMDFS, Constants.MAX_BLOCK_SIZE, Constants.K_N_RATIO, perm, ServiceHelper.getInstance().getEncryptKey() ,clientID), clientID).start();
 
     }
-
-    //rsock listener
-    private static MDFSBlockCreatorViaRsock.MDFSBlockCreatorListenerViaRsock fileCreatorListenerviarsock = new MDFSBlockCreatorViaRsock.MDFSBlockCreatorListenerViaRsock(){
-        @Override
-        public void statusUpdate(String status) {
-
-        }
-
-        @Override
-        public void onError(String error, String clientID) {
-            clientSockets.sendAndClose(clientID, "Error! File Creation Failed. " + error);
-            return;
-        }
-
-        @Override
-        public void onComplete(String msg, String clientID) {
-            clientSockets.sendAndClose(clientID, "Success! " + msg);
-            return;
-        }
-    };
 
 
     public class FileCreatorThread extends Thread{

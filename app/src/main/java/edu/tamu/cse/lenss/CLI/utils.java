@@ -71,6 +71,10 @@ public class utils {
 
     ///takes a filename and checks if the filename contains the desired file extension
     public static boolean checkFileExtension(String filename){
+        //dummy check
+        if(true){return true;}
+
+        //actual check
         if(filename.contains(".jpg")  || filename.contains(".mp4") || filename.contains(".txt") || filename.contains(".pdf") || filename.contains(".jar")){
             return true;
         }else{

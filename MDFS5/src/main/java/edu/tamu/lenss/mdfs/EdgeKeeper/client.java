@@ -31,7 +31,7 @@ public class client{
             try { this.socket = SocketChannel.open();
                 this.socket.connect(new InetSocketAddress(serverIP, port));
             } catch (IOException e) { e.printStackTrace(); }
-            if(socket!=null){
+            if(socket!=null && socket.isConnected()){
                 isConnected = true;
                 System.out.println("EdgeKeeper client Socket is connected");
                 return true;

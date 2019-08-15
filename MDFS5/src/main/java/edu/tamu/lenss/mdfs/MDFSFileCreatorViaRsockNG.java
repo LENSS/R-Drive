@@ -42,7 +42,6 @@ import static java.lang.Thread.sleep;
 
 public class MDFSFileCreatorViaRsockNG{
 
-    private static final String TAG = MDFSFileCreatorViaRsock.class.getSimpleName();
     private File file;              //the actual file
     private MDFSFileInfo fileInfo;  //file information
     private byte[] encryptKey;
