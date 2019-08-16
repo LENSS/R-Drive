@@ -1,5 +1,7 @@
 package edu.tamu.cse.lenss.CLI;
 
+import org.sat4j.pb.tools.INegator;
+
 import java.io.File;
 import java.io.FileOutputStream;
 
@@ -70,7 +72,9 @@ public class handlePutCommand {
     private void sendFile(final File file, String filePathMDFS, String[] perm, String clientID){
 
         //new school
-        new FileCreatorThread(new MDFSFileCreatorViaRsockNG(file, filePathMDFS, Constants.MAX_BLOCK_SIZE, Constants.K_N_RATIO, perm, ServiceHelper.getInstance().getEncryptKey() ,clientID), clientID).start();
+        int maxBlockSize = Constants.MAX_BLOCK_SIZE;
+        if(maxBlockSize > (Integer.MAX_VALUE-Integer.BYTES - 1)){ maxBlockSize = Integer.MAX_VALUE - Integer.BYTES - 1;}
+        new FileCreatorThread(new MDFSFileCreatorViaRsockNG(file, filePathMDFS, maxBlockSize, Constants.K_N_RATIO, perm, ServiceHelper.getInstance().getEncryptKey() ,clientID), clientID).start();
 
     }
 

@@ -46,6 +46,7 @@ public class MDFSFileCreatorViaRsockNG{
     private MDFSFileInfo fileInfo;  //file information
     private byte[] encryptKey;
     private int blockCount;
+    private int maxBlockSize;
     private double encodingRatio;
     private boolean isN2K2Chosen = false;
     private boolean isPartComplete = false;
@@ -60,7 +61,7 @@ public class MDFSFileCreatorViaRsockNG{
     public MDFSFileCreatorViaRsockNG(
                 File f,
                 String filePathMDFS,
-                long maxBlockSize,
+                int maxBlockSize,
                 double encodingRatio,
                 String[] permList,
                 byte[] key,
@@ -69,6 +70,7 @@ public class MDFSFileCreatorViaRsockNG{
         this.filePathMDFS = filePathMDFS;
         this.encodingRatio = encodingRatio;
         this.blockCount = (int)Math.ceil((double)file.length()/maxBlockSize);
+        this.maxBlockSize = maxBlockSize;
         this.fileInfo = new MDFSFileInfo(file.getName(), file.lastModified());
         this.fileInfo.setFileSize(file.length());
         this.fileInfo.setNumberOfBlocks((byte)blockCount);
@@ -102,7 +104,7 @@ public class MDFSFileCreatorViaRsockNG{
             if(blockCount > 1){
                 System.out.println("blockcount: " + blockCount);
                 //partition the file
-                if(partition()){
+                if(partition1()){
                     isPartComplete = true;
                      String sendRet = sendBlocks();
                      if(sendRet.equals("SUCCESS")){
@@ -147,6 +149,45 @@ public class MDFSFileCreatorViaRsockNG{
     }
 
 
+    //takes a file and converts it into multiple blocks.
+    //blocks will be saved in /storage/emulated/0/MDFS/test1.jpg_0123/ directory with "__blk__" signature.
+    private boolean partition1(){
+        boolean result = false;
+
+        ///storage/emulated/0/MDFS/test1.jpg_0123/ (directory)
+        String outputDirPath = File.separator + edu.tamu.lenss.mdfs.Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(file.getName(), file.lastModified());
+
+        byte[] fileBytes = IOUtilities.fileToByte(file);
+
+        byte[][] blockBytes = new byte[blockCount][];
+
+        int startIndex = 0;
+        int endIndex = maxBlockSize;
+        for(int i=0; i< blockCount; i++){
+            //allocate space for ith block
+            blockBytes[i] = new byte[(endIndex -startIndex + Integer.BYTES)];
+
+            //add the number itself of bytes about to be copied
+            ByteBuffer.wrap(blockBytes[i]).putInt(endIndex - startIndex);
+
+            //copy the file data into block file
+            System.arraycopy(fileBytes, startIndex, blockBytes[i], Integer.BYTES, (endIndex -startIndex));
+
+            //update start and end index for next iteration
+            startIndex = endIndex;
+            endIndex = endIndex + maxBlockSize;
+            if(endIndex>fileBytes.length){endIndex = fileBytes.length;}
+        }
+
+        //save the blockBytes into each files with appropriate naming
+        for(int i=0; i< blockCount; i++){
+            File blockFile = IOUtilities.byteToFile(blockBytes[i], AndroidIOUtils.getExternalFile(outputDirPath), (file.getName() + "__blk__" + i));
+        }
+
+        result = true;
+        return result;
+    }
+
     //divides a file into multiple blocks
     private boolean partition(){
         ///storage/emulated/0/MDFS/test1.jpg_0123/ (directory)
@@ -173,6 +214,7 @@ public class MDFSFileCreatorViaRsockNG{
         List<MDFSBlockCreatorViaRsockNG> uploadQ = new ArrayList<>();
 
         //load the block directory
+        ///storage/emulated/0/MDFS/test1.jpg_0123/ (directory)
         final File fileDir = AndroidIOUtils.getExternalFile(edu.tamu.lenss.mdfs.Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(file.getName(), file.lastModified()));
 
         //array of blocks

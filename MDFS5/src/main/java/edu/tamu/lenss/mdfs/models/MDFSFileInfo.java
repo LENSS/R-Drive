@@ -13,7 +13,7 @@ public class MDFSFileInfo implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private final long createdTime;  //fileID
 	private final String fileName;
-	private long fileSize;
+	private long fileSize;   //entire file size
 	private byte k2, n2;
 	private byte numberOfBlocks;
 	
@@ -120,7 +120,6 @@ public class MDFSFileInfo implements Serializable {
 	 * @return
 	 */
 	public static String getFragmentPath(String fileName, long fileId, byte blockIdx, byte fragIdx){
-		return MDFSFileInfo.getBlockDirPath(fileName, fileId, blockIdx) + File.separator
-				+ MDFSFileInfo.getFragName(fileName, blockIdx, fragIdx);
+		return MDFSFileInfo.getBlockDirPath(fileName, fileId, blockIdx)     + File.separator + MDFSFileInfo.getFragName(fileName, blockIdx, fragIdx);
 	}
 }

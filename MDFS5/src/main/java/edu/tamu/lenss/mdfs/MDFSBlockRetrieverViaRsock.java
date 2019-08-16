@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -62,7 +61,7 @@ public class MDFSBlockRetrieverViaRsock {
     private byte[] decryptKey;
 
     public MDFSBlockRetrieverViaRsock(String fileName, long fileId, byte blockIndex, String clientID, MDFSFileInfo fileInfo){
-        serviceHelper = ServiceHelper.getInstance();
+        this.serviceHelper = ServiceHelper.getInstance();
         this.fileName = fileName;
         this.fileId = fileId;
         this.blockIdx = blockIndex;
@@ -94,7 +93,7 @@ public class MDFSBlockRetrieverViaRsock {
             serviceHelper.executeRunnableTask(new Runnable(){
                 @Override
                 public void run() {
-                    decodeFile(localFrags);
+                    decodeBlockFile(localFrags);
                 }
             });
         }
@@ -192,7 +191,7 @@ public class MDFSBlockRetrieverViaRsock {
         listener.statusUpdate("Downloading fragments", clientID);
         // If I have enough fragments already
         if(locFragCounter.get() >= fileInfo.getK2()){
-            decodeFile();
+            decodeBlockFile();
             return;
         }
         int requiredDownloadCnt = fileInfo.getK2() + 1 - locFragCounter.get();	// Download one more fragment. Just in case...
@@ -324,6 +323,7 @@ public class MDFSBlockRetrieverViaRsock {
                             System.out.println("xxx file signature is true");
 
                             //create fileFrag from byteArray
+                            ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg_0123__0/test1.jpg_0123__frag__0_dOwN__lOaDiNg___   (file)
                             tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(fileName, fileId, blockIdx, fragmentIndex) + DOWNLOADING_SIGNATURE );
                             FileOutputStream outputStream = new FileOutputStream(tmp0);
                             outputStream.write(byteArray);
@@ -331,8 +331,10 @@ public class MDFSBlockRetrieverViaRsock {
                             outputStream.close();
 
                             // Rename the fragment after it is completely downloaded to avoid decoder using a fragment that is still being downloaded
+                            ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg_0123__0/test1.jpg_0123__frag__0 (file)
                             success = IOUtilities.renameFile(tmp0, MDFSFileInfo.getFragName(fileName, blockIdx, fragmentIndex));
 
+                            ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg_0123__0/test1.jpg_0123__frag__0 (file)
                             tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(fileName, fileId, blockIdx, fragmentIndex));
                             try { sleep(100); } catch (InterruptedException e) { e.printStackTrace(); }
 
@@ -352,9 +354,10 @@ public class MDFSBlockRetrieverViaRsock {
                 System.out.println("EXCEPTION!");
                 e.printStackTrace();
             }finally{
-                if(success && tmp0.length() > 0){	// Hacky way to avoid 0 byte file
+                if(success && tmp0.length() > 0){
                     // success! so update directory
                     serviceHelper.getDirectory().addBlockFragment(header.getCreatedTime(), header.getBlockIndex(), header.getFragIndex());
+                    //update local fragment counter for this block
                     locFragCounter.incrementAndGet();
                 }else if(tmp0 != null){
                     //something was wrong
@@ -362,7 +365,8 @@ public class MDFSBlockRetrieverViaRsock {
                 }
 
                 if(locFragCounter.get() >= fileInfo.getK2()){
-                    decodeFile();
+                    //decode the fragments into a block
+                    decodeBlockFile();
                 }
 
             }
@@ -376,12 +380,12 @@ public class MDFSBlockRetrieverViaRsock {
     //this function is directly called from start() when all fagments of a block are locally available,
     //and no need to download fragmentss from other nodes.
     //or called by decodeFIle() function after fetching of fragments is done.
-    private synchronized void decodeFile(List<FragmentInfo> blockFragments){
+    private synchronized void decodeBlockFile(List<FragmentInfo> blockFragments){
 
         System.out.println("xxx inside decodefile");
         if(!isFinished) {
             // Final Check. Make sure enough fragments are available
-            //decodeFile() execution will only proceed further if this block of code passes
+            //decodeBlockFile() execution will only proceed further if this block of code passes
             if (blockFragments.size() < fileInfo.getK2()) {
                 String s = blockFragments.size() + " block fragments are available locally.";
                 listener.onError("Insufficient fragments." + s, fileInfo, clientID);
@@ -404,13 +408,14 @@ public class MDFSBlockRetrieverViaRsock {
                 return;
             }
 
-            //if enough fragments available, isFinished is False, decoding is False and decryptKey is valid, then
-            //decode and store the file
+            //if enough fragments available, isFinished is False, decoding is False and decryptKey is valid, then decode and store the file
+            //tmp0 = /storage/emulated/0/MDFS/test1.jpg__0123/ (directory)
+            //tmp = /storage/emulated/0/MDFS/test1.jpg__0123/test2.jpg_0123__blk__0 (file)
             File tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFileDirPath(fileInfo.getFileName(), fileInfo.getCreatedTime()));
             File tmp = IOUtilities.createNewFile(tmp0, MDFSFileInfo.getBlockName(fileInfo.getFileName(), blockIdx));
 
             //make decoder object
-            DeCoDeR decoder = new DeCoDeR(decryptKey, fileInfo.getN2(), fileInfo.getK2(), blockFragments, tmp.getAbsolutePath() );
+            DeCoDeR decoder = new DeCoDeR(decryptKey, fileInfo.getN2(), fileInfo.getK2(), blockFragments, tmp.getAbsolutePath());
 
             //check if decoding completed
             if (decoder.ifYouSmellWhatTheRockIsCooking()) {  //takes bunch of file fragments and returns file block
@@ -430,9 +435,9 @@ public class MDFSBlockRetrieverViaRsock {
     //this function is only called when all blocks are not locally available,
     //and needed to download blocks from other nodes.
     //this function is called only AFTER all the required blocks hav been downloaded
-    //this function eventually calls the other decodeFile(List<FragmentInfo> blockFragments) function
-    private void decodeFile(){
-        decodeFile(getStoredFrags());
+    //this function eventually calls the other decodeBlockFile(List<FragmentInfo> blockFragments) function
+    private void decodeBlockFile(){
+        decodeBlockFile(getStoredFrags());
     }
 
     //Distance from me; the closer to me, the shorter the disatance is
@@ -450,12 +455,12 @@ public class MDFSBlockRetrieverViaRsock {
         List<FragmentInfo> blockFragments = new ArrayList<FragmentInfo>();
         if(cachedFrags != null){
             // Check stored fragments
+            ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg_0123__0/  (directory)
             File blockDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileName, fileId, blockIdx));
             if(blockDir.isDirectory()){
                 File[] files = blockDir.listFiles(new FileFilter(){
                     @Override
                     public boolean accept(File f) {
-                        // one fragment maybe still being downloaded. We assume each fragment is at least 5k large
                         return ( f.isFile() && f.getName().contains(fileName + "__" + blockIdx + "__frag__") );
                     }
                 });

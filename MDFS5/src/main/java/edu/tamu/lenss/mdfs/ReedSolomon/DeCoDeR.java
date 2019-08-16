@@ -113,7 +113,7 @@ public class DeCoDeR {
 
     private boolean nocipher(){
 
-        System.out.println("decodefilepath dirdirdir: " + decodedFilePath);
+        ///storage/emulated/0/MDFS/cache/decodercache_0123 (file)
         File tmpEncryptFile1 = IOUtilities.byteToFile(encryptedByte, AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE), "decodercache_" + System.nanoTime());
         File newFile = IOUtilities.createNewFile(decodedFilePath);
         try { Files.copy(tmpEncryptFile1, newFile); } catch (IOException e) { e.printStackTrace(); }

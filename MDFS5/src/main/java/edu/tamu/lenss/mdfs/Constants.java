@@ -9,7 +9,7 @@ public class Constants {
 	public static final int FILE_CREATION_RETRIALS = 2;
 
 
-	public static final long MAX_BLOCK_SIZE = 3 * (1024*1024);					// Max size of each data block
+	public static final int MAX_BLOCK_SIZE = 3 * (1024*1024);					// Max size of each data block || must not be set larger than (Integer.MAX - Integer.BYTES - 1)
 	public static final long IDLE_BTW_FAILURE = 10000;							// Idle time between successive upload/download a block
 
 	public static final String ANDROID_DIR_ROOT = "MDFS";

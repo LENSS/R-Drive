@@ -2,9 +2,14 @@ package edu.tamu.lenss.mdfs;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -86,9 +91,9 @@ public class MDFSFileRetrieverViaRsock {
                         reTryLimit--;
                     }
                     Logger.i(TAG, "Finish downloadQ");
-                    //downloadQ beung empty means there are no blocks to retrieve,
+                    //downloadQ being empty means there are no blocks to retrieve,
                     //not empty means there are some block failed and,
-                    //they needs to be retrieved again but reTryLimit exceeded.
+                    //they needs to be retrieved again but reTryLimit may exceed.
                     if(downloadQ.isEmpty())
                         return true;
                     else
@@ -140,7 +145,7 @@ public class MDFSFileRetrieverViaRsock {
                     System.out.println("xxx" + " complete downlaoding all blocks");
                     fileListener.statusUpdate("Complete downloading all blocks of a file", clientID);
                     if(fileInfo.getFileName().contains(".mp4") && fileInfo.getNumberOfBlocks() > 1){
-                        mergeBlocks();
+                        mergeBlock1();
                     }
                     else{
                         handleSingleBlock();
@@ -157,9 +162,13 @@ public class MDFSFileRetrieverViaRsock {
         ServiceHelper.getInstance().submitCallableTask(new CallableTask<Boolean>(downloadTask, callback));
     }
 
+
+    //goes into the file directory and loads all the files that has "__blk__" tag in it.
     private MergeVideo prepareBlocks(){
-        File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator
-                + MDFSFileInfo.getFileDirName(fileInfo.getFileName(), fileInfo.getCreatedTime()));
+        ////storage/emulated/0/MDFS/test1.jpg_0123/
+        File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(fileInfo.getFileName(), fileInfo.getCreatedTime()));
+
+        //blockFiles only contains blocks with signature "__blk_-" in them.
         File[] blockFiles = fileDir.listFiles(new FileFilter(){
             @Override
             public boolean accept(File file) {
@@ -184,9 +193,7 @@ public class MDFSFileRetrieverViaRsock {
 
     private void handleSingleBlock(){
         // move block to the decrypted directory and rename
-        File from = AndroidIOUtils.getExternalFile(
-                MDFSFileInfo.getFileDirPath(fileInfo.getFileName(), fileInfo.getCreatedTime()) + File.separator
-                        + MDFSFileInfo.getBlockName(fileInfo.getFileName(), (byte)0));
+        File from = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFileDirPath(fileInfo.getFileName(), fileInfo.getCreatedTime()) + File.separator + MDFSFileInfo.getBlockName(fileInfo.getFileName(), (byte)0));
         File to = IOUtilities.createNewFile(getDecryptedFilePath());
 
         try {
@@ -200,6 +207,7 @@ public class MDFSFileRetrieverViaRsock {
     }
 
     private void mergeBlocks(){
+
         Callable<Boolean> mergeJob = new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
@@ -231,20 +239,86 @@ public class MDFSFileRetrieverViaRsock {
         ServiceHelper.getInstance().submitCallableTask(new CallableTask<Boolean>(mergeJob, callback));
     }
 
+    private void mergeBlock1(){
+        boolean mergeResult = false;
+
+        //get all the block files from disk
+        ///storage/emulated/0/MDFS/test1.jpg_0123/
+        File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(fileInfo.getFileName(), fileInfo.getCreatedTime()));
+        File[] blockFiles = fileDir.listFiles(new FileFilter(){
+            @Override
+            public boolean accept(File file) {
+                if(file.isFile() && file.getName().contains(fileInfo.getFileName() + "__blk__")) {
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        //create a map with blockname to byte[] mapping
+        Map<String, byte[]> fileMap = new HashMap<>();
+        for(int i =0; i< blockFiles.length; i++){
+            //get the bytes of the block files
+            byte[] blockBytes = IOUtilities.fileToByte(blockFiles[i]);
+
+            //get the length of bytes which are actual data (a block file = size_of_data + data)
+            int blockLength = ByteBuffer.wrap(blockBytes).getInt();
+
+            //allocate the blockLength amount of size in each array
+            byte[] blockData = new byte[blockLength];
+
+            //copy data from blockBytes[] to blockData[]
+            System.arraycopy(blockBytes, Integer.BYTES, blockData, 0 ,blockLength);
+
+            //put blockData[] into map
+            fileMap.put(blockFiles[i].getName(), blockData);
+        }
+
+
+        File file = new File(getDecryptedFilePath());
+        for(int i=0; i< fileMap.size(); i++){
+            try {
+                FileOutputStream fos = new FileOutputStream(file, true);
+                fos.write(fileMap.get(fileInfo.getFileName() + "__blk__" + i ));
+                fos.close();
+            }catch(IOException e){e.printStackTrace();}
+        }
+
+        mergeResult = true;
+
+        if(mergeResult){
+            //update listener
+            fileListener.statusUpdate("Video Merge Complete.", clientID);
+            deleteBlocks();
+
+            // Update directory
+            ServiceHelper.getInstance().getDirectory().addDecryptedFile(fileInfo.getCreatedTime());
+            fileListener.onComplete(AndroidIOUtils.getExternalFile(getDecryptedFilePath()), fileInfo, clientID);  //this is where execution of this file ends
+        }else{
+            fileListener.onError("Fail to merge vbbkjbideo.", fileInfo, clientID);
+            return;
+        }
+    }
+
 
     private String getDecryptedFilePath(){
 
         //first set the path where the file ought to be saved
+        //replace the "/storage/emulated/0" part from user inputted localDir since it will be added again.
         Constants.ANDROID_DIR_DECRYPTED = localDir.replace("/storage/emulated/0/", "/");
 
+        ///storage/emulated/0/MDFS/test1.jpg
         return Environment.getExternalStorageDirectory().getAbsolutePath()
                 + File.separator + Constants.ANDROID_DIR_DECRYPTED
                 + File.separator + fileInfo.getFileName();
     }
 
+    //goes into /storage/emulated/0/MDFS/test1.jpg_0123/ directory and loads all the files.
+    //all the files consists of both block directories(like "test1.jpg_0123_0/" that contains fragments)
+    // and the block file (with "__blk__" in name) itself.
+    //this function only deletes the block files and doesnt affect the block directories.
     private void deleteBlocks(){
-        File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator
-                + MDFSFileInfo.getFileDirName(fileInfo.getFileName(), fileInfo.getCreatedTime()));
+        File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(fileInfo.getFileName(), fileInfo.getCreatedTime()));
         File[] blockFiles = fileDir.listFiles(new FileFilter(){
             @Override
             public boolean accept(File file) {
