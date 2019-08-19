@@ -144,7 +144,7 @@ public class MDFSFileRetrieverViaRsock {
                     // Directory update
                     System.out.println("xxx" + " complete downlaoding all blocks");
                     fileListener.statusUpdate("Complete downloading all blocks of a file", clientID);
-                    if(fileInfo.getFileName().contains(".mp4") && fileInfo.getNumberOfBlocks() > 1){
+                    if(fileInfo.getNumberOfBlocks() > 1){
                         mergeBlock1();
                     }
                     else{
@@ -255,7 +255,8 @@ public class MDFSFileRetrieverViaRsock {
             }
         });
 
-        //create a map with blockname to byte[] mapping
+
+        //create a map with blockName to byte[] mapping
         Map<String, byte[]> fileMap = new HashMap<>();
         for(int i =0; i< blockFiles.length; i++){
             //get the bytes of the block files

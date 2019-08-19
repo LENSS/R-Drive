@@ -117,6 +117,7 @@ public class MDFSFileCreatorViaRsockNG{
                     return "File to block partition failed.";
                 }
             }else{
+                System.out.println("blockcount: " + blockCount);
                 // Single block so we create a new file and copy all the bytes from main file to new file in mdfs directory and operate on that
                 ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg_0123__blk__0 (file)
                 File fileBlock = IOUtilities.createNewFile(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + MDFSFileInfo.getFileDirPath(file.getName(), file.lastModified()) + File.separator + MDFSFileInfo.getBlockName(file.getName(), (byte)0));
@@ -231,6 +232,7 @@ public class MDFSFileCreatorViaRsockNG{
         String fName;
         for(File blockF : blocks){
             fName = blockF.getName();
+            System.out.println("block idx: " + fName.substring((fName.lastIndexOf("_")+1)));
             byte idx = Byte.parseByte(fName.substring((fName.lastIndexOf("_")+1)));   //idx = block number
             uploadQ.add(new MDFSBlockCreatorViaRsockNG(blockF, filePathMDFS, fileInfo, idx, permList, uniqueReqID, chosenNodes, clientID, encryptKey));
         }
