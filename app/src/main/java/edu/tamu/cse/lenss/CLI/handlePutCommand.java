@@ -40,7 +40,7 @@ public class handlePutCommand {
             if(file.length()>Integer.MAX_VALUE){
                 clientSockets.sendAndClose(clientID, "-put Failed! File size too large " + "(Max: " + Integer.MAX_VALUE + " bytes).");
             }else if((file.length()/Constants.MAX_BLOCK_SIZE)>127){ //max java byte value
-                clientSockets.sendAndClose(clientID, "-put Failed! Block count exceeds. Choosing a larger block size might solve this problem.");
+                clientSockets.sendAndClose(clientID, "-put Failed! Block count exceeded. Choosing a larger block size might solve this problem.");
             }else{
                 compressAndsendFile(file, filePathMDFS, null, false, perm, clientID);
             }
