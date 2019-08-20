@@ -35,33 +35,56 @@ public class handleCOPYTOLOCALcommand {
 
         //check if the file exists
         File file = new File(androidDir + filename);
+
         if(file.exists()){
 
-            //get all the files in a byteArray
-            try {
-                byte[] bArray = new byte[1000000];  // allocate a size of 1 MB
-                FileInputStream in = new FileInputStream(androidDir + filename);
-                readLen = in.read(bArray);
-                in.close();
+            if(file.length()>2000000){
+                reply = "FILETOOLARGE 0 DUMMYFILEDATA";
+                readyToSend = true;
+            }else {
+                //get all the files in a byteArray
+                try {
+                    byte[] bArray = new byte[(int) file.length()];  // allocate a size of 2 MB
+                    FileInputStream in = new FileInputStream(androidDir + filename);
+                    readLen = in.read(bArray);
+                    in.close();
 
-                //check if we could load the file
-                if (readLen <= 0) {
-                    reply = "COULDNOTLOADFILE 0 DUMMYFILEDATA";
-                    readyToSend = true;
+                    //check if we could load the file
+                    if (readLen <= 0) {
+                        reply = "COULDNOTLOADFILE 0 DUMMYFILEDATA";
+                        readyToSend = true;
 
-                }else {
-                    data = "";
-                    for (int i = 0; i < readLen; i++) { data = data + Integer.toString((int) bArray[i]) + "/"; }
-                    reply = "SUCCESS" + " " + Integer.toString(readLen) + " "+ data;
-                    readyToSend = true;
+                    } else {
+                        //file is loaded, now pad the file and make a string of bytes.
+                        //note: heavily inefficient way but no other convenient way found.
+                        //(ex: sending a 2 mb file requires almost 8 mb data transfer)
+                        data = "";
+                        for (int i = 0; i < readLen; i++) {
+                            data = data + Integer.toString((int) bArray[i]) + "/";
+                        }
+                        reply = "SUCCESS" + " " + Integer.toString(readLen) + " " + data;
+
+                        //check if the final reply variable size is less than 5 mb.
+                        //note: on the reciever side, a 5 mb size limit si sent in send_receive_ng() function.
+                        if (reply.length() > 8000000) {
+                            reply = "FILETOOLARGE 0 DUMMYFILEDATA";
+                            readyToSend = true;
+                        } else {
+                            //dont change the reply variable, just enable readyToSend
+                            readyToSend = true;
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            }catch(IOException e){e.printStackTrace();}
+            }
         }else{
             reply = "DIRORFILENOTEXIST 0 DUMMYFILEDATA";
             readyToSend = true;
         }
 
-
+        //now send it part by part
+        //this is done due to mac layer mtu being 1500 for wifi
         if(readyToSend) {
             //separate the reply string into different 1000 pieces
             //the first piece contains numOfPieces + "_" + 1000 bytes
@@ -116,7 +139,7 @@ public class handleCOPYTOLOCALcommand {
                 clientSockets.close(clientID);
 
             }else{
-                //make the reply
+                //make the only reply
                 reply = "1" + "^"  +  reply;
 
                 //send the reply

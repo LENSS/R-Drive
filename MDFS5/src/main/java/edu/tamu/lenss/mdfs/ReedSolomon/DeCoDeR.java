@@ -80,7 +80,7 @@ public class DeCoDeR {
         //copy all the bytes, except the first four bytes to encryptedByes array
         encryptedByte = new byte[fileSize];
         System.arraycopy(allBytes, BYTES_IN_INT, encryptedByte, 0, fileSize);
-        
+
         //check if the encryptedByte are null or something
         if(encryptedByte ==null){ return false;}
 

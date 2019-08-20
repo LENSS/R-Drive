@@ -44,10 +44,6 @@ class RequestHandler implements Runnable{
             OutputStream os = cSocket.getOutputStream();
             String command = inBuffer.readLine();  //note: the reading finishes until one or more \n is read
 
-            //todo:send the string to a parse function
-            //the parse function will return a cliObject
-
-
             //make clientSockets object
             clientSockets socket = new clientSockets(inBuffer, os, cSocket);
 
