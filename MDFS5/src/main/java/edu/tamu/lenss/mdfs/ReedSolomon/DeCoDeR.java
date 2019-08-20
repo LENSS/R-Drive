@@ -37,14 +37,6 @@ public class DeCoDeR {
 
     public boolean ifYouSmellWhatTheRockIsCooking(){
 
-        System.out.println("nn22: " + N2);
-        System.out.println("kk22: " + K2);
-
-
-        //print all the file fragment numbers
-        for(int i=0; i< fileFragments.size(); i++){
-            System.out.println("filefragnumber: " + fileFragments.get(i).getFragmentNumber());
-        }
         //create space for file fragments
         byte [][] shards = new byte [N2] [];
         boolean [] shardPresent = new boolean [N2];
@@ -86,13 +78,9 @@ public class DeCoDeR {
         int fileSize = ByteBuffer.wrap(allBytes).getInt();
 
         //copy all the bytes, except the first four bytes to encryptedByes array
-        int index = 0;
         encryptedByte = new byte[fileSize];
-        for(int i=BYTES_IN_INT; i<fileSize; i++){
-            encryptedByte[index] = allBytes[i];
-            index++;
-        }
-
+        System.arraycopy(allBytes, BYTES_IN_INT, encryptedByte, 0, fileSize);
+        
         //check if the encryptedByte are null or something
         if(encryptedByte ==null){ return false;}
 

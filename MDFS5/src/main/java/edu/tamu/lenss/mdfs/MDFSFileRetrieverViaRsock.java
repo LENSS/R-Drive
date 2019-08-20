@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -145,7 +144,7 @@ public class MDFSFileRetrieverViaRsock {
                     System.out.println("xxx" + " complete downlaoding all blocks");
                     fileListener.statusUpdate("Complete downloading all blocks of a file", clientID);
                     if(fileInfo.getNumberOfBlocks() > 1){
-                        mergeBlock1();
+                        mergeBlocks1();
                     }
                     else{
                         handleSingleBlock();
@@ -239,7 +238,7 @@ public class MDFSFileRetrieverViaRsock {
         ServiceHelper.getInstance().submitCallableTask(new CallableTask<Boolean>(mergeJob, callback));
     }
 
-    private void mergeBlock1(){
+    private void mergeBlocks1(){
         boolean mergeResult = false;
 
         //get all the block files from disk

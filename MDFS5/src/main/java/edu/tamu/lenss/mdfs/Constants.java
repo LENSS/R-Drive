@@ -7,7 +7,7 @@ public class Constants {
 	public static final long FRAGMENT_RETRIEVAL_TIMEOUT_INTERVAL = 10000;		//Timeout of retrieving file fragments, after this time a thread stops trying
 	public static final int FILE_RETRIEVAL_RETRIALS = 1;						//how many times
 
-	public static final int MAX_BLOCK_SIZE = 3 * (1024*1024);					// Max size of each data block || must not be set larger than (Integer.MAX - Integer.BYTES - 1)
+	public static final int MAX_BLOCK_SIZE = 8*8; //3 * (1024*1024);					// Max size of each data block || must not be set larger than (Integer.MAX - Integer.BYTES - 1)
 	public static final long IDLE_BTW_FAILURE = 10000;							// Idle time between successive upload/download a block
 
 	public static final String ANDROID_DIR_ROOT = "MDFS";

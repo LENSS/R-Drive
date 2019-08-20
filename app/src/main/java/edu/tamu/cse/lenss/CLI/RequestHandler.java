@@ -306,7 +306,7 @@ class RequestHandler implements Runnable{
                             }else {
 
                                 //check if its a subDir deletion request or a file deletion request
-                                //split the dir in tokensnamely
+                                //split the dir in tokens
                                 String[] dirTokens = dir.split("/");
 
                                 //remove empty strings
@@ -370,9 +370,7 @@ class RequestHandler implements Runnable{
             }
         }else{
             clientSockets.sendAndClose(clientID, "Not a MDFS command...Type \"mdfs -help\" for more information.");
-
         }
-
     }
 
 

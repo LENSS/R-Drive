@@ -67,7 +67,6 @@ public class EnCoDer {
 
         //first write a temporary file in cache directory
         tmpFile = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE + File.separator + "encrypt_" + clearFile.getName());
-        System.out.println("tmpfile dirdirdir: " + tmpFile.getAbsolutePath() + "      "  + tmpFile.getName());
         IOUtilities.createNewFile(tmpFile);
 
 
@@ -89,7 +88,7 @@ public class EnCoDer {
         int fileSize = (int) encryptedByte.length;
 
         // Figure out how big each shard will be.  The total size stored
-        // will be the file size (8 bytes) plus the file.
+        // will be the file size (4 bytes) plus the file.
         int storedSize = fileSize + BYTES_IN_INT;
         int shardSize = (storedSize + K2 - 1) / K2;
 

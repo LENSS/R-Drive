@@ -1,5 +1,7 @@
 package edu.tamu.cse.lenss.CLI;
 
+import com.google.common.primitives.Bytes;
+
 import org.sat4j.pb.tools.INegator;
 
 import java.io.File;
@@ -19,6 +21,7 @@ public class handlePutCommand {
         loadFile(filePathLocal, filePathMDFS, filename, perm, clientID);
     }
 
+
     private void loadFile(String filePathLocal, String filePathMDFS, String filename, String[] perm, String clientID){
 
         File[] listofFiles = new File(filePathLocal).listFiles();
@@ -34,8 +37,13 @@ public class handlePutCommand {
 
         if(fileExists){
             File file = listofFiles[index];
-            compressAndsendFile(file, filePathMDFS,null, false, perm, clientID);
-
+            if(file.length()>Integer.MAX_VALUE){
+                clientSockets.sendAndClose(clientID, "-put Failed! File size too large " + "(Max: " + Integer.MAX_VALUE + " bytes).");
+            }else if((file.length()/Constants.MAX_BLOCK_SIZE)>127){ //max java byte value
+                clientSockets.sendAndClose(clientID, "-put Failed! Block count exceeds. Choosing a larger block size might solve this problem.");
+            }else{
+                compressAndsendFile(file, filePathMDFS, null, false, perm, clientID);
+            }
         }else{
             clientSockets.sendAndClose(clientID, "-put Failed! File not found.");
             return;
