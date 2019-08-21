@@ -17,14 +17,6 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.util.Arrays;
-
-import edu.tamu.lenss.mdfs.utils.IOUtilities;
-
-
 //this is the main actiivty and where the execution of this app starts.
 public class MainActivity extends AppCompatActivity {
 
@@ -137,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     initializeApp();
                 } else {
-                    Toast.makeText(this, "You denied the permission", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "You must allow permission to continue.", Toast.LENGTH_SHORT).show();
                     checkPermissions();
                 }
         }

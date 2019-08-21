@@ -85,12 +85,12 @@ public class DeCoDeR {
         if(encryptedByte ==null){ return false;}
 
         //then decipher/decrypt the encryptedBYte
-        return nocipher();
+        return javaCipher();
     }
 
     private boolean javaCipher(){
 
-        File tmpEncryptFile = IOUtilities.byteToFile(encryptedByte, AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE), "decodercache_" + System.nanoTime());
+        File tmpEncryptFile = IOUtilities.byteToFile(encryptedByte, AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE), "decodercache_" + System.nanoTime());  //Isagor0!
         // Decrypt
         MDFSCipher myCipher = MDFSCipher.getInstance();
         boolean isSuccess = myCipher.decrypt(tmpEncryptFile.getAbsolutePath(), decodedFilePath, decryptKey);
@@ -102,7 +102,7 @@ public class DeCoDeR {
     private boolean nocipher(){
 
         ///storage/emulated/0/MDFS/cache/decodercache_0123 (file)
-        File tmpEncryptFile1 = IOUtilities.byteToFile(encryptedByte, AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE), "decodercache_" + System.nanoTime());
+        File tmpEncryptFile1 = IOUtilities.byteToFile(encryptedByte, AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE), "decodercache_" + System.nanoTime());  //Isagor0!
         File newFile = IOUtilities.createNewFile(decodedFilePath);
         try { Files.copy(tmpEncryptFile1, newFile); } catch (IOException e) { e.printStackTrace(); }
         tmpEncryptFile1.delete();

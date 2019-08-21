@@ -28,6 +28,7 @@ public class GNS {
     }
 
     public static boolean stop(){
+        System.out.println("Gns STOPPING...");
         return gnsServiceClient.removeService(GNSConstants.GNS_s);
     }
 }

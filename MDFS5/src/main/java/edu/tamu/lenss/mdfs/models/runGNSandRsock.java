@@ -10,8 +10,6 @@ import java.io.IOException;
 
 import edu.tamu.cse.lenss.gnsService.server.GNSServiceUtils;
 import edu.tamu.lenss.mdfs.Constants;
-import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
-import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperServer;
 import edu.tamu.lenss.mdfs.GNS.GNS;
 import edu.tamu.lenss.mdfs.GNS.GNSConstants;
 import edu.tamu.lenss.mdfs.network.RsockReceiveForFileCreation;
@@ -22,7 +20,7 @@ public class runGNSandRsock {
     public runGNSandRsock(){
 
         //log4j used by rsockJavaAPI and GNS
-        try { GNSServiceUtils.initLogger(Environment.getExternalStorageDirectory() + "/someLog", Level.ALL); }
+        try { GNSServiceUtils.initLogger(Environment.getExternalStorageDirectory() + "/someLog", Level.ALL); }  //Isagor0!
         catch (IOException e) { System.out.println("Can not create log file probably due to insufficient permission"); }
 
         //if file creation or retrieval is via rsock, then we need gns, so init gns first in GNS.java file
@@ -43,11 +41,6 @@ public class runGNSandRsock {
             t1.start();
         }
 
-        //todo: you are not the edgekeeper so delete it
-        //check if I am the dummy EdgeKeeper server.
-        if(EdgeKeeperConstants.dummy_EdgeKeeper_ip.equals(EdgeKeeperConstants.getWifiIP(EdgeKeeperConstants.context))){
-            EdgeKeeperServer EdgeKeeperServer = new EdgeKeeperServer(EdgeKeeperConstants.dummy_EdgeKeeper_port);
-        }
     }
 
 

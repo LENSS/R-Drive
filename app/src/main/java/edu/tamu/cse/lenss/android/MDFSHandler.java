@@ -1,12 +1,5 @@
 package edu.tamu.cse.lenss.android;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.res.AssetManager;
-
-import java.io.IOException;
 
 import edu.tamu.cse.lenss.CLI.cli_processor;
 import edu.tamu.lenss.mdfs.Constants;
@@ -14,21 +7,19 @@ import edu.tamu.lenss.mdfs.GNS.GNS;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 
+
+//this is the mdfs handler that starts the command line interface(cli) and the MDFS library.
+
 public class MDFSHandler extends Thread {
 
     public cli_processor cli;
-    Context appContext;
 
-    public MDFSHandler(Context appContext) {
-        this.appContext = appContext;
-    }
+    public MDFSHandler() {}
 
     @Override
     public void run(){
         startMDFS();
         startCLI();
-
-
     }
 
     @Override
@@ -58,7 +49,7 @@ public class MDFSHandler extends Thread {
 
 
     private void startCLI() {
-        cli = new cli_processor(appContext);
+        cli = new cli_processor();
         cli.start();
     }
 

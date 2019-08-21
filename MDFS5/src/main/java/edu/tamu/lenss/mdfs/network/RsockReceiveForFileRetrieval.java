@@ -112,10 +112,6 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                             RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing","nothing", srcGUID, 0, "hdrRecv", receivedFile.getReplyEndpoint(), "noReply");
                             System.out.println("fragment has been pushed to the rsock daemon (success)");
 
-                            //delete tmp0 file
-                            //tmp0.delete();
-
-
                         } catch (IOException e) {
                             e.printStackTrace();
                         }

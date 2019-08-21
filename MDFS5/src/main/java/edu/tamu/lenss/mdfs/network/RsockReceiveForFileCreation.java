@@ -57,9 +57,6 @@ public class RsockReceiveForFileCreation implements Runnable{
                 if(rcvdfile!=null) {
                     System.out.println("new incoming rsock");
 
-                    //print
-                    //System.out.println("print: " + Arrays.toString(rcvdfile.getFileArray()));
-
                     //convert byteArray into MDFSRsockBlockCreator object
                     ByteArrayInputStream bis = new ByteArrayInputStream(rcvdfile.getFileArray());
                     ObjectInputStream ois = new ObjectInputStream(bis);

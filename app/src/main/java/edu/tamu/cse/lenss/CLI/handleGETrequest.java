@@ -123,6 +123,11 @@ public class handleGETrequest {
                 //reply with failure as permission denied
                 clientSockets.sendAndClose(clientID, "-get Failed! File permission denied.");
                 return null;
+            }else if(metadataRet.command==EdgeKeeperConstants.METADATA_WITHDRAW_REPLY_FAILED_DIRNOTEXIST){
+
+                //reply with failure as dir doesnt exist
+                clientSockets.sendAndClose(clientID, "-get Failed! Directory doesnt exist.");
+                return null;
             }
         }
 

@@ -103,13 +103,13 @@ public class MDFSCipher {
 		try {
 			plainMessage = cipher.doFinal(encryptedMessage);
 		} catch (IllegalBlockSizeException e) {
-			System.out.println("xxyyzz illegal blocksize exception");
+			System.out.println("illegal blocksize exception");
 			e.printStackTrace();
 		} catch (BadPaddingException e) {
 			e.printStackTrace();
-			System.out.println("xxyyzz bad padding exception");
+			System.out.println("bad padding exception");
 		} catch(OutOfMemoryError e){
-			System.out.println("xxyyzz out of memory exception");
+			System.out.println("out of memory exception");
 			e.printStackTrace();
 		}
 		

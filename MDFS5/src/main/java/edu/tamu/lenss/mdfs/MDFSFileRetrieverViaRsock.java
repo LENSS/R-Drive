@@ -64,7 +64,6 @@ public class MDFSFileRetrieverViaRsock {
 
     //this function calls new MDFSBlockRetrieverViaRsock()
     private void retrieveBlocks(){
-        System.out.println("xxx:::" + "inside retrieveblock");
 
         fileListener.statusUpdate("Start downloading blocks. Total " + fileInfo.getNumberOfBlocks() + " blocks.", clientID);
         final Queue<Byte> downloadQ = new ConcurrentLinkedQueue<Byte>();
@@ -243,7 +242,7 @@ public class MDFSFileRetrieverViaRsock {
 
         //get all the block files from disk
         ///storage/emulated/0/MDFS/test1.jpg_0123/
-        File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(fileInfo.getFileName(), fileInfo.getCreatedTime()));
+        File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(fileInfo.getFileName(), fileInfo.getCreatedTime()));  //Isagor0!
         File[] blockFiles = fileDir.listFiles(new FileFilter(){
             @Override
             public boolean accept(File file) {
@@ -288,20 +287,20 @@ public class MDFSFileRetrieverViaRsock {
 
         if(mergeResult){
             //update listener
-            fileListener.statusUpdate("Video Merge Complete.", clientID);
+            fileListener.statusUpdate("File Merge Complete.", clientID);
             deleteBlocks();
 
             // Update directory
             ServiceHelper.getInstance().getDirectory().addDecryptedFile(fileInfo.getCreatedTime());
             fileListener.onComplete(AndroidIOUtils.getExternalFile(getDecryptedFilePath()), fileInfo, clientID);  //this is where execution of this file ends
         }else{
-            fileListener.onError("Fail to merge vbbkjbideo.", fileInfo, clientID);
+            fileListener.onError("Fail to merge file..", fileInfo, clientID);
             return;
         }
     }
 
 
-    private String getDecryptedFilePath(){
+    private String getDecryptedFilePath(){  //Isagor0!
 
         //first set the path where the file ought to be saved
         //replace the "/storage/emulated/0" part from user inputted localDir since it will be added again.
@@ -318,7 +317,7 @@ public class MDFSFileRetrieverViaRsock {
     // and the block file (with "__blk__" in name) itself.
     //this function only deletes the block files and doesnt affect the block directories.
     private void deleteBlocks(){
-        File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(fileInfo.getFileName(), fileInfo.getCreatedTime()));
+        File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(fileInfo.getFileName(), fileInfo.getCreatedTime()));  //Isagor0!
         File[] blockFiles = fileDir.listFiles(new FileFilter(){
             @Override
             public boolean accept(File file) {

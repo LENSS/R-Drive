@@ -346,10 +346,8 @@ public class MDFSBlockRetrieverViaRsock {
                         break;
                     }else{
                         //returned with null, did not received any reply from other side.
-
                     }
                 }
-
             }catch(IOException | ClassNotFoundException | NullPointerException e){
                 System.out.println("EXCEPTION!");
                 e.printStackTrace();

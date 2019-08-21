@@ -35,7 +35,6 @@ public final class IOUtilities {
 		
 		if(!dir.exists()){
 			if(!dir.mkdirs()){
-				Logger.e(TAG, "Fail to create directory");
 				return null;
 			}
 		}
@@ -79,7 +78,6 @@ public final class IOUtilities {
 			return IP.substring(0,IP.lastIndexOf(".")+1);
 		}
 		catch(IndexOutOfBoundsException e){
-			Logger.e(TAG, "Fail to parse the IP prefix. " + e.toString());
 			return null;
 		}
 	}
@@ -202,16 +200,12 @@ public final class IOUtilities {
 			input.close();
 			fis.close();
 		} catch (FileNotFoundException e) {
-			System.out.println("xxx yoyoyoy");
 			e.printStackTrace();
 		} catch (StreamCorruptedException e) {
-			System.out.println("xxx yoyoyoy");
 			e.printStackTrace();
 		} catch (IOException e) {
-			System.out.println("xxx yoyoyoy");
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			System.out.println("xxx yoyoyoy");
 			e.printStackTrace();
 		}
 		return object;

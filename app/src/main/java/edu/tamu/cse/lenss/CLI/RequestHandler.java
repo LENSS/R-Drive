@@ -1,12 +1,7 @@
 package edu.tamu.cse.lenss.CLI;
 
-import android.content.Context;
-import android.os.Environment;
-
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -18,22 +13,19 @@ import java.util.UUID;
 
 import edu.tamu.lenss.mdfs.EdgeKeeper.Directory;
 
-import static java.lang.Thread.sleep;
 
 class RequestHandler implements Runnable{
 
     //class variables
     private Socket cSocket;
-    Context appContext;
 
 
     //commands
     String[] comm = { "-help", "-ls", "-list", "-mkdir", "-rm", "-setfacl", "-getfacl", "-put", "-get", "-copyFromLocal", "-copyToLocal", "-hdfs"};
     Set<String> commandNames = new HashSet<>(Arrays.asList(comm));
 
-    public RequestHandler( Socket cSocket, Context con) {
+    public RequestHandler( Socket cSocket) {
         this.cSocket = cSocket;
-        this.appContext = con;
     }
 
     public void run() {
@@ -123,7 +115,7 @@ class RequestHandler implements Runnable{
 
 
                             //check if the filePathLocal is valid
-                            String isValLocDir  = utils.isValidLocalDirInAndroidPhone(filepathLocal);
+                            String isValLocDir  = utils.isValidLocalDirInAndroidPhone(filepathLocal);  //Isagor0!
 
                             if(isValLocDir.equals("OK")) {
 
@@ -177,10 +169,10 @@ class RequestHandler implements Runnable{
                                     clientSockets.sendAndClose(clientID, "Directory/file does not exist.");
                                 }
                             }else{
-                                clientSockets.sendAndClose(clientID, "Error! " + "Android " + isValLocDir);
+                                clientSockets.sendAndClose(clientID, "Error! " + "Android " + isValLocDir);   //Isagor0!
                             }
                         } else {
-                            clientSockets.sendAndClose(clientID, "Command not complete, mention a filename with absolute path...ex:/storage/emulated/0/.../test.jpg ");
+                            clientSockets.sendAndClose(clientID, "Command not complete, mention a filename with absolute path...ex:/storage/emulated/0/.../test.jpg ");  //Isagor0!
                         }
                     }else if(cmd[1].equals("-get")){
 
@@ -228,7 +220,7 @@ class RequestHandler implements Runnable{
                                             String locDir = cmd[3];
 
                                             //check if local path is valid
-                                            String locDirValid = utils.isValidLocalDirInAndroidPhone(locDir);
+                                            String locDirValid = utils.isValidLocalDirInAndroidPhone(locDir);  //Isagor0!
 
                                             if(locDirValid.equals("OK")){
 
@@ -237,12 +229,12 @@ class RequestHandler implements Runnable{
 
 
                                             }else{
-                                                clientSockets.sendAndClose(clientID, "Invalid local directory, " + locDirValid);
+                                                clientSockets.sendAndClose(clientID, "Invalid Android directory, " + locDirValid);
                                             }
 
 
                                         }else{
-                                            clientSockets.sendAndClose(clientID, "Command not comeplete, local filepath not mentioned.");
+                                            clientSockets.sendAndClose(clientID, "Command not comeplete, local Android filepath not mentioned.");
                                         }
 
 

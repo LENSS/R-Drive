@@ -20,9 +20,6 @@ import edu.tamu.lenss.mdfs.utils.Logger;
 //these codes are used in EdgeKeeperMetadata class.
 public class EdgeKeeperConstants {
 
-    //app context
-    public static Context context;
-
     //EdgeKeeper variables
     public static final String dummy_EdgeKeeper_ip = "192.168.1.100";
     public static final int dummy_EdgeKeeper_port = 9995;

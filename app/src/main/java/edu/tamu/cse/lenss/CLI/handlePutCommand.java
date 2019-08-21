@@ -1,12 +1,7 @@
 package edu.tamu.cse.lenss.CLI;
 
-import com.google.common.primitives.Bytes;
-
-import org.sat4j.pb.tools.INegator;
-
 import java.io.File;
 import java.io.FileOutputStream;
-
 import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.MDFSFileCreatorViaRsockNG;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
@@ -38,7 +33,7 @@ public class handlePutCommand {
         if(fileExists){
             File file = listofFiles[index];
             if(file.length()>Integer.MAX_VALUE){
-                clientSockets.sendAndClose(clientID, "-put Failed! File size too large " + "(Max: " + Integer.MAX_VALUE + " bytes).");
+                clientSockets.sendAndClose(clientID, "-put Failed! File size too large " + "(Max: " + Integer.MAX_VALUE + " bytes)." + "\n" + "Note: Actual available memory on device may be much lower than above number.");
             }else if((file.length()/Constants.MAX_BLOCK_SIZE)>127){ //max java byte value
                 clientSockets.sendAndClose(clientID, "-put Failed! Block count exceeded. Choosing a larger block size might solve this problem.");
             }else{

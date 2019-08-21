@@ -52,7 +52,7 @@ public class EnCoDer {
     public List<FragmentInfo> ifYouSmellWhatTheRockIsCooking(){
 
         //cipher/encrypt the file
-        nocipher();
+        javaCipher();
 
         //check if the cipher succeeded
         if(encryptedByte==null){
@@ -66,7 +66,7 @@ public class EnCoDer {
     private void javaCipher(){
 
         //first write a temporary file in cache directory
-        tmpFile = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE + File.separator + "encrypt_" + clearFile.getName());
+        tmpFile = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE + File.separator + "encrypt_" + clearFile.getName());  //Isagor0!
         IOUtilities.createNewFile(tmpFile);
 
 
@@ -77,9 +77,6 @@ public class EnCoDer {
         }
     }
 
-    private void apacheCipher(){
-
-    }
 
     private List<FragmentInfo> getFragmantsFromBlockFile(){
 

@@ -1,9 +1,6 @@
 package edu.tamu.lenss.mdfs;
-
 import android.os.Environment;
-
 import com.google.common.io.Files;
-
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -18,11 +15,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
 import edu.tamu.lenss.mdfs.EdgeKeeper.FileMetadata;
@@ -120,7 +114,7 @@ public class MDFSFileCreatorViaRsockNG{
                 System.out.println("blockcount: " + blockCount);
                 // Single block so we create a new file and copy all the bytes from main file to new file in mdfs directory and operate on that
                 ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg_0123__blk__0 (file)
-                File fileBlock = IOUtilities.createNewFile(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + MDFSFileInfo.getFileDirPath(file.getName(), file.lastModified()) + File.separator + MDFSFileInfo.getBlockName(file.getName(), (byte)0));
+                File fileBlock = IOUtilities.createNewFile(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + MDFSFileInfo.getFileDirPath(file.getName(), file.lastModified()) + File.separator + MDFSFileInfo.getBlockName(file.getName(), (byte)0));  //Isagor0!
                 try {
                     Files.copy(file, fileBlock);
                 } catch (IOException e) {
@@ -156,7 +150,7 @@ public class MDFSFileCreatorViaRsockNG{
         boolean result = false;
 
         ///storage/emulated/0/MDFS/test1.jpg_0123/ (directory)
-        String outputDirPath = File.separator + edu.tamu.lenss.mdfs.Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(file.getName(), file.lastModified());
+        String outputDirPath = File.separator + edu.tamu.lenss.mdfs.Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(file.getName(), file.lastModified());  //Isagor0!
 
         byte[] fileBytes = IOUtilities.fileToByte(file);
 
@@ -192,7 +186,7 @@ public class MDFSFileCreatorViaRsockNG{
     //divides a file into multiple blocks
     private boolean partition(){
         ///storage/emulated/0/MDFS/test1.jpg_0123/ (directory)
-        String outputDirPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + edu.tamu.lenss.mdfs.Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(file.getName(), file.lastModified());
+        String outputDirPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + edu.tamu.lenss.mdfs.Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(file.getName(), file.lastModified());  //Isagor0!
         SplitVideo splitVideo = new SplitVideo(file.getAbsolutePath(), outputDirPath, blockCount);
 
         return splitVideo.splitVideo();
@@ -216,7 +210,7 @@ public class MDFSFileCreatorViaRsockNG{
 
         //load the block directory
         ///storage/emulated/0/MDFS/test1.jpg_0123/ (directory)
-        final File fileDir = AndroidIOUtils.getExternalFile(edu.tamu.lenss.mdfs.Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(file.getName(), file.lastModified()));
+        final File fileDir = AndroidIOUtils.getExternalFile(edu.tamu.lenss.mdfs.Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(file.getName(), file.lastModified()));   //Isagor0!
 
         //array of blocks
         final File[] blocks = fileDir.listFiles(new FileFilter(){

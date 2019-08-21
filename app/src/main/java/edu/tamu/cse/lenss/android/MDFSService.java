@@ -9,10 +9,10 @@ import android.os.IBinder;
 
 import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
 
+//this is the mdfs service that runs of the phones background.
 public class MDFSService extends Service {
 
     public static final String loggerLocation = Environment.getExternalStorageDirectory().toString() + "/distressnet/mdfs.log";
-    private Context appContext;
     MDFSHandler mdfsHandler;
 
     @Override
@@ -22,15 +22,7 @@ public class MDFSService extends Service {
 
     @Override
     public void onCreate(){
-
-        //get the app context
-        appContext = getApplication().getApplicationContext();
-
-        //set the app context to a secure place for future use
-        EdgeKeeperConstants.context = appContext;
-
-        //proceed
-        mdfsHandler = new MDFSHandler(appContext);
+        mdfsHandler = new MDFSHandler();
     }
 
     @Override
