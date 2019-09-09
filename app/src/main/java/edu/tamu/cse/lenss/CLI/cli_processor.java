@@ -18,7 +18,8 @@ public class cli_processor extends Thread {
     public ServerSocket serverSocket;
     public boolean isRunning = false;
 
-    public cli_processor(){}
+    public cli_processor(){
+    }
 
     //The purpose of the server is to accept new connection and let
     //the Request Handler deal with the service request in another thread.

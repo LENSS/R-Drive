@@ -212,6 +212,7 @@ public class Directory {
     //output is arrayList which can be empty.
     //this function is mostly used for -list or -ls command.
     public List<String> getAllFileNames(String dir){
+
         //first check if the dir exists
         if(dirExists(dir)){
             //check if dir is only "/" aka root
@@ -701,7 +702,6 @@ public class Directory {
     public static boolean isValidDir(String dir){
         return true;
     }
-
 
 
 }

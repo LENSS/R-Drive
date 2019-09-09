@@ -68,6 +68,9 @@ dependencies {
     implementation 'org.codehaus.woodstox:woodstox-core-asl:4.4.1'
     implementation 'commons-collections:commons-collections:3.2.2'
     implementation files('libs/commons-crypto-1.0.0.jar')
+    implementation files('libs/xmlrpc-client-3.1.3.jar')
+    implementation files('libs/xmlrpc-server-3.1.3.jar')
+    implementation files('libs/EdgeKeeper-client-api.jar')
 }
 
 
