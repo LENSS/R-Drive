@@ -10,15 +10,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.tamu.lenss.mdfs.Constants;
-import edu.tamu.lenss.mdfs.GNS.GNS;
+import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.ReedSolomon.EnCoDer;
 import edu.tamu.lenss.mdfs.cipher.FragmentInfo;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
-import edu.tamu.lenss.mdfs.models.FragmentTransferInfo;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.models.MDFSRsockBlockForFileCreate;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
@@ -34,11 +32,10 @@ public class MDFSBlockCreatorViaRsockNG{
     private ServiceHelper serviceHelper;
     private MDFSFileInfo fileInfo;
     String uniqueReqID;                     //unique req id fr file creation job
-    String clientID;                        //client id who made the file creation request
     String filePathMDFS;
 
     //constructor
-    public MDFSBlockCreatorViaRsockNG(File file, String filePathMDFS, MDFSFileInfo info, byte blockIndex, String uniquereqid, List<String> chosenodes, String clientID, byte[] key) {  //RSOCK
+    public MDFSBlockCreatorViaRsockNG(File file, String filePathMDFS, MDFSFileInfo info, byte blockIndex, String uniquereqid, List<String> chosenodes, byte[] key) {  //RSOCK
         this.blockIdx = blockIndex;
         this.blockFile = file;
         this.serviceHelper = ServiceHelper.getInstance();
@@ -47,7 +44,6 @@ public class MDFSBlockCreatorViaRsockNG{
         this.n2 = fileInfo.getN2();
         this.uniqueReqID = uniquereqid;
         this.fileStorageGUIDs = chosenodes;
-        this.clientID = clientID;
         this.filePathMDFS = filePathMDFS;
         this.encryptKey = key;
     }
@@ -57,7 +53,7 @@ public class MDFSBlockCreatorViaRsockNG{
         if(encryptFile()){
 
             //check if the only mdfs node is me or there are other nodes
-            if(fileStorageGUIDs.size()==1 && fileStorageGUIDs.get(0).equals(GNS.ownGUID)){
+            if(fileStorageGUIDs.size()==1 && fileStorageGUIDs.get(0).equals(EdgeKeeper.ownGUID)){
 
                 //there is no other nodes to send the fragments to so return.
                 return "SUCCESS";
@@ -98,7 +94,7 @@ public class MDFSBlockCreatorViaRsockNG{
                     String destNode = nodesIter.next();
 
                     //dont sent fragments to myself again
-                    if (!destNode.equals(GNS.ownGUID)){
+                    if (!destNode.equals(EdgeKeeper.ownGUID)){
                         result = result && fragmentUploaderViaRsock(oneFrag, filePathMDFS, fileInfo.getCreatedTime(), destNode);
                     }
                 }
@@ -134,7 +130,7 @@ public class MDFSBlockCreatorViaRsockNG{
         }
 
         //make MDFSRsockBlockCreator obj
-        MDFSRsockBlockForFileCreate mdfsrsockblock = new MDFSRsockBlockForFileCreate(fileInfo.getFileName(), filePathMDFS, byteArray, fileCreationTime, fileInfo.getFileSize(), fileInfo.getN2(), fileInfo.getK2(), blockIndex, fragmentIndex, GNS.ownGUID, uniqueReqID, Constants.isGlobal);
+        MDFSRsockBlockForFileCreate mdfsrsockblock = new MDFSRsockBlockForFileCreate(fileInfo.getFileName(), filePathMDFS, byteArray, fileCreationTime, fileInfo.getFileSize(), fileInfo.getN2(), fileInfo.getK2(), blockIndex, fragmentIndex, EdgeKeeper.ownGUID, uniqueReqID, Constants.isGlobal);
 
         //get byteArray and size of the MDFSRsockBlockCreator obj and do send over rsock
         ByteArrayOutputStream bos = new ByteArrayOutputStream();

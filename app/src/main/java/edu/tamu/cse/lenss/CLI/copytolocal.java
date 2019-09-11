@@ -11,11 +11,11 @@ import java.io.IOException;
 import static java.lang.Thread.sleep;
 
 //copy a file from android phone/linux machine, where mdfs is running, to the cli client side linux machine
-public class handleCOPYTOLOCALcommand {
+public class copytolocal {
 
     public static boolean readyToSend = false;
 
-    public static  void handleCOPYTOLOCALcommand(String clientID, String[] cmd){
+    public static  void copytolocal(String clientID, String[] cmd){
 
         //no need to check the command this command is already verified
         String androidDir = cmd[2];

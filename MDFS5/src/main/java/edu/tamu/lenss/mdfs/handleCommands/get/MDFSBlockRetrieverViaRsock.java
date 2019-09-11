@@ -19,9 +19,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
 import edu.tamu.lenss.mdfs.Constants;
-import edu.tamu.lenss.mdfs.EdgeKeeper.FileMetadata;
-import edu.tamu.lenss.mdfs.GNS.GNS;
+import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.cipher.FragmentInfo;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
@@ -56,24 +56,22 @@ public class MDFSBlockRetrieverViaRsock {
     private final BlockRetrieveLog fileRetLog = new BlockRetrieveLog();
     private AtomicInteger locFragCounter;
     private int initFileFragsCnt = 0;          //dont change it
-    private FileMetadata metadata;
+    private MDFSMetadata metadata;
     private boolean isFinished = false;
-    private String clientID;
     private byte[] decryptKey;
 
-    public MDFSBlockRetrieverViaRsock(String fileName, long fileId, byte blockIndex, String clientID, MDFSFileInfo fileInfo){
+    public MDFSBlockRetrieverViaRsock(String fileName, long fileId, byte blockIndex, MDFSFileInfo fileInfo){
         this.serviceHelper = ServiceHelper.getInstance();
         this.fileName = fileName;
         this.fileId = fileId;
         this.blockIdx = blockIndex;
         this.fileInfo = fileInfo;
-        this.clientID = clientID;
     }
 
 
-    public MDFSBlockRetrieverViaRsock(MDFSFileInfo fInfo, byte blockIndex, FileMetadata metadata, String clientID, MDFSFileInfo fileInfo){	//RSOCK
-        this(fInfo.getFileName(), fInfo.getCreatedTime(), blockIndex, clientID, fileInfo);
-        this.fileInfo = fInfo;
+    public MDFSBlockRetrieverViaRsock(MDFSFileInfo fileInfo, byte blockIndex, MDFSMetadata metadata){	//RSOCK
+        this(fileInfo.getFileName(), fileInfo.getCreatedTime(), blockIndex, fileInfo);
+        this.fileInfo = fileInfo;
         this.metadata = metadata;
         this.locFragCounter  = new AtomicInteger();
     }
@@ -128,7 +126,7 @@ public class MDFSBlockRetrieverViaRsock {
                 }
 
                 //create BlockReply object
-                BlOcKrEpLy blockReply = new BlOcKrEpLy(metadata.filename, metadata.fileID, (byte) Integer.parseInt(blockNums.get(j)), nodes.get(i), GNS.ownGUID);
+                BlOcKrEpLy blockReply = new BlOcKrEpLy(metadata.getFileName(), metadata.getCreatedTime(), (byte) Integer.parseInt(blockNums.get(j)), nodes.get(i), EdgeKeeper.ownGUID);
 
                 //put fragListByte in blockReply object
                 blockReply.setBlockFragIndex(fragListByte);
@@ -168,7 +166,7 @@ public class MDFSBlockRetrieverViaRsock {
 
         if(uniqueFrags.size() < fileInfo.getK2()){
             String s = uniqueFrags.size() + " block fragments";
-            listener.onError("Insufficient fragments. " + s, fileInfo, clientID);
+            listener.onError("Insufficient fragments. " + s, fileInfo);
             return;
         }
         else{
@@ -184,12 +182,12 @@ public class MDFSBlockRetrieverViaRsock {
         File tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileName, fileId, blockIdx));
         if(!tmp0.exists()){
             if(!tmp0.mkdirs()){
-                listener.onError("File IO Error. Can't create/save file locally", fileInfo, clientID);
+                listener.onError("File IO Error. Can't create/save file locally", fileInfo);
                 return;
             }
         }
 
-        listener.statusUpdate("Downloading fragments", clientID);
+        listener.statusUpdate("Downloading fragments");
         // If I have enough fragments already
         if(locFragCounter.get() >= fileInfo.getK2()){
             decodeBlockFile();
@@ -259,7 +257,7 @@ public class MDFSBlockRetrieverViaRsock {
                 header.setNeedReply(false);
 
                 //make an object of MDFSRsockBlockRetrieval
-                MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(header, destGUID, GNS.ownGUID, fileName, fileId, blockIdx, fragmentIndex);
+                MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(header, destGUID, EdgeKeeper.ownGUID, fileName, fileId, blockIdx, fragmentIndex);
 
                 //get byteArray and size of the MDFSRsockBlockRetreival obj
                 byte[] data;
@@ -387,7 +385,7 @@ public class MDFSBlockRetrieverViaRsock {
             //decodeBlockFile() execution will only proceed further if this block of code passes
             if (blockFragments.size() < fileInfo.getK2()) {
                 String s = blockFragments.size() + " block fragments are available locally.";
-                listener.onError("Insufficient fragments." + s, fileInfo, clientID);
+                listener.onError("Insufficient fragments." + s, fileInfo);
                 return;
             }
 
@@ -399,11 +397,11 @@ public class MDFSBlockRetrieverViaRsock {
             }
 
             //listener and log update
-            listener.statusUpdate("Decoding fragments", clientID);
+            listener.statusUpdate("Decoding fragments");
 
             //if decryptkey is null
             if (decryptKey == null) {
-                listener.onError("No decryption key found", fileInfo, clientID);
+                listener.onError("No decryption key found", fileInfo);
                 return;
             }
 
@@ -420,12 +418,12 @@ public class MDFSBlockRetrieverViaRsock {
             if (decoder.ifYouSmellWhatTheRockIsCooking()) {  //takes bunch of file fragments and returns file block
                 System.out.println("xxx Block Decryption Complete");
                 isFinished = true;
-                listener.onComplete(tmp, fileInfo, clientID);
+                listener.onComplete(tmp, fileInfo);
                 return;
             } else {
                 isFinished = false;
                 decoding = false;
-                listener.onError("Fail to decode the fragments. You may try again", fileInfo, clientID);
+                listener.onError("Fail to decode the fragments. You may try again", fileInfo);
                 return;
             }
         }
@@ -488,21 +486,21 @@ public class MDFSBlockRetrieverViaRsock {
     //Default FileRetrieverListener. Do nothing.
     private BlockRetrieverListenerViaRsock listener = new BlockRetrieverListenerViaRsock(){
         @Override
-        public void onError(String error, MDFSFileInfo fileInfo, String clientID) {
+        public void onError(String error, MDFSFileInfo fileInfo) {
         }
         @Override
-        public void onComplete(File decryptedFile, MDFSFileInfo fileInfo, String clientID) {
+        public void onComplete(File decryptedFile, MDFSFileInfo fileInfo) {
         }
         @Override
-        public void statusUpdate(String status, String clientID) {
+        public void statusUpdate(String status) {
         }
     };//
 
     //interface for BlockRetrieverListenerViaRsock
     public interface BlockRetrieverListenerViaRsock{
-        public void onError(String error, MDFSFileInfo fileInfo, String clientID);
-        public void statusUpdate(String status, String clientID);
-        public void onComplete(File decryptedFile, MDFSFileInfo fileInfo, String clientID);
+        public void onError(String error, MDFSFileInfo fileInfo);
+        public void statusUpdate(String status);
+        public void onComplete(File decryptedFile, MDFSFileInfo fileInfo);
     }
 
     //some kind of logging

@@ -10,7 +10,7 @@ import java.io.ObjectInputStream;
 
 import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
 import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
-import edu.tamu.lenss.mdfs.GNS.GNS;
+import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
@@ -40,7 +40,7 @@ public class RsockReceiveForFileCreation implements Runnable{
     @Override
     public void run() {
         if(RSockConstants.intrfc_creation==null) {
-            RSockConstants.intrfc_creation = Interface.getInstance(GNS.getGNSInstance().getOwnGuid(), RSockConstants.intrfc_creation_appid, 999);
+            RSockConstants.intrfc_creation = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_creation_appid, 999);
         }
         System.out.println("Rsock receiver thread is running...");
         ReceivedFile rcvdfile = null;
@@ -119,10 +119,10 @@ public class RsockReceiveForFileCreation implements Runnable{
 
             //add info of the fragment I received and
             //update to edgekeeper.
-            MDFSMetadata metadata = MDFSMetadata.createFileMetadata(uniquereqid, fileCreatedTime, filesize, fileCreatorGUID, GNS.ownGUID, filePathMDFS, isGlobal);
+            MDFSMetadata metadata = MDFSMetadata.createFileMetadata(uniquereqid, fileCreatedTime, filesize, fileCreatorGUID, EdgeKeeper.ownGUID, filePathMDFS, isGlobal);
             metadata.setn2(n2);
             metadata.setk2(k2);
-            metadata.addInfo(GNS.ownGUID, (int)blockIdx, (int)fragmentIdx);
+            metadata.addInfo(EdgeKeeper.ownGUID, (int)blockIdx, (int)fragmentIdx);
 
             //send metadata to local edgeKeeper
             JSONObject repJSON = EKClient.putMetadata(metadata);

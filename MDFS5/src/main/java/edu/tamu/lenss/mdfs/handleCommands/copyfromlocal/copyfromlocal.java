@@ -1,4 +1,4 @@
-package edu.tamu.cse.lenss.CLI;
+package edu.tamu.lenss.mdfs.handleCommands.copyfromlocal;
 
 import android.os.Environment;
 
@@ -8,9 +8,9 @@ import java.io.IOException;
 
 
 //copy a file from cli client side to the android phone/linux machine where mdfs is running
-public class handleCOPYFROMLOCALcommand {
+public class copyfromlocal {
 
-    public static void handleCOPYFROMLOCALcommand(String clientID, String[] cmd){
+    public static String copyfromlocal( String[] cmd){
 
         //this command has already been verified and parsed from the client side
         //get all the variables
@@ -36,7 +36,7 @@ public class handleCOPYFROMLOCALcommand {
         File dir = new File(androidDir);
         if(!dir.exists()){
             boolean mkdir = dir.mkdirs();
-            if(!mkdir){ clientSockets.sendAndClose(clientID, "Error! Cannot make directory in android phone."); }
+            if(!mkdir){ return "Error! Cannot make directory in android phone."; }
         }
 
         //check if the file already exists, if does, delete it first
@@ -56,6 +56,6 @@ public class handleCOPYFROMLOCALcommand {
         }
 
         //send back reply
-        clientSockets.sendAndClose(clientID, "Info! File copy success.");
+        return "File copy success!";
     }
 }

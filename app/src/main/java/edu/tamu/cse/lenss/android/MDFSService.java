@@ -1,13 +1,10 @@
 package edu.tamu.cse.lenss.android;
 
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Environment;
 import android.app.Service;
 import android.os.IBinder;
-
-import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
 
 //this is the mdfs service that runs of the phones background.
 public class MDFSService extends Service {

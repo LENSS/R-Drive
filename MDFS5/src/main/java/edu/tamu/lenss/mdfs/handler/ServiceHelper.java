@@ -3,7 +3,7 @@ package edu.tamu.lenss.mdfs.handler;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import edu.tamu.lenss.mdfs.GNS.GNS;
+import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
 import edu.tamu.lenss.mdfs.MDFSDirectory;
 
 public class ServiceHelper {
@@ -37,9 +37,6 @@ public class ServiceHelper {
 	}
 
 	public static void releaseService(){
-
-		//unregister GNS
-		boolean gnsUnreg = GNS.stop();
 
 		//close netobserver
 		netObserver.shutdown();

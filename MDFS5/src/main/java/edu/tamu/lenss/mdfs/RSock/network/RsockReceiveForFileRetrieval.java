@@ -11,7 +11,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.UUID;
 
-import edu.tamu.lenss.mdfs.GNS.GNS;
+import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
 import edu.tamu.lenss.mdfs.models.MDFSRsockBlockForFileRetrieve;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.models.FragmentTransferInfo;
@@ -35,7 +35,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
 
         try {
             //create rsock Interface intrfc
-            RSockConstants.intrfc_retrieval = Interface.getInstance(GNS.getGNSInstance().getOwnGuid(), RSockConstants.intrfc_retrieval_appid, 999);
+            RSockConstants.intrfc_retrieval = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_retrieval_appid, 999);
 
             ReceivedFile receivedFile = null;
             byte[] byteArray = null;
@@ -96,7 +96,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                         //System.out.print("print: " + Arrays.toString(byteArray));
 
                         //now, make MDFSRsockBlockRetrieval object with the file fragment byteArray
-                        mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(byteArray, (int) tmp0.length(), true, GNS.ownGUID );
+                        mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(byteArray, (int) tmp0.length(), true, EdgeKeeper.ownGUID );
 
                         //convert mdfsrsockblock object into bytearray and do send
                         ByteArrayOutputStream bos = new ByteArrayOutputStream();

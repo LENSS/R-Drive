@@ -1,8 +1,8 @@
-package edu.tamu.cse.lenss.CLI;
+package edu.tamu.lenss.mdfs.handleCommands.help;
 
-public class handleHelpCommand {
+public class help {
 
-    public static void handleHelpCommand(String uuid) {
+    public static String help() {
         String reply =
                 "mdfs -help                                  : Shows all MDFS commands.<newline>" +
                 "mdfs -ls <mdfs_dir>                         : Lists all directory/sub-directories in MDFS.<newline>" +
@@ -22,7 +22,6 @@ public class handleHelpCommand {
                 //"<permission_list>                                                         : WORLD | OWNER | GUID(s) | GROUP.<newline>"
                 ;
 
-        clientSockets.sendAndClose(uuid, reply);
-        return;
+        return reply;
     }
 }

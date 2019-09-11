@@ -6,7 +6,7 @@ import org.json.JSONObject;
 import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
 import edu.tamu.cse.lenss.edgeKeeper.server.RequestTranslator;
 import edu.tamu.lenss.mdfs.Constants;
-import edu.tamu.lenss.mdfs.GNS.GNS;
+import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
 
 public class mkdir {
 
@@ -16,7 +16,7 @@ public class mkdir {
         JSONObject reqJSON = new JSONObject();
 
         //send mkdir request
-        JSONObject repJSON = EKClient.mkdir(mdfsDir, GNS.ownGUID, Constants.isGlobal);
+        JSONObject repJSON = EKClient.mkdir(mdfsDir, EdgeKeeper.ownGUID, Constants.isGlobal);
 
         //check reply
         if(repJSON!=null){

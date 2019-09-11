@@ -9,7 +9,6 @@ import java.util.UUID;
 import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
 import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
 import edu.tamu.cse.lenss.edgeKeeper.server.RequestTranslator;
-import edu.tamu.lenss.mdfs.EdgeKeeper.FileMetadata;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
 

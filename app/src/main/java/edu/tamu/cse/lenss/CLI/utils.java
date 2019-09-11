@@ -6,9 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import edu.tamu.lenss.mdfs.Constants;
-import edu.tamu.lenss.mdfs.GNS.GNSConstants;
-
 
 //this class contains utility functions for commands passed through cli_processor.java class
 public class utils {

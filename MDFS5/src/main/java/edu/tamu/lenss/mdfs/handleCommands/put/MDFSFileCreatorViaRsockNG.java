@@ -20,9 +20,8 @@ import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
 import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
 import edu.tamu.cse.lenss.edgeKeeper.server.RequestTranslator;
 import edu.tamu.lenss.mdfs.Constants;
-import edu.tamu.lenss.mdfs.GNS.GNS;
+import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
-import edu.tamu.lenss.mdfs.handleCommands.put.MDFSBlockCreatorViaRsockNG;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
@@ -45,7 +44,6 @@ public class MDFSFileCreatorViaRsockNG{
     private boolean isSending = false;
     List<String> chosenNodes;
     MDFSMetadata metadata;                  //metadata object for this file
-    String clientID;                        //the client who is making this request
     String filePathMDFS;                    //virtual directory path in MDFS in which the file will be saved. if dir doesnt exist, it willbe created first
     String uniqueReqID;                     //unique id
 
@@ -54,8 +52,7 @@ public class MDFSFileCreatorViaRsockNG{
                 String filePathMDFS,
                 int maxBlockSize,
                 double encodingRatio,
-                byte[] key,
-                String clientID) {
+                byte[] key) {
         this.file = f;
         this.filePathMDFS = filePathMDFS;
         this.encodingRatio = encodingRatio;
@@ -66,9 +63,8 @@ public class MDFSFileCreatorViaRsockNG{
         this.fileInfo.setNumberOfBlocks((byte)blockCount);
         this.uniqueReqID = UUID.randomUUID().toString();
         this.encryptKey = key;
-        this.clientID = clientID;
         this.chosenNodes = new ArrayList<>();
-        this.metadata = MDFSMetadata.createFileMetadata(uniqueReqID, fileInfo.getCreatedTime(), fileInfo.getFileSize(), GNS.ownGUID, GNS.ownGUID, filePathMDFS, Constants.isGlobal);
+        this.metadata = MDFSMetadata.createFileMetadata(uniqueReqID, fileInfo.getCreatedTime(), fileInfo.getFileSize(), EdgeKeeper.ownGUID, EdgeKeeper.ownGUID, filePathMDFS, Constants.isGlobal);
 
     }
 
@@ -213,7 +209,7 @@ public class MDFSFileCreatorViaRsockNG{
             fName = blockF.getName();
             System.out.println("block idx: " + fName.substring((fName.lastIndexOf("_")+1)));
             byte idx = Byte.parseByte(fName.substring((fName.lastIndexOf("_")+1)));   //idx = block number
-            uploadQ.add(new MDFSBlockCreatorViaRsockNG(blockF, filePathMDFS, fileInfo, idx, uniqueReqID, chosenNodes, clientID, encryptKey));
+            uploadQ.add(new MDFSBlockCreatorViaRsockNG(blockF, filePathMDFS, fileInfo, idx, uniqueReqID, chosenNodes, encryptKey));
         }
 
         //create a result list
@@ -241,7 +237,7 @@ public class MDFSFileCreatorViaRsockNG{
     private String fetchTopologyAndChooseNodes(){
 
         //get peer guids who are running mdfs from GNS
-        List<String> peerGUIDsListfromGNS = GNS.gnsServiceClient.getPeerGUIDs("MDFS", "default");
+        List<String> peerGUIDsListfromGNS = EKClient.getPeerGUIDs("MDFS", "default");
         if(peerGUIDsListfromGNS==null){ return "GNS Error! called getPeerGUIDs() and returned null.";}
         if(peerGUIDsListfromGNS.size()==0){ return "no other MDFS peer registered to GNS."; }
 
@@ -264,7 +260,7 @@ public class MDFSFileCreatorViaRsockNG{
 
         //call Dijkstra from ownGUID to each of the commonPeerGUIDs and populate peerGUIDsWithWeights map
         for(int i=0; i< commonPeerGUIDs.size(); i++){
-            double pathWeight = Topology.getInstance(RSockConstants.intrfc_creation_appid).getShortestPathWeight(GNS.ownGUID, commonPeerGUIDs.get(i));
+            double pathWeight = Topology.getInstance(RSockConstants.intrfc_creation_appid).getShortestPathWeight(EdgeKeeper.ownGUID, commonPeerGUIDs.get(i));
             peerGUIDsWithWeights.put(commonPeerGUIDs.get(i), pathWeight);
         }
 
@@ -280,7 +276,7 @@ public class MDFSFileCreatorViaRsockNG{
         }
 
         //add myself if it is not already in it
-        if(!chosenNodes.contains(GNS.ownGUID)){chosenNodes.add(GNS.ownGUID);}
+        if(!chosenNodes.contains(EdgeKeeper.ownGUID)){chosenNodes.add(EdgeKeeper.ownGUID);}
 
         return "SUCCESS";
     }
@@ -334,7 +330,7 @@ public class MDFSFileCreatorViaRsockNG{
         //add information of all blocks/fragments that I(file creator) have(file creator has all fragments of all blocks)
         for(int i=0; i< blockCount; i++){
             for(int j=0; j<metadata.getn2(); j++){
-                metadata.addInfo(GNS.ownGUID, i, j);
+                metadata.addInfo(EdgeKeeper.ownGUID, i, j);
             }
         }
 

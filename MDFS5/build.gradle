@@ -50,8 +50,6 @@ dependencies {
     api 'com.android.support:appcompat-v7:26.1.0'
     //for topology fetch
     implementation 'org.jgrapht:jgrapht-core:1.3.0'
-    //gns
-    implementation files('libs/GnsService-client-api.jar')
     //rsock java api
     implementation files('libs/API.jar')
     //logging.

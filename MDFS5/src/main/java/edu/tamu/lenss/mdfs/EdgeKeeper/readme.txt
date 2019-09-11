@@ -1,2 +1,0 @@
-note: this package is called EdgeKeeper and this package should not be here, it should be running as
-the namenode of MDFS in some distributed server. This package is here because it was developed with MDFS simultaneously and put here for testing purpose only.

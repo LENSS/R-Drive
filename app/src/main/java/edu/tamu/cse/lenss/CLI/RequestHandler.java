@@ -11,9 +11,17 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import edu.tamu.lenss.mdfs.EdgeKeeper.Directory;
+import edu.tamu.lenss.mdfs.handleCommands.copyfromlocal.copyfromlocal;
+import edu.tamu.lenss.mdfs.handleCommands.get.get;
+import edu.tamu.lenss.mdfs.handleCommands.help.help;
+import edu.tamu.lenss.mdfs.handleCommands.ls.ls;
+import edu.tamu.lenss.mdfs.handleCommands.mkdir.mkdir;
+import edu.tamu.lenss.mdfs.handleCommands.put.put;
+import edu.tamu.lenss.mdfs.handleCommands.rm.rm;
+import edu.tamu.lenss.mdfs.utils.IOUtilities;
 
 
+//
 class RequestHandler implements Runnable{
 
     //class variables
@@ -28,6 +36,7 @@ class RequestHandler implements Runnable{
         this.cSocket = cSocket;
     }
 
+    @Override
     public void run() {
 
         try{
@@ -91,7 +100,8 @@ class RequestHandler implements Runnable{
                     //operand exists, take action based on operand type
                     if (cmd[1].equals("-help")) {
 
-                        handleHelpCommand.handleHelpCommand(clientID);
+                        //handle help command
+                        clientSockets.sendAndClose(clientID, help.help());
 
                     } else if (cmd[1].equals("-put")) {
 
@@ -148,9 +158,8 @@ class RequestHandler implements Runnable{
                                             String dirValidCheck = utils.isValidMDFSDir(filePathMDFS);
                                             if (dirValidCheck.equals("OK")) {
 
-                                                //do the job
-                                                handlePutCommand hand = new handlePutCommand();
-                                                hand.handleCreateCommand(filepathLocal, filePathMDFS, filename, clientID);
+                                                //handle put command
+                                                clientSockets.sendAndClose(clientID, put.put(filepathLocal, filePathMDFS, filename, clientID));
 
                                             } else {
                                                 clientSockets.sendAndClose(clientID, "Error! " + "MDFS " + dirValidCheck);
@@ -188,7 +197,7 @@ class RequestHandler implements Runnable{
                                 String[] dirTokens = mdfsDirWithFilename.split("/");
 
                                 //remove all empty strings
-                                dirTokens = Directory.delEmptyStr(dirTokens);
+                                dirTokens = IOUtilities.delEmptyStr(dirTokens);
 
                                 //check if the last token is a filename
                                 if(utils.checkFileExtension(dirTokens[dirTokens.length-1])){
@@ -213,7 +222,7 @@ class RequestHandler implements Runnable{
                                         //check if next token exists
                                         if(cmd.length>3){
 
-                                            //next token exists tht is local dir
+                                            //next token exists that is local dir
                                             String locDir = cmd[3];
 
                                             //check if local path is valid
@@ -221,9 +230,8 @@ class RequestHandler implements Runnable{
 
                                             if(locDirValid.equals("OK")){
 
-                                                //do the job
-                                                handleGETrequest.handleGETrequest(clientID, filename, mdfsDir, locDir);
-
+                                                //handle getcommand
+                                                clientSockets.sendAndClose(clientID, get.get(mdfsDirWithFilename, locDir));
 
                                             }else{
                                                 clientSockets.sendAndClose(clientID, "Invalid Android directory, " + locDirValid);
@@ -259,8 +267,8 @@ class RequestHandler implements Runnable{
                             String isDirValid = utils.isValidMDFSDir(mdfsDir);
                             if(isDirValid.equals("OK")){
 
-                                //do the job
-                                handleMkdirCommand.handleMkdirCommand(clientID, mdfsDir);
+                                //handle mkdir command
+                                clientSockets.sendAndClose(clientID, mkdir.mkdir(mdfsDir));
 
                             }else{
                                 clientSockets.sendAndClose(clientID, "Error! MDFS " + isDirValid);
@@ -290,7 +298,7 @@ class RequestHandler implements Runnable{
                                 String[] dirTokens = dir.split("/");
 
                                 //remove empty strings
-                                dirTokens = Directory.delEmptyStr(dirTokens);
+                                dirTokens = IOUtilities.delEmptyStr(dirTokens);
 
 
                                 //check if the last elem is file or dir
@@ -302,7 +310,8 @@ class RequestHandler implements Runnable{
                                 }
 
                                 //handle rm command
-                                handleRMcommand.handleRMcommand(clientID, dir, reqType);
+                                clientSockets.sendAndClose(clientID, rm.rm(dir,reqType));
+
                             }
 
                         }else{
@@ -322,8 +331,8 @@ class RequestHandler implements Runnable{
 
                             if(isDirValid.equals("OK")){
 
-                                //do the job
-                                handleLScommand.handleLScommand(clientID, mdfsDir);
+                                //handle ls command
+                                clientSockets.sendAndClose(clientID, ls.ls(mdfsDir));
 
                             }else{
                                 clientSockets.sendAndClose(clientID, "MDFS " + isDirValid);
@@ -332,11 +341,11 @@ class RequestHandler implements Runnable{
                             clientSockets.sendAndClose(clientID, "Mention a MDFS directory to list files and folders.");
                         }
                     }else if(cmd[1].equals("-copyFromLocal")){
-                        //do the job
-                        handleCOPYFROMLOCALcommand.handleCOPYFROMLOCALcommand(clientID, cmd);
+                        //handle copyfromlocal command
+                        clientSockets.sendAndClose(clientID, copyfromlocal.copyfromlocal(cmd));
                     }else if(cmd[1].equals("-copyToLocal")){
-                        //do the job
-                        handleCOPYTOLOCALcommand.handleCOPYTOLOCALcommand(clientID, cmd);
+                        //handle copytolocal command
+                        copytolocal.copytolocal(clientID, cmd);
                     }else if(cmd[1].equals("-hdfs")){
                         clientSockets.sendAndClose(clientID, "Hadoop HDFS commands are not supported.");
                     }else{

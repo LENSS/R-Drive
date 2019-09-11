@@ -1,14 +1,9 @@
 package edu.tamu.lenss.mdfs.RSock.network;
 
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-
-import edu.tamu.lenss.mdfs.GNS.GNS;
+import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
-import edu.tamu.lenss.mdfs.models.MDFSRsockBlockForFileCreate;
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
 import example.Interface;
 import example.ReceivedFile;
@@ -28,7 +23,7 @@ public class RsockReceiveForFileDeletion implements Runnable{
     @Override
     public void run() {
         if(RSockConstants.intrfc_deletion==null) {
-            RSockConstants.intrfc_deletion = Interface.getInstance(GNS.getGNSInstance().getOwnGuid(), RSockConstants.intrfc_deletion_appid, 999);
+            RSockConstants.intrfc_deletion = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_deletion_appid, 999);
         }
 
         ReceivedFile rcvdfile = null;

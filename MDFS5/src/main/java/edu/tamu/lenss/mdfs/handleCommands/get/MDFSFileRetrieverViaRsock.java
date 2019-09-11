@@ -17,8 +17,8 @@ import com.google.common.io.Files;
 
 import android.os.Environment;
 
+import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
 import edu.tamu.lenss.mdfs.Constants;
-import edu.tamu.lenss.mdfs.EdgeKeeper.FileMetadata;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
@@ -39,14 +39,12 @@ public class MDFSFileRetrieverViaRsock {
     private static final String TAG = MDFSFileRetrieverViaRsock.class.getSimpleName();
     private byte[] decryptKey;
     private MDFSFileInfo fileInfo;
-    private FileMetadata metadata;
-    private String clientID;
+    private MDFSMetadata metadata;
     private String localDir;
 
-    public MDFSFileRetrieverViaRsock(MDFSFileInfo fInfo, FileMetadata metadata, String clientID, String localDir) {
+    public MDFSFileRetrieverViaRsock(MDFSFileInfo fInfo, MDFSMetadata metadata, String localDir) {
         this.fileInfo = fInfo;
         this.metadata = metadata;
-        this.clientID = clientID;
         this.localDir = localDir;
     }
 
@@ -66,7 +64,7 @@ public class MDFSFileRetrieverViaRsock {
     //this function calls new MDFSBlockRetrieverViaRsock()
     private void retrieveBlocks(){
 
-        fileListener.statusUpdate("Start downloading blocks. Total " + fileInfo.getNumberOfBlocks() + " blocks.", clientID);
+        fileListener.statusUpdate("Start downloading blocks. Total " + fileInfo.getNumberOfBlocks() + " blocks.");
         final Queue<Byte> downloadQ = new ConcurrentLinkedQueue<Byte>();
         for(byte i=0; i < fileInfo.getNumberOfBlocks(); i++){
             downloadQ.add(i);
@@ -82,7 +80,7 @@ public class MDFSFileRetrieverViaRsock {
                 synchronized(downloadQ){
                     while(!downloadQ.isEmpty() && reTryLimit > 0){
                         curBlockIdx = downloadQ.poll();
-                        curBlock = new MDFSBlockRetrieverViaRsock(fileInfo, curBlockIdx, metadata, clientID, fileInfo);  //RSOCK
+                        curBlock = new MDFSBlockRetrieverViaRsock(fileInfo, curBlockIdx, metadata);  //RSOCK
                         curBlock.setListener(blockListener);
                         curBlock.setDecryptKey(decryptKey);
                         curBlock.start();
@@ -106,8 +104,8 @@ public class MDFSFileRetrieverViaRsock {
             BlockRetrieverListenerViaRsock blockListener = new BlockRetrieverListenerViaRsock(){
                 private long sleepPeriod = Constants.IDLE_BTW_FAILURE;
                 @Override
-                public void onError(String error, MDFSFileInfo fInfo, String clientID) {
-                    fileListener.onError("Retrieve block unsuccessful. Retrying...  " + error, fInfo, clientID);
+                public void onError(String error, MDFSFileInfo fInfo) {
+                    fileListener.onError("Retrieve block unsuccessful. Retrying...  " + error, fInfo);
                     try {
                         Thread.sleep(sleepPeriod);
                     } catch (InterruptedException e) {
@@ -121,7 +119,7 @@ public class MDFSFileRetrieverViaRsock {
                 }
 
                 @Override
-                public void onComplete(File decryptedFile, MDFSFileInfo fileInfo, String clientID) {
+                public void onComplete(File decryptedFile, MDFSFileInfo fileInfo) {
                     synchronized(downloadQ){
                         sleepPeriod = Constants.IDLE_BTW_FAILURE;
                         downloadQ.notify();
@@ -129,7 +127,7 @@ public class MDFSFileRetrieverViaRsock {
                 }
 
                 @Override
-                public void statusUpdate(String status, String clientID) {
+                public void statusUpdate(String status) {
                     Logger.i(TAG, status);
                 }
             };
@@ -142,7 +140,7 @@ public class MDFSFileRetrieverViaRsock {
                 if(result){
                     // Directory update
                     System.out.println("xxx" + " complete downlaoding all blocks");
-                    fileListener.statusUpdate("Complete downloading all blocks of a file", clientID);
+                    fileListener.statusUpdate("Complete downloading all blocks of a file");
                     if(fileInfo.getNumberOfBlocks() > 1){
                         mergeBlocks1();
                     }
@@ -152,7 +150,7 @@ public class MDFSFileRetrieverViaRsock {
                 }
                 else{
                     Logger.e(TAG, "Fail to download some blocks");
-                    fileListener.onError("Fail to download some blocks", fileInfo, clientID);
+                    fileListener.onError("Fail to download some blocks", fileInfo);
                     return;
                 }
             }
@@ -202,7 +200,7 @@ public class MDFSFileRetrieverViaRsock {
         }
         // update directory
         ServiceHelper.getInstance().getDirectory().addDecryptedFile(fileInfo.getCreatedTime());
-        fileListener.onComplete(to, fileInfo, clientID);  //this is where execution of this file ends
+        fileListener.onComplete(to, fileInfo);  //this is where execution of this file ends
     }
 
     private void mergeBlocks(){
@@ -223,14 +221,14 @@ public class MDFSFileRetrieverViaRsock {
 
                 if(result){
                     Logger.i(TAG, "Video Merge Complete.");
-                    fileListener.statusUpdate("Video Merge Complete.", clientID);
+                    fileListener.statusUpdate("Video Merge Complete.");
                     deleteBlocks();
                     // Update directory
                     ServiceHelper.getInstance().getDirectory().addDecryptedFile(fileInfo.getCreatedTime());
-                    fileListener.onComplete(AndroidIOUtils.getExternalFile(getDecryptedFilePath()), fileInfo, clientID);  //this is where execution of this file ends
+                    fileListener.onComplete(AndroidIOUtils.getExternalFile(getDecryptedFilePath()), fileInfo);  //this is where execution of this file ends
                 }
                 else{
-                    fileListener.onError("Fail to merge video.", fileInfo, clientID);
+                    fileListener.onError("Fail to merge video.", fileInfo);
                     return;
                 }
             }
@@ -288,14 +286,14 @@ public class MDFSFileRetrieverViaRsock {
 
         if(mergeResult){
             //update listener
-            fileListener.statusUpdate("File Merge Complete.", clientID);
+            fileListener.statusUpdate("File Merge Complete.");
             deleteBlocks();
 
             // Update directory
             ServiceHelper.getInstance().getDirectory().addDecryptedFile(fileInfo.getCreatedTime());
-            fileListener.onComplete(AndroidIOUtils.getExternalFile(getDecryptedFilePath()), fileInfo, clientID);  //this is where execution of this file ends
+            fileListener.onComplete(AndroidIOUtils.getExternalFile(getDecryptedFilePath()), fileInfo);  //this is where execution of this file ends
         }else{
-            fileListener.onError("Fail to merge file..", fileInfo, clientID);
+            fileListener.onError("Fail to merge file..", fileInfo);
             return;
         }
     }
@@ -336,13 +334,13 @@ public class MDFSFileRetrieverViaRsock {
 
     private BlockRetrieverListenerViaRsock fileListener = new BlockRetrieverListenerViaRsock(){
         @Override
-        public void onError(String error, MDFSFileInfo fInfo, String clientID) {
+        public void onError(String error, MDFSFileInfo fInfo) {
         }
         @Override
-        public void onComplete(File decryptedFile, MDFSFileInfo fileInfo, String clientID) {
+        public void onComplete(File decryptedFile, MDFSFileInfo fileInfo) {
         }
         @Override
-        public void statusUpdate(String status, String clientID) {
+        public void statusUpdate(String status) {
         }
     };
 }
