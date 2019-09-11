@@ -12,35 +12,36 @@ import edu.tamu.cse.lenss.gnsService.server.GNSServiceUtils;
 import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.GNS.GNS;
 import edu.tamu.lenss.mdfs.GNS.GNSConstants;
-import edu.tamu.lenss.mdfs.network.RsockReceiveForFileCreation;
-import edu.tamu.lenss.mdfs.network.RsockReceiveForFileRetrieval;
+import edu.tamu.lenss.mdfs.RSock.network.RsockReceiveForFileCreation;
+import edu.tamu.lenss.mdfs.RSock.network.RsockReceiveForFileRetrieval;
+import edu.tamu.lenss.mdfs.RSock.network.RsockReceiveForFileDeletion;
+
 
 public class runGNSandRsock {
 
     public runGNSandRsock(){
 
         //log4j used by rsockJavaAPI and GNS
-        try { GNSServiceUtils.initLogger(Environment.getExternalStorageDirectory() + "/someLog", Level.ALL); }  //Isagor0!
+        try { GNSServiceUtils.initLogger(Environment.getExternalStorageDirectory() + "/someLog", Level.ALL); }   //Isagor0!
         catch (IOException e) { System.out.println("Can not create log file probably due to insufficient permission"); }
 
-        //if file creation or retrieval is via rsock, then we need gns, so init gns first in GNS.java file
-        if(Constants.file_creation_via_rsock_or_tcp.equals("rsock") || Constants.file_retrieval_via_rsock_or_tcp.equals("rsock")) {
-            GNS.getGNSInstance();
-            GNS.gnsServiceClient.addService(GNSConstants.GNS_s, GNSConstants.GNS_s1);
-        }
+        //we need gns, so init gns first in GNS.java file
+        GNS.getGNSInstance();
+        GNS.gnsServiceClient.addService(GNSConstants.GNS_s, GNSConstants.GNS_s1);
 
-        //if file creation via rsock is enabled in Constants file, start rsock in a thread
-        if(Constants.file_creation_via_rsock_or_tcp.equals("rsock")){
-            Thread t1 = new Thread(new RsockReceiveForFileCreation());
-            t1.start();
-        }
 
-        //if file retrieval via rsock is enabled in Constants file, start rsock in a thread
-        if(Constants.file_retrieval_via_rsock_or_tcp.equals("rsock")){
-            Thread t1 = new Thread(new RsockReceiveForFileRetrieval());
-            t1.start();
-        }
+        //start file creator rsock in a thread
+        Thread t1 = new Thread(new RsockReceiveForFileCreation());
+        t1.start();
 
+
+        // start file retriever rsock in a thread
+        Thread t2 = new Thread(new RsockReceiveForFileRetrieval());
+        t2.start();
+
+        // start file deletion rsock in a thread
+        Thread t3 = new Thread(new RsockReceiveForFileDeletion());
+        t3.start();
     }
 
 
@@ -48,6 +49,7 @@ public class runGNSandRsock {
         GNS.stop();
         RsockReceiveForFileCreation.stop();
         RsockReceiveForFileRetrieval.stop();
+        RsockReceiveForFileDeletion.stop();
 
     }
 

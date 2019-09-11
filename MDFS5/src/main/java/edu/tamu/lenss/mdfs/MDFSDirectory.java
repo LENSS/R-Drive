@@ -87,7 +87,7 @@ public class MDFSDirectory implements Serializable {
 		long curTime = System.currentTimeMillis();
 		recentUpdate.addFirst(MyPair.create(file.getCreatedTime(), curTime));
 		// Remove expired items
-		while (!recentUpdate.isEmpty() && recentUpdate.getLast().second < (curTime - edu.tamu.lenss.mdfs.network.Constants.FILE_SYNC_PERIOD)) {
+		while (!recentUpdate.isEmpty() && recentUpdate.getLast().second < (curTime - Constants.FILE_SYNC_PERIOD)) {
 			recentUpdate.removeLast();
 		}
 	}
@@ -185,7 +185,7 @@ public class MDFSDirectory implements Serializable {
 		synchronized (recentDelete) {
 			long curTime = System.currentTimeMillis();
 			recentDelete.addFirst(MyPair.create(fileId, curTime));
-			while (!recentDelete.isEmpty() && recentDelete.getLast().second < curTime - edu.tamu.lenss.mdfs.network.Constants.FILE_DEL_PERIOD)
+			while (!recentDelete.isEmpty() && recentDelete.getLast().second < curTime - Constants.FILE_DEL_PERIOD)
 				recentDelete.removeLast();
 		}
 
@@ -202,7 +202,7 @@ public class MDFSDirectory implements Serializable {
 		// Remove Decrypted File
 		file = new File(rootDir, "decrypted/" + fName);
 		if (file.exists()){ file.delete();}
-		
+
 		//Remove Cahced File
 		file = new File(rootDir, "cache/" + "thumb_" + fileId + ".jpg");
 		if (file.exists()){ file.delete();}

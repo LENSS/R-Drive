@@ -9,8 +9,8 @@ import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeperConstants;
 import edu.tamu.lenss.mdfs.EdgeKeeper.FileMetadata;
 import edu.tamu.lenss.mdfs.EdgeKeeper.client;
 import edu.tamu.lenss.mdfs.GNS.GNS;
-import edu.tamu.lenss.mdfs.MDFSBlockRetrieverViaRsock;
-import edu.tamu.lenss.mdfs.MDFSFileRetrieverViaRsock;
+import edu.tamu.lenss.mdfs.handleCommands.get.MDFSBlockRetrieverViaRsock;
+import edu.tamu.lenss.mdfs.handleCommands.get.MDFSFileRetrieverViaRsock;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 

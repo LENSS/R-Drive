@@ -18,6 +18,7 @@ public class MDFSHandler extends Thread {
 
     @Override
     public void run(){
+        //note: MDFS must start before CLI
         startMDFS();
         startCLI();
     }

@@ -13,9 +13,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-import org.apache.commons.crypto.*;
-import org.apache.commons.crypto.cipher.CryptoCipher;
-import org.apache.commons.crypto.cipher.CryptoCipherFactory;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;

@@ -148,12 +148,9 @@ class RequestHandler implements Runnable{
                                             String dirValidCheck = utils.isValidMDFSDir(filePathMDFS);
                                             if (dirValidCheck.equals("OK")) {
 
-                                                //dir is valid, get the perm list
-                                                String[] perm = utils.checkPermittedNodes("WORLD");  //dummy
-
                                                 //do the job
                                                 handlePutCommand hand = new handlePutCommand();
-                                                hand.handleCreateCommand(filepathLocal, filePathMDFS, filename, perm, clientID);
+                                                hand.handleCreateCommand(filepathLocal, filePathMDFS, filename, clientID);
 
                                             } else {
                                                 clientSockets.sendAndClose(clientID, "Error! " + "MDFS " + dirValidCheck);
@@ -286,11 +283,6 @@ class RequestHandler implements Runnable{
                                 //cannot delete root
                                 clientSockets.sendAndClose(clientID, "Cannot delete / directory.");
 
-                            }else if(dir.equals("/*")){
-
-                                //delete all files and folders in the root
-                                handleRMcommand.handleRMcommand(clientID, dir, new String[0], "del_dir");
-
                             }else {
 
                                 //check if its a subDir deletion request or a file deletion request
@@ -302,15 +294,15 @@ class RequestHandler implements Runnable{
 
 
                                 //check if the last elem is file or dir
+                                String reqType = "";
                                 if (utils.checkFileExtension(dirTokens[dirTokens.length - 1])) {
-
-                                    //this is a file deletion request
-                                    handleRMcommand.handleRMcommand(clientID, dir, dirTokens, "del_file");
+                                    reqType = "del_file";
                                 } else {
-
-                                    //this is a directory deletion request
-                                    handleRMcommand.handleRMcommand(clientID, dir, dirTokens, "del_dir");
+                                    reqType = "del_dir";
                                 }
+
+                                //handle rm command
+                                handleRMcommand.handleRMcommand(clientID, dir, reqType);
                             }
 
                         }else{

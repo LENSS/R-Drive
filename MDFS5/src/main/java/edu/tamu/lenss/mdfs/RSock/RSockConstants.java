@@ -6,41 +6,14 @@ import example.Interface;
 //this class contains constants for Rsock initialization.
 public class RSockConstants {
 
-    //rsock api instances, initialized in PacketExchanger.java class
+    //rsock api instances,
     public static Interface intrfc_creation;
     public static Interface intrfc_retrieval;
+    public static Interface intrfc_deletion;
 
     //appID using which above Rsock api objects are registered to the daemon.
     public static final String intrfc_creation_appid = "mdfsFileCreation";
     public static final String intrfc_retrieval_appid = "mdfsFileRetrieval";
-
-    //RSOCK variables | (value: "rsock" or "tcp").
-    //when "tcp", file creation happens using tcp,
-    // instant topology discovery takes place to find candidate nodes
-    //who will take the file fragments, and all data packet is IP based.
-    //Using tcp, no file metadata is stored in EdgeKeeper.
-    //when "rsock", file creation happens using rsock,
-    //no topology discovery takes place, instead topology fetching
-    //takes place, and all data packet is GUID based.
-    //using rsock, file metadata is stored i EdgeKeeper.
-    //not a param to toggle between during runtime.
-    //NOTE: the tcp part has been stripped out.
-    public static final String file_creation_via_rsock_or_tcp = "rsock";
-
-    //RSOCK variables | (value: "rsock" or "tcp").
-    //when "tcp", file retrieval happens using tcp,
-    //instant topology discovery takes place to find the
-    //nodes who has what fragments, and all communication is IP
-    //based.
-    //using tcp, it doesnt fetch file metadata from EdgeKeeper.
-    //when "rsock", file retrieval happens using rsock,
-    //no topology discovery takes place, rather fragment holder
-    //information is fetched from EDGEKEEPER, and all communication
-    //is GUID based.
-    //using rsock, file metadata is first fetched from EdgeKeeper
-    //before fetching fragments.
-    //not a param to toggle between during runtime.
-    //NOTE: the tcp part has been stripped out.
-    public static final String file_retrieval_via_rsock_or_tcp = "rsock";
-
+    public static final String intrfc_deletion_appid = "mdfsFileDeletion";
+    public static final String deletion_tag = "_delete_";
 }

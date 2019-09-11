@@ -16,12 +16,49 @@ import java.io.StreamCorruptedException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class IOUtilities {
 	private static final String TAG = "IOUtilities";
+
+
+
+
+	//takes a fullpath of a file and returns the name.
+    //this function assumes that the last entry in the filePath is indeed fileName.
+    public static String getFileNameFromFullPath(String filePath){
+        //first tokenize the filePath
+        String[] tokens = filePath.split("/");
+
+        //delete empty strings
+        tokens = delEmptyStr(tokens);
+
+        //return the last element
+        return tokens[tokens.length-1];
+
+    }
+
+
+
+	//eliminates empty string tokens
+	public static String[] delEmptyStr(String[] tokens){
+		List<String> newTokens = new ArrayList<>();
+		for(String token: tokens){
+			if(!token.equals("")){
+				newTokens.add(token);
+			}
+		}
+
+		return newTokens.toArray(new String[0]);
+	}
+
 
 
 	/**
@@ -348,4 +385,24 @@ public final class IOUtilities {
 		final File renamedFile = new File(originalFile.getParent()+ File.separator + newName);
 		return originalFile.renameTo(renamedFile);
 	}
+
+	//utility function
+	//takes a hashmap and returns sorted map by value
+	//order = true, results in ascending order, false= descending order
+	public static Map<String, Double> sortByComparator(Map<String, Double> unsortMap, final boolean order) {
+		List<Map.Entry<String, Double>> list = new LinkedList<Map.Entry<String, Double>>(unsortMap.entrySet());
+		// Sorting the list based on values
+		Collections.sort(list, new Comparator<Map.Entry<String, Double>>() {
+			public int compare(Map.Entry<String, Double> o1, Map.Entry<String, Double> o2) {
+				if (order) { return o1.getValue().compareTo(o2.getValue()); }
+				else { return o2.getValue().compareTo(o1.getValue()); }
+			}
+		});
+
+		// Maintaining insertion order with the help of LinkedList
+		Map<String, Double> sortedMap = new LinkedHashMap<String, Double>();
+		for (Map.Entry<String, Double> entry : list) { sortedMap.put(entry.getKey(), entry.getValue()); }
+		return sortedMap;
+	}
+
 }
