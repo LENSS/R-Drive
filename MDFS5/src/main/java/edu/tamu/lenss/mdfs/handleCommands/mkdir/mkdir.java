@@ -28,7 +28,7 @@ public class mkdir {
                     return "-mkdir success!";
                 }else{
 
-                    return "-mkdir failed! " + repJSON.getString(RequestTranslator.errorMessage);
+                    return "-mkdir failed! " + repJSON.getString(RequestTranslator.messageField);
                 }
             } catch (JSONException e) {
                 return "Json exception.";

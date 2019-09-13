@@ -119,7 +119,7 @@ public class RsockReceiveForFileCreation implements Runnable{
 
             //add info of the fragment I received and
             //update to edgekeeper.
-            MDFSMetadata metadata = MDFSMetadata.createFileMetadata(uniquereqid, fileCreatedTime, filesize, fileCreatorGUID, EdgeKeeper.ownGUID, filePathMDFS, isGlobal);
+            MDFSMetadata metadata = MDFSMetadata.createFileMetadata(uniquereqid, fileCreatedTime, filesize, fileCreatorGUID, EdgeKeeper.ownGUID, filePathMDFS + "/" + fileName, isGlobal);
             metadata.setn2(n2);
             metadata.setk2(k2);
             metadata.addInfo(EdgeKeeper.ownGUID, (int)blockIdx, (int)fragmentIdx);

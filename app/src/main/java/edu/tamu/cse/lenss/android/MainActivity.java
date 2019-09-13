@@ -16,6 +16,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+//import edu.tamu.cse.lenss.utils
+
 
 //this is the main actiivty and where the execution of this app starts.
 public class MainActivity extends AppCompatActivity {
@@ -37,6 +39,9 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+
+
+
 
         checkPermissions();
     }

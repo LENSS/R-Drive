@@ -1,8 +1,12 @@
 package edu.tamu.lenss.mdfs.handler;
 
+import org.apache.log4j.Level;
+
+import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
+import edu.tamu.cse.lenss.edgeKeeper.utils.EKUtils;
 import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
 import edu.tamu.lenss.mdfs.MDFSDirectory;
 
@@ -18,6 +22,14 @@ public class ServiceHelper {
 		this.netObserver = new StartAll();
 		this.directory = MDFSDirectory.readDirectory();
 		this.directory.syncLocal();
+
+		//init logger for hell
+		try {
+			EKUtils.initLogger("/storage/emulated/0/log4MDFS/",Level.ALL);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 	
 	public static ServiceHelper getInstance() {

@@ -21,6 +21,7 @@ import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
 import edu.tamu.cse.lenss.edgeKeeper.server.RequestTranslator;
 import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
+import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeperConstants;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
@@ -32,6 +33,7 @@ import static java.lang.Thread.sleep;
 
 
 public class MDFSFileCreatorViaRsockNG{
+
 
     private File file;                      //the actual file
     private MDFSFileInfo fileInfo;          //file information
@@ -64,72 +66,78 @@ public class MDFSFileCreatorViaRsockNG{
         this.uniqueReqID = UUID.randomUUID().toString();
         this.encryptKey = key;
         this.chosenNodes = new ArrayList<>();
-        this.metadata = MDFSMetadata.createFileMetadata(uniqueReqID, fileInfo.getCreatedTime(), fileInfo.getFileSize(), EdgeKeeper.ownGUID, EdgeKeeper.ownGUID, filePathMDFS, Constants.isGlobal);
+        this.metadata = MDFSMetadata.createFileMetadata(uniqueReqID, fileInfo.getCreatedTime(), fileInfo.getFileSize(), EdgeKeeper.ownGUID, EdgeKeeper.ownGUID, filePathMDFS + "/" + fileInfo.getFileName(), Constants.isGlobal);
 
     }
 
 
     public String start(){
 
-        //first decide candidate nodes and choose N, K values
-        if(fetchTopologyAndChooseNodes().equals("SUCCESS") && chooseN2K2().equals("SUCCESS")){
+        //first decide candidate nodes
+        String fetchTop = fetchTopologyAndChooseNodes();
+        if(fetchTop.equals("SUCCESS")){
 
-            //check if its single block or multiple blocks
-            if(blockCount > 1){
-                System.out.println("blockcount: " + blockCount);
+            //then decide N, K values
+            String NKVal = chooseN2K2();
+            if(NKVal.equals("SUCCESS")) {
+                //check if its single block or multiple blocks
+                if (blockCount > 1) {
+                    System.out.println("blockcount: " + blockCount);
 
-                //partition the file
-                if(partition()){
+                    //partition the file
+                    if (partition()) {
 
-                    isPartComplete = true;
-                     String sendRet = sendBlocks();
+                        isPartComplete = true;
+                        String sendRet = sendBlocks();
 
-                     if(sendRet.equals("SUCCESS")){
+                        if (sendRet.equals("SUCCESS")) {
 
-                        //update own directory and edgekeeper\
-                         //returns SUCCESS or error message
-                         return updateDirectory();
+                            //update own directory and edgekeeper\
+                            //returns SUCCESS or error message
+                            return updateDirectory();
 
-                     }else{
-                         return sendRet;
-                     }
-                }else{
+                        } else {
+                            return sendRet;
+                        }
+                    } else {
 
-                    return "File to block partition failed.";
+                        return "File to block partition failed.";
+                    }
+                } else {
+                    System.out.println("blockcount: " + blockCount);
+
+                    // Single block so we create a new file and copy all the bytes from main file to new file in mdfs directory and operate on that
+                    ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg_0123__blk__0 (file)
+                    File fileBlock = IOUtilities.createNewFile(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + MDFSFileInfo.getFileDirPath(file.getName(), file.lastModified()) + File.separator + MDFSFileInfo.getBlockName(file.getName(), (byte) 0));  //Isagor0!
+                    try {
+                        Files.copy(file, fileBlock);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return "Copying block from local drive failed";
+                    }
+
+                    //no need for partition but make this variable true
+                    synchronized (fileInfo) {
+                        isPartComplete = true;
+                    }
+
+                    //sending single block
+                    String sendRet = sendBlocks();
+                    if (sendRet.equals("SUCCESS")) {
+
+                        //update own directory and edgekeeper
+                        return updateDirectory();
+                    } else {
+                        return sendRet;
+                    }
                 }
             }else{
-                System.out.println("blockcount: " + blockCount);
-
-                // Single block so we create a new file and copy all the bytes from main file to new file in mdfs directory and operate on that
-                ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg_0123__blk__0 (file)
-                File fileBlock = IOUtilities.createNewFile(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + MDFSFileInfo.getFileDirPath(file.getName(), file.lastModified()) + File.separator + MDFSFileInfo.getBlockName(file.getName(), (byte)0));  //Isagor0!
-                try {
-                    Files.copy(file, fileBlock);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return "Copying block from local drive failed";
-                }
-
-                //no need for partition but make this variable true
-                synchronized(fileInfo){
-                    isPartComplete = true;
-                }
-
-                //sending single block
-                String sendRet = sendBlocks();
-                if(sendRet.equals("SUCCESS")){
-
-                    //update own directory and edgekeeper
-                    return updateDirectory();
-                }else{
-                    return sendRet;
-                }
+                return NKVal;
             }
         }else{
             //dont do anything here, errors have been handled here
+            return fetchTop;
         }
-
-        return "File Creation Failed.";
     }
 
 
@@ -237,7 +245,7 @@ public class MDFSFileCreatorViaRsockNG{
     private String fetchTopologyAndChooseNodes(){
 
         //get peer guids who are running mdfs from GNS
-        List<String> peerGUIDsListfromGNS = EKClient.getPeerGUIDs("MDFS", "default");
+        List<String> peerGUIDsListfromGNS = EKClient.getPeerGUIDs(EdgeKeeperConstants.EdgeKeeper_s, EdgeKeeperConstants.EdgeKeeper_s1);
         if(peerGUIDsListfromGNS==null){ return "GNS Error! called getPeerGUIDs() and returned null.";}
         if(peerGUIDsListfromGNS.size()==0){ return "no other MDFS peer registered to GNS."; }
 
@@ -334,6 +342,8 @@ public class MDFSFileCreatorViaRsockNG{
             }
         }
 
+
+
         //send the metadata to the local edgeKeeper
         JSONObject repJSON = EKClient.putMetadata(metadata);
 
@@ -343,10 +353,10 @@ public class MDFSFileCreatorViaRsockNG{
                 if (repJSON.getString(RequestTranslator.resultField).equals(RequestTranslator.successMessage)) {
                     return "SUCCESS";
                 } else {
-                    return repJSON.getString(RequestTranslator.errorMessage);
+                    return repJSON.getString(RequestTranslator.messageField);
                 }
             } catch (JSONException e) {
-                return "Json exception.";
+                return "Json exception when sendign metadata to edgekeeper.";
             }
         }else{
             return "File has been created on mdfs but could not submit file metadata (could not connect to local EdgeKeeper).";

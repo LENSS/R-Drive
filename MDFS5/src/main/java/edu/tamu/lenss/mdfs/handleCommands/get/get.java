@@ -66,7 +66,7 @@ public class get {
                         return null;
                     }
                 } else {
-
+                    return null;
                 }
             } else {
                 return null;
@@ -75,7 +75,6 @@ public class get {
             return null;
         }
 
-        return null;
     }
 
     //rsock listener

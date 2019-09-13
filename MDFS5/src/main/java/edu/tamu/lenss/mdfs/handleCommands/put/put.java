@@ -17,12 +17,12 @@ public class put {
 
     public static String put(String filePathLocal, String filePathMDFS, String filename, String clientID) {
 
-        Pair pair =  loadFile(filePathLocal, filePathMDFS, filename, clientID);
+        Pair pair =  loadFile(filePathLocal, filename, clientID);
 
         //if file has been loaded, then send
         if(pair!=null) {
             if (pair.getString().equals("SUCCESS") && pair.getFile() != null) {
-                return sendFile(pair.getFile(), filePathMDFS);
+                return sendFile(filename, pair.getFile(), filePathMDFS);
             } else {
                 return pair.getString();
             }
@@ -32,7 +32,7 @@ public class put {
     }
 
 
-    private static Pair loadFile(String filePathLocal, String filePathMDFS, String filename, String clientID){
+    private static Pair loadFile(String filePathLocal,String filename, String clientID){
 
         //return pair
         Pair pair = new Pair();
@@ -76,7 +76,7 @@ public class put {
     }
 
     //takes a file, and a MDFS path and sends it
-    private static String sendFile(File file, String filePathMDFS){
+    private static String sendFile(String filename, File file, String filePathMDFS){
 
         ///check block count is not exceeded
         int maxBlockSize = Constants.MAX_BLOCK_SIZE;

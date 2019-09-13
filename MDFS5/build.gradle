@@ -60,7 +60,9 @@ dependencies {
     implementation files('libs/jackson-core-2.9.4.jar')
     implementation files('libs/jackson-databind-2.9.4.jar')
     //edgeKeeper
-    implementation files('libs/EdgeKeeper-client-api.jar')
+    implementation files('libs/EdgeKeeper-client.jar')
+    implementation files('libs/gson-2.8.5.jar')
+    implementation files('libs/json-20180813.jar')
 }
 
 

@@ -57,7 +57,7 @@ public class rm {
 
                     } else {
                         //return error message
-                        return "-rm failed! " + repJSON.getString(RequestTranslator.errorMessage);
+                        return "-rm failed! " + repJSON.getString(RequestTranslator.messageField);
                     }
                 } else {
                     //could not connect to edgekeeper
@@ -80,7 +80,7 @@ public class rm {
                     } else {
 
                         //return error message
-                        return "-rm failed! " + repJSON.getString(RequestTranslator.errorMessage);
+                        return "-rm failed! " + repJSON.getString(RequestTranslator.messageField);
                     }
                 } else {
 

@@ -20,7 +20,7 @@ public class ls {
                 if(repJSON.getString(RequestTranslator.resultField).equals(RequestTranslator.successMessage)){
                     return repJSON.getString(RequestTranslator.MDFSLsReply);
                 }else{
-                    return "-ls failed! " + repJSON.getString(RequestTranslator.errorMessage);
+                    return "-ls failed! " + repJSON.getString(RequestTranslator.messageField);
                 }
             } catch (JSONException e) {
                 return "Json exception.";
