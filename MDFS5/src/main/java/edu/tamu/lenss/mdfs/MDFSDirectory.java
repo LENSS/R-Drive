@@ -9,10 +9,12 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.io.StreamCorruptedException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -362,4 +364,25 @@ public class MDFSDirectory implements Serializable {
 		return new MDFSDirectory();
 	}
 
+	//get fragment index from name
+	public int getFragmentIndexFromName(String name) {
+		String[] tokens = name.split("__frag__");
+
+		tokens = delEmptyStr(tokens);
+
+		return Integer.parseInt(tokens[tokens.length-1]);
+	}
+
+
+	//eliminates empty string tokens
+	public static String[] delEmptyStr(String[] tokens){
+		List<String> newTokens = new ArrayList<>();
+		for(String token: tokens){
+			if(!token.equals("")){
+				newTokens.add(token);
+			}
+		}
+
+		return newTokens.toArray(new String[0]);
+	}
 }

@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
+import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
 import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
@@ -33,9 +34,10 @@ public class MDFSBlockCreatorViaRsockNG{
     private MDFSFileInfo fileInfo;
     String uniqueReqID;                     //unique req id fr file creation job
     String filePathMDFS;
+    MDFSMetadata metadata;
 
     //constructor
-    public MDFSBlockCreatorViaRsockNG(File file, String filePathMDFS, MDFSFileInfo info, byte blockIndex, String uniquereqid, List<String> chosenodes, byte[] key) {  //RSOCK
+    public MDFSBlockCreatorViaRsockNG(File file, String filePathMDFS, MDFSFileInfo info, byte blockIndex, String uniquereqid, List<String> chosenodes, byte[] key, MDFSMetadata metadata) {  //RSOCK
         this.blockIdx = blockIndex;
         this.blockFile = file;
         this.serviceHelper = ServiceHelper.getInstance();
@@ -46,6 +48,7 @@ public class MDFSBlockCreatorViaRsockNG{
         this.fileStorageGUIDs = chosenodes;
         this.filePathMDFS = filePathMDFS;
         this.encryptKey = key;
+        this.metadata = metadata;
     }
 
     //returns SUCCESS or Error message
@@ -89,13 +92,16 @@ public class MDFSBlockCreatorViaRsockNG{
         for (File oneFrag : allFrags) {
             if (oneFrag.getName().contains("__frag__")) {
 
-                // Find the fragment Number
+                //get the fragment number from name
+                int fragIndex = ServiceHelper.getInstance().getDirectory().getFragmentIndexFromName(oneFrag.getName());
+
+                // get the destination guid
                 if (nodesIter != null && nodesIter.hasNext()) {
                     String destNode = nodesIter.next();
 
                     //dont sent fragments to myself again
                     if (!destNode.equals(EdgeKeeper.ownGUID)){
-                        result = result && fragmentUploaderViaRsock(oneFrag, filePathMDFS, fileInfo.getCreatedTime(), destNode);
+                        result = result && fragmentUploaderViaRsock(oneFrag, filePathMDFS, fileInfo.getCreatedTime(), fragIndex,  destNode);
                     }
                 }
             }
@@ -106,7 +112,7 @@ public class MDFSBlockCreatorViaRsockNG{
     }
 
     //this function sends the fragments to each destinations
-    private boolean fragmentUploaderViaRsock(File fileFrag, String filePathMDFS, long fileCreationTime,  String destGUID){
+    private boolean fragmentUploaderViaRsock(File fileFrag, String filePathMDFS, long fileCreationTime, int fragIndex, String destGUID){
 
         //return variable
         boolean result = false;
@@ -145,6 +151,9 @@ public class MDFSBlockCreatorViaRsockNG{
             String uuid = UUID.randomUUID().toString().substring(0, 12);
             result = RSockConstants.intrfc_creation.send(uuid, data, data.length, "nothing", "nothing", destGUID, 0, "default", "default", "default");
             System.out.println("fragment has been pushed to the rsock daemon to : " + destGUID);
+
+            //add block and fragment info into metadata
+            metadata.addInfo(destGUID, blockIndex, fragIndex);
 
             return result;
         } catch (IOException e) {

@@ -10,6 +10,7 @@ import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
 import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
 import edu.tamu.cse.lenss.edgeKeeper.server.RequestTranslator;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
+import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
 
 public class rm {
@@ -38,6 +39,13 @@ public class rm {
 
                             //get file ID
                             long fileID = metadata.getCreatedTime();
+
+                            //delete the fragment from my disk
+                            try {
+                                ServiceHelper.getInstance().getDirectory().deleteFile(fileID, fileName);
+                            }catch(Exception e){
+                                e.printStackTrace();
+                            }
 
                             //get all unique fragmentHoldersGUIDs
                             List<String> uniqueFragHoldersGUIDs = metadata.getAllUniqueFragmentHolders();

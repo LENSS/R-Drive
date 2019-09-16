@@ -41,6 +41,7 @@ public class RsockReceiveForFileDeletion implements Runnable{
             }
 
             if(rcvdfile!=null) {
+                System.out.println("new incoming rsock for file deletion");
 
                 //get file information and parse
                 fileInformation = new String(rcvdfile.getFileArray());

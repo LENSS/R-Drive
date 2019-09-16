@@ -105,7 +105,7 @@ public class MDFSFileRetrieverViaRsock {
                 private long sleepPeriod = Constants.IDLE_BTW_FAILURE;
                 @Override
                 public void onError(String error, MDFSFileInfo fInfo) {
-                    fileListener.onError("Retrieve block unsuccessful. Retrying...  " + error, fInfo);
+                    fileListener.onError("Retrieve block unsuccessful.  " + error, fInfo);
                     try {
                         Thread.sleep(sleepPeriod);
                     } catch (InterruptedException e) {

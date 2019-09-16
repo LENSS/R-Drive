@@ -217,7 +217,7 @@ public class MDFSFileCreatorViaRsockNG{
             fName = blockF.getName();
             System.out.println("block idx: " + fName.substring((fName.lastIndexOf("_")+1)));
             byte idx = Byte.parseByte(fName.substring((fName.lastIndexOf("_")+1)));   //idx = block number
-            uploadQ.add(new MDFSBlockCreatorViaRsockNG(blockF, filePathMDFS, fileInfo, idx, uniqueReqID, chosenNodes, encryptKey));
+            uploadQ.add(new MDFSBlockCreatorViaRsockNG(blockF, filePathMDFS, fileInfo, idx, uniqueReqID, chosenNodes, encryptKey, metadata));
         }
 
         //create a result list
@@ -250,8 +250,13 @@ public class MDFSFileCreatorViaRsockNG{
         if(peerGUIDsListfromGNS.size()==0){ return "no other MDFS peer registered to GNS."; }
 
         //get all nearby vertices from Topology.java from rsockJavaAPI(OLSR) and put it in a list
-        Set<String> peerGUIDsSetfromOLSR = Topology.getInstance(RSockConstants.intrfc_creation_appid).getVertices();
-        if(peerGUIDsSetfromOLSR==null){return "Topology fetch from OLSR Error! called getNeighbors() and returned null.";}
+        Set<String> peerGUIDsSetfromOLSR = null;
+        try {
+            peerGUIDsSetfromOLSR = Topology.getInstance(RSockConstants.intrfc_creation_appid).getVertices();
+        }catch(Exception e ){
+
+        }
+        if(peerGUIDsSetfromOLSR==null){return "No neighbors found from OLSR.";}  //Topology fetch from OLSR Error! called getNeighbors() and returned null.
         if(peerGUIDsSetfromOLSR.size()==0){return "No neighbors found from OLSR.";}
         List<String> peerGUIDsListfromOLSR = new ArrayList<String>(peerGUIDsSetfromOLSR);
 

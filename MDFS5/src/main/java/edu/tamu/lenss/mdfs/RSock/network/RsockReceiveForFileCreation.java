@@ -98,7 +98,7 @@ public class RsockReceiveForFileCreation implements Runnable{
     private void saveTheFileFragAndUpdateMetadataToEdgeKeeper(String fileName, String filePathMDFS, byte[] byteArray, long fileCreatedTime, long filesize, byte n2, byte k2, byte blockIdx, byte fragmentIdx, String fileCreatorGUID, String uniquereqid, boolean isGlobal) {
         //create file
         File tmp0 = null;
-        try{
+
             tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileName, fileCreatedTime, blockIdx));
 
             if(!tmp0.exists()){
@@ -108,28 +108,29 @@ public class RsockReceiveForFileCreation implements Runnable{
             }
 
             //write on file
-            tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(fileName, fileCreatedTime, blockIdx, fragmentIdx));
-            FileOutputStream outputStream = new FileOutputStream(tmp0);
-            outputStream.write(byteArray);
-            outputStream.flush();
-            outputStream.close();
+             try {
+                 tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(fileName, fileCreatedTime, blockIdx, fragmentIdx));
+                 FileOutputStream outputStream = new FileOutputStream(tmp0);
+                 outputStream.write(byteArray);
+                 outputStream.flush();
+                 outputStream.close();
+             }catch(IOException e){
+                 System.out.println("Could not convert fragment bytes into fragment file.");
+             }
 
             //update own local directory data
             ServiceHelper.getInstance().getDirectory().addBlockFragment(fileCreatedTime, blockIdx, fragmentIdx);
 
-            //add info of the fragment I received and
-            //update to edgekeeper.
+            //add info of the fragment I received and update to edgekeeper.
             MDFSMetadata metadata = MDFSMetadata.createFileMetadata(uniquereqid, fileCreatedTime, filesize, fileCreatorGUID, EdgeKeeper.ownGUID, filePathMDFS + "/" + fileName, isGlobal);
             metadata.setn2(n2);
             metadata.setk2(k2);
             metadata.addInfo(EdgeKeeper.ownGUID, (int)blockIdx, (int)fragmentIdx);
 
             //send metadata to local edgeKeeper
-            JSONObject repJSON = EKClient.putMetadata(metadata);
+            // JSONObject repJSON = EKClient.putMetadata(metadata);
 
-        }catch(Exception e){
-            e.printStackTrace();
-        }
+
     }
 
     public static void stop(){
