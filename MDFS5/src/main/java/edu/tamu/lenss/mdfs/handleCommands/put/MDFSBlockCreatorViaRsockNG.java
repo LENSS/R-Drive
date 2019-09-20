@@ -1,5 +1,7 @@
 package edu.tamu.lenss.mdfs.handleCommands.put;
 
+import org.apache.log4j.Level;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,6 +38,9 @@ public class MDFSBlockCreatorViaRsockNG{
     String filePathMDFS;
     MDFSMetadata metadata;
 
+    //private default constructor
+    private MDFSBlockCreatorViaRsockNG(){}
+
     //constructor
     public MDFSBlockCreatorViaRsockNG(File file, String filePathMDFS, MDFSFileInfo info, byte blockIndex, String uniquereqid, List<String> chosenodes, byte[] key, MDFSMetadata metadata) {  //RSOCK
         this.blockIdx = blockIndex;
@@ -53,10 +58,17 @@ public class MDFSBlockCreatorViaRsockNG{
 
     //returns SUCCESS or Error message
     public String start() {
+
+        //log
+        MDFSFileCreatorViaRsockNG.logger.log(Level.ALL, "Starting to handle one block, block# " + blockIdx);
+
         if(encryptFile()){
 
             //check if the only mdfs node is me or there are other nodes
             if(fileStorageGUIDs.size()==1 && fileStorageGUIDs.get(0).equals(EdgeKeeper.ownGUID)){
+
+                //log
+                MDFSFileCreatorViaRsockNG.logger.log(Level.ALL, "Block creation success.");
 
                 //there is no other nodes to send the fragments to so return.
                 return "SUCCESS";
@@ -69,6 +81,9 @@ public class MDFSBlockCreatorViaRsockNG{
 
             }
         }else{
+
+            //log
+            MDFSFileCreatorViaRsockNG.logger.log(Level.DEBUG, "Block# " + blockIdx +" encryption Failed");
             return "Block encryption Failed.";
 
         }
@@ -77,6 +92,8 @@ public class MDFSBlockCreatorViaRsockNG{
     //this method is only called when needs to distribute fragments among other nodes.
     //returns SUCCESS if all succeeds, Error message if not.
     private String distributeFragments() {
+
+        MDFSFileCreatorViaRsockNG.logger.log(Level.ALL, "Starting to send block fragments of block# " + blockIdx);
 
         //result to return
         boolean result = true;
@@ -107,8 +124,19 @@ public class MDFSBlockCreatorViaRsockNG{
             }
         }
 
-        if(result){return "SUCCESS";}
-        else{return "Failed to push one or more fragments to the rsock daemon.";}
+        if(result){
+
+            //log
+            MDFSFileCreatorViaRsockNG.logger.log(Level.ALL, "Successfully pushed block# " + blockIdx + " to rsock");
+
+            //return
+            return "SUCCESS";
+        }
+        else{
+
+            //log
+            MDFSFileCreatorViaRsockNG.logger.log(Level.DEBUG, "Failed to push one or more fragments of block# " + blockIdx + " to rsock daemon. <check rsock client library>");
+            return "Failed to push one or more fragments to the rsock daemon.";}
     }
 
     //this function sends the fragments to each destinations
@@ -150,7 +178,9 @@ public class MDFSBlockCreatorViaRsockNG{
             //send the object over rsock and dont expect reply
             String uuid = UUID.randomUUID().toString().substring(0, 12);
             result = RSockConstants.intrfc_creation.send(uuid, data, data.length, "nothing", "nothing", destGUID, 0, "default", "default", "default");
-            System.out.println("fragment has been pushed to the rsock daemon to : " + destGUID);
+
+            //log
+            MDFSFileCreatorViaRsockNG.logger.log(Level.ALL, "fragment# " + fragIndex +  " of block# " + blockIndex +" has been pushed to rsock daemon to guid: " + destGUID + "with uuid: " + uuid);
 
             //add block and fragment info into metadata
             metadata.addInfo(destGUID, blockIndex, fragIndex);
@@ -159,6 +189,9 @@ public class MDFSBlockCreatorViaRsockNG{
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        //log
+        MDFSFileCreatorViaRsockNG.logger.log(Level.ALL, "Failed to push fragment# " + fragIndex +" to rsock daemon to guid: " + destGUID);
 
         return false;
     }
@@ -170,7 +203,14 @@ public class MDFSBlockCreatorViaRsockNG{
     private boolean encryptFile(){
 
         //check if the blockfile exists and not null
-        if(blockFile == null || !blockFile.exists()){return false;}
+        if(blockFile == null || !blockFile.exists()){
+
+            //log
+            MDFSFileCreatorViaRsockNG.logger.log(Level.DEBUG, "Failed to encrypt block# " + blockIdx);
+
+            //return
+            return false;
+        }
 
         //encode
         EnCoDer encoder = new EnCoDer(encryptKey, n2, k2, blockFile);
@@ -194,6 +234,9 @@ public class MDFSBlockCreatorViaRsockNG{
         //add fragments information in my local directory
         serviceHelper.getDirectory().addBlockFragments(fileInfo.getCreatedTime(), blockIdx, frags);
 
+        //log
+        MDFSFileCreatorViaRsockNG.logger.log(Level.ALL, "block# " + blockIdx + " has been successfully encrypted and partitioned into fragments.");
+
         return true;
     }
 
@@ -208,6 +251,10 @@ public class MDFSBlockCreatorViaRsockNG{
     }
     private byte parseFragNum(String fName) {
         return Byte.parseByte(fName.substring(fName.lastIndexOf("_") + 1).trim());
+    }
+
+    public byte getBlockIdx(){
+        return blockIdx;
     }
 
 }

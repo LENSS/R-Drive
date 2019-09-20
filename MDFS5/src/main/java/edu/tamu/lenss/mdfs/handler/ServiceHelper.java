@@ -1,34 +1,38 @@
 package edu.tamu.lenss.mdfs.handler;
 
 import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import edu.tamu.cse.lenss.edgeKeeper.utils.EKUtils;
-import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
 import edu.tamu.lenss.mdfs.MDFSDirectory;
 
 public class ServiceHelper {
+	static Logger logger = Logger.getLogger(ServiceHelper.class);
 	
-	/* Global Shared Instances */
+	//Global Shared Instances
 	private static ServiceHelper instance = null;
-	private static StartAll netObserver;
+	private static StartAll startAll;
 	private static MDFSDirectory directory;
 	private byte[] encryptKey = new byte[32];
 	
 	private ServiceHelper() {
-		this.netObserver = new StartAll();
+
+		//init log
+		try {
+			EKUtils.initLogger("/storage/emulated/0/MDFS/mdfs_log.log", Level.ALL);
+		} catch (IOException e) {
+			System.out.println("Could not init log ");
+		}
+
+		//start all
+		this.startAll = new StartAll();
 		this.directory = MDFSDirectory.readDirectory();
 		this.directory.syncLocal();
 
-		//init logger for hell
-		try {
-			EKUtils.initLogger("/storage/emulated/0/log4MDFS/",Level.ALL);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 
 	}
 	
@@ -51,7 +55,7 @@ public class ServiceHelper {
 	public static void releaseService(){
 
 		//close netobserver
-		netObserver.shutdown();
+		startAll.shutdown();
 
 		//save directory and null servicehelper instance
 		if(instance != null ){
@@ -70,12 +74,12 @@ public class ServiceHelper {
 
 	//submit a task to executorService
 	public void executeRunnableTask(Runnable task){
-		netObserver.executeRunnableTask(task);
+		startAll.executeRunnableTask(task);
 	}
 	
 	//submit a callable task to ExecutorService
 	public Future<?> submitCallableTask(Callable<?> task){
-		return netObserver.submitCallableTask(task);
+		return startAll.submitCallableTask(task);
 	}
 
 }

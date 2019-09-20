@@ -43,7 +43,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
             ObjectInputStream ois;
             while (isRunning) {
 
-                //blocking receive
+                //blocking on receiving through rsock at a particular endpoint
                 try { receivedFile = RSockConstants.intrfc_retrieval.receive(100,"hdrRecv");} catch (InterruptedException e) {e.printStackTrace(); }
 
                 //if unblocked, check if received something
@@ -109,7 +109,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
 
                             //send the object over rsock and expect no reply
                             String uuid = UUID.randomUUID().toString().substring(0,12);
-                            RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing","nothing", srcGUID, 0, "hdrRecv", receivedFile.getReplyEndpoint(), "noReply");
+                            RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing","nothing", srcGUID, 100, "hdrRecv", receivedFile.getReplyEndpoint(), "noReply");
                             System.out.println("fragment has been pushed to the rsock daemon (success)");
 
                         } catch (IOException e) {

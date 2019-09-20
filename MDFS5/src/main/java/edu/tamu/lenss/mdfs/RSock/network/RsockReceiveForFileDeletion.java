@@ -16,24 +16,27 @@ public class RsockReceiveForFileDeletion implements Runnable{
     private static boolean isTerminated = false;
 
     //constructor
-    public RsockReceiveForFileDeletion(){
-
-    }
+    public RsockReceiveForFileDeletion(){}
 
     @Override
     public void run() {
+
+        //if rsock client library object is null, init it once.
         if(RSockConstants.intrfc_deletion==null) {
             RSockConstants.intrfc_deletion = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_deletion_appid, 999);
         }
 
+        //variables
         ReceivedFile rcvdfile = null;
         String[] tokens = null;
         String fileInformation;
         String fileName;
         long fileID;
+
+        //while loop
         while(!isTerminated){
 
-            //blocking on receiving through rsock
+            //blocking on receiving through rsock at a particular endpoint
             try {
                 rcvdfile = RSockConstants.intrfc_deletion.receive(100, "default"); }
             catch (InterruptedException e) {
@@ -50,7 +53,7 @@ public class RsockReceiveForFileDeletion implements Runnable{
                 fileName = tokens[0];
                 fileID = Long.parseLong(tokens[1]);
 
-                //trigger delete
+                //trigger delete on this device
                 try {
                     ServiceHelper.getInstance().getDirectory().deleteFile(fileID, fileName);
                 }catch(Exception e){

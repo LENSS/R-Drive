@@ -1,5 +1,7 @@
 package edu.tamu.lenss.mdfs.EDGEKEEPER;
 
+import android.widget.Toast;
+
 import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
 
 public class EdgeKeeper {
@@ -18,6 +20,7 @@ public class EdgeKeeper {
         if(ownGUID==null){
             System.out.println("EdgeKeeper Error! could not init EdgeKeeper");
             throw new NullPointerException("EdgeKeeper initialization error...Maybe local EdgeKeeper server is not running or not connected.");
+
         }else{
             System.out.println("own GUID: " + ownGUID);
         }

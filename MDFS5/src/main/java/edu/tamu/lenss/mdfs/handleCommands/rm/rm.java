@@ -84,7 +84,8 @@ public class rm {
                     if (repJSON.getString(RequestTranslator.resultField).equals(RequestTranslator.successMessage)) {
 
                         //return success message
-                        return "Directory deletion success!";
+                        return "Directory deletion success!";  //todo: delete all the file list it returns
+
                     } else {
 
                         //return error message

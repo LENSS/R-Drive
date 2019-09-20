@@ -2,6 +2,8 @@ package edu.tamu.lenss.mdfs.handleCommands.put;
 import android.os.Environment;
 import com.google.common.io.Files;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -34,7 +36,10 @@ import static java.lang.Thread.sleep;
 
 public class MDFSFileCreatorViaRsockNG{
 
+    //log
+    static Logger logger = Logger.getLogger(MDFSFileCreatorViaRsockNG.class);
 
+    //variables
     private File file;                      //the actual file
     private MDFSFileInfo fileInfo;          //file information
     private byte[] encryptKey;              //encryption key
@@ -49,6 +54,11 @@ public class MDFSFileCreatorViaRsockNG{
     String filePathMDFS;                    //virtual directory path in MDFS in which the file will be saved. if dir doesnt exist, it willbe created first
     String uniqueReqID;                     //unique id
 
+
+    //private default constructor
+    private MDFSFileCreatorViaRsockNG(){}
+
+    //public constructor
     public MDFSFileCreatorViaRsockNG(
                 File f,
                 String filePathMDFS,
@@ -67,11 +77,15 @@ public class MDFSFileCreatorViaRsockNG{
         this.encryptKey = key;
         this.chosenNodes = new ArrayList<>();
         this.metadata = MDFSMetadata.createFileMetadata(uniqueReqID, fileInfo.getCreatedTime(), fileInfo.getFileSize(), EdgeKeeper.ownGUID, EdgeKeeper.ownGUID, filePathMDFS + "/" + fileInfo.getFileName(), Constants.isGlobal);
-
     }
 
 
+
+    //start function to call after calling constructor
     public String start(){
+
+        //log
+        logger.log(Level.ALL, "Start file creation in MDFS for filename: " + fileInfo.getFileName());
 
         //first decide candidate nodes
         String fetchTop = fetchTopologyAndChooseNodes();
@@ -79,10 +93,14 @@ public class MDFSFileCreatorViaRsockNG{
 
             //then decide N, K values
             String NKVal = chooseN2K2();
+
             if(NKVal.equals("SUCCESS")) {
+
+                //log
+                logger.log(Level.ALL, "Number of blocks: " + blockCount);
+
                 //check if its single block or multiple blocks
                 if (blockCount > 1) {
-                    System.out.println("blockcount: " + blockCount);
 
                     //partition the file
                     if (partition()) {
@@ -97,14 +115,19 @@ public class MDFSFileCreatorViaRsockNG{
                             return updateDirectory();
 
                         } else {
+
+                            //log
+                            logger.log(Level.DEBUG, "Failed to push all file data in rsock...reason: " + sendRet);
+
                             return sendRet;
                         }
                     } else {
+                        logger.log(Level.DEBUG, "Failed to push all file data in rsock...reason: " + "File to block partition failed.");
+                        MDFSFileCreatorViaRsockNG.logger.log(Level.ALL, "\n");
 
                         return "File to block partition failed.";
                     }
                 } else {
-                    System.out.println("blockcount: " + blockCount);
 
                     // Single block so we create a new file and copy all the bytes from main file to new file in mdfs directory and operate on that
                     ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg_0123__blk__0 (file)
@@ -125,17 +148,32 @@ public class MDFSFileCreatorViaRsockNG{
                     String sendRet = sendBlocks();
                     if (sendRet.equals("SUCCESS")) {
 
+                        //log
+                        logger.log(Level.ALL, "File data has been pushed to the rsock.");
+                        MDFSFileCreatorViaRsockNG.logger.log(Level.ALL, "\n");
+
+
                         //update own directory and edgekeeper
                         return updateDirectory();
                     } else {
+
+                        logger.log(Level.ALL, "Failed to push all file data in rsock...reason: " + sendRet);
+
                         return sendRet;
                     }
                 }
             }else{
+
+                //log
+                logger.log(Level.DEBUG, "Failed to push all file data in rsock...reason: " + NKVal);
+
                 return NKVal;
             }
         }else{
-            //dont do anything here, errors have been handled here
+
+            //log
+            logger.log(Level.DEBUG, "Failed to push all file data in rsock...reason: " + fetchTop);
+
             return fetchTop;
         }
     }
@@ -177,6 +215,9 @@ public class MDFSFileCreatorViaRsockNG{
             File blockFile = IOUtilities.byteToFile(blockBytes[i], AndroidIOUtils.getExternalFile(outputDirPath), (file.getName() + "__blk__" + i));
         }
 
+        //log
+        logger.log(Level.ALL, "Successfully partitioned file into blocks.");
+
         result = true;
         return result;
     }
@@ -187,7 +228,7 @@ public class MDFSFileCreatorViaRsockNG{
         //check before proceeding
         synchronized(fileInfo){
             if(!isN2K2Chosen || !isPartComplete || isSending){
-                return "Failed to send all fragments of a block.";
+                return "Failed to send block.";
             }
         }
 
@@ -215,19 +256,25 @@ public class MDFSFileCreatorViaRsockNG{
         String fName;
         for(File blockF : blocks){
             fName = blockF.getName();
-            System.out.println("block idx: " + fName.substring((fName.lastIndexOf("_")+1)));
             byte idx = Byte.parseByte(fName.substring((fName.lastIndexOf("_")+1)));   //idx = block number
+
+            //log
+            logger.log(Level.ALL, "Starting to send block# " + idx);
             uploadQ.add(new MDFSBlockCreatorViaRsockNG(blockF, filePathMDFS, fileInfo, idx, uniqueReqID, chosenNodes, encryptKey, metadata));
         }
 
         //create a result list
         boolean result = false;
         String blockResult = "";
-        MDFSBlockCreatorViaRsockNG curBlock;
+        MDFSBlockCreatorViaRsockNG curBlock = null;
         for(int i=0; i< uploadQ.size(); i++){
             curBlock = uploadQ.get(i);
             blockResult = curBlock.start();
             if(blockResult.equals("SUCCESS")){
+
+                //log
+                logger.log(Level.ALL, "Block# " + curBlock.getBlockIdx() + " has been pushed to Rsock.");
+
                 result = true;
                 curBlock.deleteBlockFile();
             }else{
@@ -238,55 +285,81 @@ public class MDFSFileCreatorViaRsockNG{
         }
 
         if(result){return "SUCCESS";}
-        else{return blockResult;}
+        else{
+            logger.log(Level.DEBUG, "Failed to push block# " + curBlock.getBlockIdx() + " to rsock...reason: " + blockResult);
+            return blockResult;
+        }
     }
 
     // this function basically populates chosenNodes list with GUIDs.
+    //chosenNodes list is used later for choosing n2 and k2 values.
     private String fetchTopologyAndChooseNodes(){
 
-        //get peer guids who are running mdfs from GNS
-        List<String> peerGUIDsListfromGNS = EKClient.getPeerGUIDs(EdgeKeeperConstants.EdgeKeeper_s, EdgeKeeperConstants.EdgeKeeper_s1);
-        if(peerGUIDsListfromGNS==null){ return "GNS Error! called getPeerGUIDs() and returned null.";}
-        if(peerGUIDsListfromGNS.size()==0){ return "no other MDFS peer registered to GNS."; }
-
-        //get all nearby vertices from Topology.java from rsockJavaAPI(OLSR) and put it in a list
+        //lists and sets
+        List<String> peerGUIDsListfromGNS = null;
         Set<String> peerGUIDsSetfromOLSR = null;
+        List<String> peerGUIDsListfromOLSR = null;
+
+        //get peer guids who are running mdfs from GNS
+        try{
+            peerGUIDsListfromGNS = EKClient.getPeerGUIDs(EdgeKeeperConstants.EdgeKeeper_s, EdgeKeeperConstants.EdgeKeeper_s1);
+            //if(peerGUIDsListfromGNS==null){ return "GNS Error! called getPeerGUIDs() and returned null.";}
+            //if(peerGUIDsListfromGNS.size()==0){ return "no other MDFS peer registered to GNS."; }
+        }catch(Exception e ){
+            //dont need to handle this error
+        }
+
+        //get all nearby vertices from Topology.java from OLSR(rsockJavaAPI) and put it in a list
         try {
             peerGUIDsSetfromOLSR = Topology.getInstance(RSockConstants.intrfc_creation_appid).getVertices();
+            //if(peerGUIDsSetfromOLSR==null){return "No neighbors found from OLSR.";}
+            //if(peerGUIDsSetfromOLSR.size()==0){return "No neighbors found from OLSR.";}
+            peerGUIDsListfromOLSR = new ArrayList<String>(peerGUIDsSetfromOLSR);
         }catch(Exception e ){
-
+            //dont need to handle this error
         }
-        if(peerGUIDsSetfromOLSR==null){return "No neighbors found from OLSR.";}  //Topology fetch from OLSR Error! called getNeighbors() and returned null.
-        if(peerGUIDsSetfromOLSR.size()==0){return "No neighbors found from OLSR.";}
-        List<String> peerGUIDsListfromOLSR = new ArrayList<String>(peerGUIDsSetfromOLSR);
 
-        //cross the peerGUIDsListfromGNS and peerGUIDsListfromOLSR and get the common ones
-        List<String> commonPeerGUIDs = new ArrayList<>();
-        for(int i = 0; i < peerGUIDsListfromOLSR.size(); i++){
-            if(peerGUIDsListfromGNS.contains(peerGUIDsListfromOLSR.get(i))){
-                commonPeerGUIDs.add(peerGUIDsListfromOLSR.get(i));
+        //only cross them if both type of list are not null and size 0
+        if(peerGUIDsListfromGNS!=null && peerGUIDsListfromOLSR!=null && peerGUIDsListfromGNS.size()!=0 && peerGUIDsListfromOLSR.size()!=0) {
+
+            try {
+                //cross the peerGUIDsListfromGNS and peerGUIDsListfromOLSR and get the common ones
+                List<String> commonPeerGUIDs = new ArrayList<>();
+                for (int i = 0; i < peerGUIDsListfromOLSR.size(); i++) {
+                    if (peerGUIDsListfromGNS.contains(peerGUIDsListfromOLSR.get(i))) {
+                        commonPeerGUIDs.add(peerGUIDsListfromOLSR.get(i));
+                    }
+                }
+
+                //make a map<guid, pathWeight> for all nodes from ownGUID to each commonPeerGUIDs
+                HashMap<String, Double> peerGUIDsWithWeights = new HashMap<>();
+
+                //call Dijkstra from ownGUID to each of the commonPeerGUIDs and populate peerGUIDsWithWeights map
+                for (int i = 0; i < commonPeerGUIDs.size(); i++) {
+                    double pathWeight = Topology.getInstance(RSockConstants.intrfc_creation_appid).getShortestPathWeight(EdgeKeeper.ownGUID, commonPeerGUIDs.get(i));
+                    peerGUIDsWithWeights.put(commonPeerGUIDs.get(i), pathWeight);
+                }
+
+                //sort the map by ascending order(less weight to more weight)
+                Map<String, Double> peerGUIDsWithWeightsSorted = IOUtilities.sortByComparator(peerGUIDsWithWeights, true);
+
+                //get first MAX_N_VAL(or less) number of nodes in a list(ones with less weight)
+                int count = 0;
+                for (Map.Entry<String, Double> pair : peerGUIDsWithWeightsSorted.entrySet()) {
+                    this.chosenNodes.add(pair.getKey());
+                    count++;
+                    if (count >= Constants.MAX_N_VAL) {
+                        break;
+                    }
+                }
+            }catch(Exception e ){
+                //dont need to handle this error
             }
         }
 
-        //make a map<guid, pathWeight> for all nodes from ownGUID to each commonPeerGUIDs
-        HashMap<String, Double> peerGUIDsWithWeights = new HashMap<>();
 
-        //call Dijkstra from ownGUID to each of the commonPeerGUIDs and populate peerGUIDsWithWeights map
-        for(int i=0; i< commonPeerGUIDs.size(); i++){
-            double pathWeight = Topology.getInstance(RSockConstants.intrfc_creation_appid).getShortestPathWeight(EdgeKeeper.ownGUID, commonPeerGUIDs.get(i));
-            peerGUIDsWithWeights.put(commonPeerGUIDs.get(i), pathWeight);
-        }
-
-        //sort the map by ascending order(less weight to more weight)
-        Map<String, Double> peerGUIDsWithWeightsSorted = IOUtilities.sortByComparator(peerGUIDsWithWeights,true );
-
-        //get first MAX_N_VAL(or less) number of nodes in a list(ones with less weight)
-        int count = 0;
-        for (Map.Entry<String, Double> pair: peerGUIDsWithWeightsSorted.entrySet()) {
-            this.chosenNodes.add(pair.getKey());
-            count++;
-            if(count>= Constants.MAX_N_VAL){break;}
-        }
+        //log
+        logger.log(Level.ALL, "Successfully fetched neighbor nodes from olsr and MDFS nodesfrom EdgeKeeper");
 
         //add myself if it is not already in it
         if(!chosenNodes.contains(EdgeKeeper.ownGUID)){chosenNodes.add(EdgeKeeper.ownGUID);}
@@ -294,29 +367,50 @@ public class MDFSFileCreatorViaRsockNG{
         return "SUCCESS";
     }
 
+    private String fetchTopDummy(){
 
-    //this function selects n2, k2 values
+        chosenNodes.add("1BC657F8971A53E9BD90C285EB17C9080EC3EB8E");
+        chosenNodes.add("8877417A2CBA0D19636B44702E7DB497B5834559");
+        chosenNodes.add("05EE5FDB77AC19C7FBE5F92DD493B039BB4CD869");
+
+        //log
+        logger.log(Level.ALL, "Successfully fetched neighbor nodes from olsr and MDFS nodesfrom EdgeKeeper");
+
+        return "SUCCESS";
+    }
+
+
+    //this function selects n2, k2 values,
+    //based on the size of the chosenNodes list.
+    //n2 will be chosen equal to number of nodes in the list.
+    //k2 will be chosen by the below equation.
     private String chooseN2K2(){
 
         //print
         System.out.print("debuggg chosen nodes: " );
         for(String node: chosenNodes){System.out.print(node + " , ");}
-        System.out.println();
 
         //set n2 , k2
         byte n2; if(chosenNodes.size() >= Constants.MAX_N_VAL){ n2 = (byte)Constants.MAX_N_VAL;} else{ n2 = (byte)chosenNodes.size();}
         byte k2 = (byte) Math.round(n2 * encodingRatio);
         fileInfo.setFragmentsParms(n2, k2);
-        System.out.println("n2: " + n2 + "   k2: " + k2);
         this.metadata.setn2((int)n2);
         this.metadata.setk2((int)k2);
         if(n2 < 1 || k2 < 1){
-            return "Decided N or K value is invalid.";
+
+            //log
+            logger.log(Level.DEBUG, "Decided N or K value is invalid, " + "N: " + n2  + " K: " + k2 + ".");
+
+            return "Decided N or K value is invalid, " + "N: " + n2  + " K: " + k2 + ".";
         }
 
         synchronized(fileInfo){
             isN2K2Chosen = true;
         }
+
+        //log
+        logger.log(Level.ALL, "Successfully choose N, K values : " + " N: ");
+
         return "SUCCESS";
     }
 
@@ -361,9 +455,14 @@ public class MDFSFileCreatorViaRsockNG{
                     return repJSON.getString(RequestTranslator.messageField);
                 }
             } catch (JSONException e) {
-                return "Json exception when sendign metadata to edgekeeper.";
+                return "Json exception when sending metadata to edgekeeper.";
             }
         }else{
+            //log
+            logger.log(Level.ALL, "File has been created on mdfs but could not submit file metadata (could not connect to local EdgeKeeper).");
+            MDFSFileCreatorViaRsockNG.logger.log(Level.DEBUG, "\n\n\n");
+
+            //return
             return "File has been created on mdfs but could not submit file metadata (could not connect to local EdgeKeeper).";
         }
 

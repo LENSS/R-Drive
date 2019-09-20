@@ -1,5 +1,7 @@
 package edu.tamu.lenss.mdfs.handleCommands.get;
 
+import org.apache.log4j.Level;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -25,13 +27,12 @@ import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.cipher.FragmentInfo;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
-import edu.tamu.lenss.mdfs.models.BlOcKrEpLy;
+import edu.tamu.lenss.mdfs.models.BlockInfo;
 import edu.tamu.lenss.mdfs.models.FragmentTransferInfo;
 import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.ReedSolomon.DeCoDeR;
 import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
 import edu.tamu.lenss.mdfs.utils.IOUtilities;
-import edu.tamu.lenss.mdfs.utils.Logger;
 import edu.tamu.lenss.mdfs.utils.MyPair;
 import example.*;
 import edu.tamu.lenss.mdfs.models.MDFSRsockBlockForFileRetrieve;
@@ -84,20 +85,24 @@ public class MDFSBlockRetrieverViaRsock {
 
     public void start(){
 
+        //log
+        MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Starting to handle one block# " + blockIdx);
+
         // Check if a decrypted file or encrypted file already exists on my device
         // If it is, returns it immediately.
-        final List<FragmentInfo> localFrags = getStoredFrags();
-
-        if(localFrags != null && (byte)localFrags.size() >= fileInfo.getK2()){
+        List<FragmentInfo> localFrags = getStoredFrags();
+        if(localFrags.size()!=0 && (byte)localFrags.size() >= fileInfo.getK2()){
             serviceHelper.executeRunnableTask(new Runnable(){
                 @Override
                 public void run() {
+
+                    //
                     decodeBlockFile(localFrags);
                 }
             });
         }
         else{
-            doTheThing();
+            selectBestNodesToAskForFRagments();
         }
     }
 
@@ -106,11 +111,11 @@ public class MDFSBlockRetrieverViaRsock {
     // so we need to fetch fragments from other nodes.
     // this function pulls out all the GUIDs of fragment holders of a file and
     //selects the best nodes among them, and then passes them to the
-    //doAnotherThing() function.
-    private void doTheThing() {
+    //requestFragments() function.
+    private void selectBestNodesToAskForFRagments() {
 
         List<String> nodes = metadata.getAllUniqueFragmentHolders();
-        Set<BlOcKrEpLy> blockreplySet = new HashSet<>();
+        Set<BlockInfo> blockInfoSet = new HashSet<>();
 
         for(int i=0; i< nodes.size(); i++){
             List<String> blockNums = metadata.getBlockNumbersHeldByNode(nodes.get(i));
@@ -125,40 +130,44 @@ public class MDFSBlockRetrieverViaRsock {
                     fragListByte.add((byte) Integer.parseInt(fragListStr.get(k)));
                 }
 
-                //create BlockReply object
-                BlOcKrEpLy blockReply = new BlOcKrEpLy(metadata.getFileName(), metadata.getCreatedTime(), (byte) Integer.parseInt(blockNums.get(j)), nodes.get(i), EdgeKeeper.ownGUID);
+                //create BlockInfo object
+                BlockInfo blockinfo = new BlockInfo(metadata.getFileName(), metadata.getCreatedTime(), (byte) Integer.parseInt(blockNums.get(j)), nodes.get(i), EdgeKeeper.ownGUID);
 
-                //put fragListByte in blockReply object
-                blockReply.setBlockFragIndex(fragListByte);
+                //put fragListByte in blockinfo object
+                blockinfo.setBlockFragIndex(fragListByte);
 
-                //add blockReply object to the list
-                blockreplySet.add(blockReply);
+                //add blockinfo object to the list
+                blockInfoSet.add(blockinfo);
 
             }
         }
 
-        doAnotherThing(blockreplySet);
+        requestFRagments(blockInfoSet);
     }
 
 
     //this function prepares a list of GUIDs from which fragments will be requested.
-    private void doAnotherThing(Set<BlOcKrEpLy> blockREPs){
+    private void requestFRagments(Set<BlockInfo> blockInfos){
 
-        // Retrieve block fragments info
-        Set<Byte> myfrags = serviceHelper.getDirectory().getStoredFragIndex(fileId, blockIdx);	// Get the fragments I have
-        if(myfrags == null){ myfrags = new HashSet<Byte>();}
-        Set<Byte> uniqueFrags = new HashSet<Byte>();				// all the available fragments, including mine and others
+        // Retrieve fragments indexes that this node already has
+        Set<Byte> myfrags = new HashSet<>();
+        List<FragmentInfo> localFrags = getStoredFrags();
+        for(int i=0; i< localFrags.size(); i++){
+            myfrags.add(localFrags.get(i)._fragmentNumber);
+        }
+
+        //this is the unique list of fragments to be downloaded for this block.
+        Set<Byte> uniqueFrags = new HashSet<Byte>();
 
         // add fragments from other nodes
-        for(BlOcKrEpLy rep : blockREPs){
-            List<Byte> tmpList = rep.getBlockFragIndex();
+        for(BlockInfo info : blockInfos){
+            List<Byte> tmpList = info.getBlockFragIndex();
             if(tmpList != null){
                 uniqueFrags.addAll(tmpList);
                 tmpList.removeAll(myfrags);						// Retain only the fragments that I DO NOT have and
-                fileFrags.put(rep.getSource(), tmpList);		// add the unique fragments (different from mine) that each storage node has
+                fileFrags.put(info.getSource(), tmpList);		// add the unique fragments (different from mine) that each storage node has
             }
         }
-        // Note. fileFrags do not include MY cached fragments
 
         locFragCounter.set(myfrags.size());						// Init downloadCounter to the number of file frags I have
         initFileFragsCnt = locFragCounter.get();
@@ -243,7 +252,7 @@ public class MDFSBlockRetrieverViaRsock {
         @Override
         public void run(){
             System.out.println("xxx a thread is born");
-            System.out.println("xxx downloading blocknum " + blockIdx + " fragmentnum " + fragmentIndex);
+            MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "ownloading block# " + blockIdx + ", fragment# " + fragmentIndex);
             int block = 0;
             int total_pooling_time = 0;
             int interval = 1000;
@@ -268,24 +277,21 @@ public class MDFSBlockRetrieverViaRsock {
                 oos.flush();
                 data = bos.toByteArray();
 
-                //print of byteArray size for testing
-                //System.out.println("print: " + 	Arrays.toString(data));
-
                 //send request and expect reply
                 String uuid = UUID.randomUUID().toString().substring(0, 12);
                 RSockConstants.intrfc_retrieval.send(uuid, data, data.length,"nothing", "nothing", destGUID,0, sendAndReplyEndpoint, "hdrRecv", sendAndReplyEndpoint);
 
+                //log
+                MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "fragment# " + fragmentIndex +  " of block# " + blockIdx +" has been requested from guid: " + destGUID + "with request uuid: " + uuid);
 
-                //now waiting for reply with fileFrag
+
+                //now waiting for reply with fileFrag.
                 ReceivedFile receivedFile = null;
                 while(true){
-                    //block only for this amount of time
-                    System.out.println("xxx blocking on while " + (++block));
 
                     //check if blocking time expired then break out of while(whether or not fragment received))
                     if(total_pooling_time>= Constants.FRAGMENT_RETRIEVAL_TIMEOUT_INTERVAL){
                         RSockConstants.intrfc_retrieval.deleteEndpoint(sendAndReplyEndpoint);
-                        System.out.println("xxx un blocking on while ");
                         break;
                     }
 
@@ -293,9 +299,10 @@ public class MDFSBlockRetrieverViaRsock {
                     try { receivedFile = RSockConstants.intrfc_retrieval.receive(interval, sendAndReplyEndpoint); } catch (InterruptedException e) {e.printStackTrace(); }
                     total_pooling_time = total_pooling_time + interval;
                     if(receivedFile!=null) {
+
                         //coming here means we received a reply for file fragment request
-                        System.out.println("xxx received file frag which is not null inside MDFSBlockRetrieval (success)");
                         RSockConstants.intrfc_retrieval.deleteEndpoint(sendAndReplyEndpoint);
+
 
                         //get the byteArray[] from the receivedFile obj and convert into MDFSRsockBlockRetrieval object
                         ByteArrayInputStream bis = new ByteArrayInputStream(receivedFile.getFileArray());
@@ -319,7 +326,6 @@ public class MDFSBlockRetrieverViaRsock {
                         if(fileFragRetrieveSuccess){
 
                             //coming here means the received file fragment reply indeed contains a file fragment
-                            System.out.println("xxx file signature is true");
 
                             //create fileFrag from byteArray
                             ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg_0123__0/test1.jpg_0123__frag__0_dOwN__lOaDiNg___   (file)
@@ -337,9 +343,8 @@ public class MDFSBlockRetrieverViaRsock {
                             tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(fileName, fileId, blockIdx, fragmentIndex));
                             try { sleep(100); } catch (InterruptedException e) { e.printStackTrace(); }
 
-                            Logger.v(TAG, "xxx Finish downloading fragment " + fragmentIndex + " from node " + destGUID );
+                            MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Finish downloading fragment " + fragmentIndex + " from node " + destGUID );
                         }else{
-                            System.out.println("file signature is not true");
                             //this means other side received fragment request, other side processed fragment request, but other side did not have the fragment, so it sent back an empty file.
                         }
                         break;
@@ -348,20 +353,36 @@ public class MDFSBlockRetrieverViaRsock {
                     }
                 }
             }catch(IOException | ClassNotFoundException | NullPointerException e){
-                System.out.println("EXCEPTION!");
-                e.printStackTrace();
+
+                //log
+                MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "Exception is block retrieval, " , e);
+
             }finally{
                 if(success && tmp0.length() > 0){
+
+                    //log
+                    MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Fragment#" + fragmentIndex + " of Block# " + blockIdx + " retrieve success.");
+
                     // success! so update directory
                     serviceHelper.getDirectory().addBlockFragment(header.getCreatedTime(), header.getBlockIndex(), header.getFragIndex());
+
                     //update local fragment counter for this block
+
                     locFragCounter.incrementAndGet();
                 }else if(tmp0 != null){
+
+                    //log
+                    MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "Fragment#" + fragmentIndex + " of Block# " + blockIdx + " retrieve success but the fragment is invalid.");
+
                     //something was wrong
                     tmp0.delete();
                 }
 
                 if(locFragCounter.get() >= fileInfo.getK2()){
+
+                    //log
+                    MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Enough fragments of block# " + blockIdx + " is available now.");
+
                     //decode the fragments into a block
                     decodeBlockFile();
                 }
@@ -379,12 +400,15 @@ public class MDFSBlockRetrieverViaRsock {
     //or called by decodeFIle() function after fetching of fragments is done.
     private synchronized void decodeBlockFile(List<FragmentInfo> blockFragments){
 
-        System.out.println("xxx inside decodefile");
+        MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Start to decode block.");
         if(!isFinished) {
             // Final Check. Make sure enough fragments are available
             //decodeBlockFile() execution will only proceed further if this block of code passes
             if (blockFragments.size() < fileInfo.getK2()) {
                 String s = blockFragments.size() + " block fragments are available locally.";
+
+                //log and listener
+                MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "block# " + blockIdx + " decryption failed, insufficient fragments.");
                 listener.onError("Insufficient fragments." + s, fileInfo);
                 return;
             }
@@ -401,6 +425,9 @@ public class MDFSBlockRetrieverViaRsock {
 
             //if decryptkey is null
             if (decryptKey == null) {
+
+                //log and listener
+                MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "Block# " + blockIdx + " decryption failed, no decryption key found.");
                 listener.onError("No decryption key found", fileInfo);
                 return;
             }
@@ -416,14 +443,21 @@ public class MDFSBlockRetrieverViaRsock {
 
             //check if decoding completed
             if (decoder.ifYouSmellWhatTheRockIsCooking()) {  //takes bunch of file fragments and returns file block
-                System.out.println("xxx Block Decryption Complete");
+
+                //log
+                MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Block# " + blockIdx +" Decryption Complete");
+
                 isFinished = true;
                 listener.onComplete(tmp, fileInfo);
                 return;
             } else {
+
+                //log and listener
+                MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "Failed to decode some fragments of block# " + blockIdx);
+                listener.onError("Fail to decode the fragments. You may try again", fileInfo);
+
                 isFinished = false;
                 decoding = false;
-                listener.onError("Fail to decode the fragments. You may try again", fileInfo);
                 return;
             }
         }
@@ -445,29 +479,39 @@ public class MDFSBlockRetrieverViaRsock {
         }
     }
 
-    //get stored fragments
+    //get stored fragments for this block in this device.
+    //never returns null, always returns a list that is either empty
+    // or has elements in it.
     private List<FragmentInfo> getStoredFrags(){
-        Set<Byte> cachedFrags = serviceHelper.getDirectory().getStoredFragIndex(fileId, blockIdx);
 
+
+        //create a list fo fragmentInfo object to return
         List<FragmentInfo> blockFragments = new ArrayList<FragmentInfo>();
-        if(cachedFrags != null){
-            // Check stored fragments
-            ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg_0123__0/  (directory)
-            File blockDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileName, fileId, blockIdx));
-            if(blockDir.isDirectory()){
-                File[] files = blockDir.listFiles(new FileFilter(){
-                    @Override
-                    public boolean accept(File f) {
-                        return ( f.isFile() && f.getName().contains(fileName + "__" + blockIdx + "__frag__") );
-                    }
-                });
 
-                for (File f : files) {
-                    FragmentInfo frag;
-                    frag = IOUtilities.readObjectFromFile(f, FragmentInfo.class);
-                    if(frag != null && cachedFrags.contains(frag.getFragmentNumber()))
-                        blockFragments.add(frag);
+
+        // Check stored fragments
+        ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg_0123__0/  (directory)
+        File blockDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileName, fileId, blockIdx));
+
+        //check if its a directory
+        if(blockDir.isDirectory()){
+
+            //get all the files in the directory
+            File[] files = blockDir.listFiles(new FileFilter(){
+                @Override
+                public boolean accept(File f) {
+
+                    //filter
+                    return ( f.isFile() && f.getName().contains(fileName + "__" + blockIdx + "__frag__") );
                 }
+            });
+
+            //read each fragment, make fragmentInfo object and push it into the list
+            for (File f : files) {
+                FragmentInfo frag;
+                frag = IOUtilities.readObjectFromFile(f, FragmentInfo.class);
+                if(frag != null)
+                    blockFragments.add(frag);
             }
         }
 
@@ -508,10 +552,14 @@ public class MDFSBlockRetrieverViaRsock {
         public BlockRetrieveLog(){}
         public long discStart, discEnd, retStart, retEnd, decryStart, decryEnd;
         public List<MyPair<Long, Byte>> fileSources = new ArrayList<MyPair<Long, Byte>>(); // <NodeIp, FragNum>
-        public Set<BlOcKrEpLy> fileReps;
+        public Set<BlockInfo> fileReps;
         public String getDiff(long l1, long l2){
             return Long.toString(Math.abs(l2-l1));
         }
+    }
+
+    public byte getBlockIdx(){
+        return blockIdx;
     }
 
 

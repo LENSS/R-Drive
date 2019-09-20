@@ -1,10 +1,13 @@
 package edu.tamu.lenss.mdfs.RSock.network;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
@@ -27,6 +30,10 @@ import example.ReceivedFile;
 //and saves it.
 public class RsockReceiveForFileCreation implements Runnable{
 
+
+    //logger
+    public static Logger logger = Logger.getLogger(RsockReceiveForFileCreation.class);
+
     private static final long serialVersionUID = 8L;
 
     private static boolean isTerminated = false;
@@ -46,7 +53,7 @@ public class RsockReceiveForFileCreation implements Runnable{
         ReceivedFile rcvdfile = null;
         while(!isTerminated){
             try {
-                //blocking on receiving through rsock
+                //blocking on receiving through rsock at a particular endpoint
                 try {
                     rcvdfile = RSockConstants.intrfc_creation.receive(100, "default"); }
                 catch (InterruptedException e) {e.printStackTrace(); }
@@ -78,11 +85,11 @@ public class RsockReceiveForFileCreation implements Runnable{
 
                     //now save the fileFrag
                     saveTheFileFragAndUpdateMetadataToEdgeKeeper(fileName, filePathMDFS, byteArray, fileCreatedTime, filesize, n2, k2, blockIdx, fragmentIdx, fileCreatorGUID, uniquereqid, isGlobal);
-
+                    logger.log(Level.DEBUG, "fragment# " + fragmentIdx + " of block# " + blockIdx + " of filename " + fileName + " received from rsock.");
                 }
 
             } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
+                logger.log(Level.FATAL, "Exception in constructing fragment ", e);
             }
         }
 

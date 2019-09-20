@@ -2,6 +2,7 @@ package edu.tamu.cse.lenss.android;
 
 
 import edu.tamu.cse.lenss.CLI.cli_processor;
+import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
 import edu.tamu.lenss.mdfs.handler.ServiceHelper;
 
 
@@ -15,13 +16,17 @@ public class MDFSHandler extends Thread {
 
     @Override
     public void run(){
-        //note: MDFS must start before CLI
+        //note: MDFS must start before CL
+
         startMDFS();
         startCLI();
     }
 
     @Override
     public void interrupt() {
+
+
+
         super.interrupt();
         ServiceHelper.releaseService();
         cli.interrupt();

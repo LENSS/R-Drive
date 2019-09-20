@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import edu.tamu.lenss.mdfs.RSock.testRsock;
 import edu.tamu.lenss.mdfs.handleCommands.copyfromlocal.copyfromlocal;
 import edu.tamu.lenss.mdfs.handleCommands.get.get;
 import edu.tamu.lenss.mdfs.handleCommands.help.help;
@@ -29,7 +30,7 @@ class RequestHandler implements Runnable{
 
 
     //commands
-    String[] comm = { "-help", "-ls", "-list", "-mkdir", "-rm", "-setfacl", "-getfacl", "-put", "-get", "-copyFromLocal", "-copyToLocal", "-hdfs"};
+    String[] comm = { "-help", "-ls", "-list", "-mkdir", "-rm", "-setfacl", "-getfacl", "-put", "-get", "-copyFromLocal", "-copyToLocal", "-hdfs", "-testRsock"};
     Set<String> commandNames = new HashSet<>(Arrays.asList(comm));
 
     public RequestHandler( Socket cSocket) {
@@ -348,6 +349,8 @@ class RequestHandler implements Runnable{
                         copytolocal.copytolocal(clientID, cmd);
                     }else if(cmd[1].equals("-hdfs")){
                         clientSockets.sendAndClose(clientID, "Hadoop HDFS commands are not supported.");
+                    }else if(cmd[1].equals("-testRsock")){
+                        clientSockets.sendAndClose(clientID, testRsock.testrsock());
                     }else{
                         clientSockets.sendAndClose(clientID, "Command has not been implemented yet.");
                     }

@@ -8,6 +8,7 @@ import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeperConstants;
 import edu.tamu.lenss.mdfs.RSock.network.RsockReceiveForFileCreation;
 import edu.tamu.lenss.mdfs.RSock.network.RsockReceiveForFileRetrieval;
 import edu.tamu.lenss.mdfs.RSock.network.RsockReceiveForFileDeletion;
+import edu.tamu.lenss.mdfs.RSock.network.RsockReceiveForRsockTest;
 
 
 public class runGNSandRsock {
@@ -16,7 +17,6 @@ public class runGNSandRsock {
 
         //we need EdgeKeeper, so init EdgeKeeper first
         new EdgeKeeper();
-
 
         //start file creator rsock in a thread
         Thread t1 = new Thread(new RsockReceiveForFileCreation());
@@ -30,6 +30,10 @@ public class runGNSandRsock {
         // start file deletion rsock in a thread
         Thread t3 = new Thread(new RsockReceiveForFileDeletion());
         t3.start();
+
+        // start file test rsock in a thread
+        Thread t4 = new Thread(new RsockReceiveForRsockTest());
+        t4.start();
     }
 
 
@@ -38,6 +42,7 @@ public class runGNSandRsock {
         RsockReceiveForFileCreation.stop();
         RsockReceiveForFileRetrieval.stop();
         RsockReceiveForFileDeletion.stop();
+        RsockReceiveForRsockTest.stop();
 
     }
 

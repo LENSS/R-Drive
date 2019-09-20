@@ -4,7 +4,7 @@ import java.io.File;
 
 public class Constants {
 
-	public static final long FRAGMENT_RETRIEVAL_TIMEOUT_INTERVAL = 10000;		//Timeout of retrieving file fragments, after this time a thread stops trying
+	public static final long FRAGMENT_RETRIEVAL_TIMEOUT_INTERVAL = 10000 * 6;		//Timeout of retrieving file fragments, after this time a thread stops trying
 	public static final int FILE_RETRIEVAL_RETRIALS = 1;						//how many times
 
 	public static final int MAX_BLOCK_SIZE = 2048*2048;   //3 * (1024*1024);					// Max size of each data block || must not be set larger than (Integer.MAX - Integer.BYTES - 1)
