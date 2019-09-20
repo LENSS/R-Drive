@@ -23,4 +23,5 @@ public class Constants {
 	public static final int MAX_N_VAL = 8; 										// max value of n
 
     public static final boolean isGlobal = true;
+    public static boolean testRsock = false;
 }

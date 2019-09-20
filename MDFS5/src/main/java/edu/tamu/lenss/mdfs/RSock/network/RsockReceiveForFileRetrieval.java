@@ -22,7 +22,8 @@ import example.*;
 import static java.lang.Thread.sleep;
 
 
-//this class is used for block retrieval via rsock, instead of tcp
+//this class is used for block retrieval via rsock.
+//this class receives fragment requests and send the fragment to the requestor.
 public class RsockReceiveForFileRetrieval implements Runnable {
     
     private static final String DOWNLOADING_SIGNATURE = "_dOwN__lOaDiNg___";

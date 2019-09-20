@@ -2,9 +2,8 @@ package edu.tamu.lenss.mdfs.models;
 
 //this class starts GNS and rsock at the beginning when the app starts.
 
-import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
+import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
-import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeperConstants;
 import edu.tamu.lenss.mdfs.RSock.network.RsockReceiveForFileCreation;
 import edu.tamu.lenss.mdfs.RSock.network.RsockReceiveForFileRetrieval;
 import edu.tamu.lenss.mdfs.RSock.network.RsockReceiveForFileDeletion;
@@ -32,8 +31,10 @@ public class runGNSandRsock {
         t3.start();
 
         // start file test rsock in a thread
-        Thread t4 = new Thread(new RsockReceiveForRsockTest());
-        t4.start();
+        if(Constants.testRsock) {
+            Thread t4 = new Thread(new RsockReceiveForRsockTest());
+            t4.start();
+        }
     }
 
 

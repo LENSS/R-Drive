@@ -289,9 +289,12 @@ public class MDFSBlockRetrieverViaRsock {
                 ReceivedFile receivedFile = null;
                 while(true){
 
+                    System.out.println("xxx blocking on while loop...");
+
                     //check if blocking time expired then break out of while(whether or not fragment received))
                     if(total_pooling_time>= Constants.FRAGMENT_RETRIEVAL_TIMEOUT_INTERVAL){
                         RSockConstants.intrfc_retrieval.deleteEndpoint(sendAndReplyEndpoint);
+                        System.out.println("xxx unblocking from while loop.");
                         break;
                     }
 
@@ -343,11 +346,12 @@ public class MDFSBlockRetrieverViaRsock {
                             tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(fileName, fileId, blockIdx, fragmentIndex));
                             try { sleep(100); } catch (InterruptedException e) { e.printStackTrace(); }
 
+                            //log
                             MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Finish downloading fragment " + fragmentIndex + " from node " + destGUID );
+
                         }else{
                             //this means other side received fragment request, other side processed fragment request, but other side did not have the fragment, so it sent back an empty file.
                         }
-                        break;
                     }else{
                         //returned with null, did not received any reply from other side.
                     }
@@ -358,7 +362,7 @@ public class MDFSBlockRetrieverViaRsock {
                 MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "Exception is block retrieval, " , e);
 
             }finally{
-                if(success && tmp0.length() > 0){
+                if(success && tmp0!=null && tmp0.length() > 0){
 
                     //log
                     MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Fragment#" + fragmentIndex + " of Block# " + blockIdx + " retrieve success.");
@@ -372,12 +376,14 @@ public class MDFSBlockRetrieverViaRsock {
                 }else if(tmp0 != null){
 
                     //log
-                    MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "Fragment#" + fragmentIndex + " of Block# " + blockIdx + " retrieve success but the fragment is invalid.");
+                    MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "Failed to download fragment# " + fragmentIndex + " of block# " + blockIdx + ".");
 
                     //something was wrong
                     tmp0.delete();
+
                 }
 
+                //check if enough fragments are available after fragment download
                 if(locFragCounter.get() >= fileInfo.getK2()){
 
                     //log

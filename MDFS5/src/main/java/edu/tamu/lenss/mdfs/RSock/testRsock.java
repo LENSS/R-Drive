@@ -2,9 +2,18 @@ package edu.tamu.lenss.mdfs.RSock;
 
 import java.util.UUID;
 
+import edu.tamu.lenss.mdfs.Constants;
+
 public class testRsock {
 
     public static String testrsock(){
+
+        //check if testRsock is enables
+        if(!Constants.testRsock){
+            return "testRsock is turned off in Constants file.";
+        }
+
+
         System.out.println("inside test.java file");
 
         //test
