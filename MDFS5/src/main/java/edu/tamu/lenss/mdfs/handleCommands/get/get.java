@@ -12,6 +12,34 @@ import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
 
 public class get {
 
+
+    public static String get_devel(String mdfsDirWithFilename, String localDir){
+        //first retrieve the metadata from edgeKeeper
+        MDFSMetadata metadata = fetchFileMetadataFromEdgeKeeper(mdfsDirWithFilename);
+
+        //check for null
+        if(metadata!=null){
+
+            //re-create MDFSFileInfo object
+            MDFSFileInfo fileInfo  = new MDFSFileInfo(metadata.getFileName(), metadata.getCreatedTime());
+            fileInfo.setFileSize(metadata.getFileSize());
+            fileInfo.setNumberOfBlocks((byte)metadata.getBlockCount());
+            fileInfo.setFragmentsParms((byte)metadata.getn2(),  (byte)metadata.getk2());
+
+            //make mdfsfileretriever object
+            MDFSFileRetrieverViaRsockNG retriever = new MDFSFileRetrieverViaRsockNG(fileInfo, metadata, localDir, ServiceHelper.getInstance().getEncryptKey());
+
+            //return
+            return retriever.start();
+
+
+
+        }else{
+            return "-get failed! Could not fetch file metadata from local EdgeKeeper (check connection).";
+        }
+    }
+
+
     public static String get(String mdfsDirWithFilename, String localDir){
 
         //first retrieve the metadata from edgeKeeper
@@ -37,7 +65,7 @@ public class get {
 
 
         }else{
-            return "-get failed! Could not fetch file metadata from local EdgeKeeper.";
+            return "-get failed! Could not fetch file metadata from local EdgeKeeper. (execute -ls command to check if file exists.).";
         }
     }
 

@@ -142,6 +142,7 @@ public class MDFSDirectory implements Serializable {
 	public synchronized void removeEncryptedFile(long fileId) {
 		encryptedFileSet.remove(fileId);
 	}
+
 	public synchronized void addDecryptedFile(long fileId) {
 		decryptedFileSet.add(fileId);
 	}

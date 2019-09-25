@@ -42,9 +42,9 @@ public class testRsock {
                 "nothing",
                 "8877417A2CBA0D19636B44702E7DB497B5834559",
                 0,
-                "default",
-                "default",
-                "default");
+                RSockConstants.rsockTestEndpoint,
+                RSockConstants.rsockTestEndpoint,
+                RSockConstants.rsockTestEndpoint);
 
         System.out.println("testRsock sent data of " + data_64049.length());
 
@@ -68,9 +68,9 @@ public class testRsock {
                 "nothing",
                 "8877417A2CBA0D19636B44702E7DB497B5834559",
                 0,
-                "default",
-                "default",
-                "default");
+                RSockConstants.rsockTestEndpoint,
+                RSockConstants.rsockTestEndpoint,
+                RSockConstants.rsockTestEndpoint);
 
         System.out.println("testRsock sent data of " + data_64050.length());
 
@@ -94,9 +94,9 @@ public class testRsock {
                 "nothing",
                 "8877417A2CBA0D19636B44702E7DB497B5834559",
                 0,
-                "default",
-                "default",
-                "default");
+                RSockConstants.rsockTestEndpoint,
+                RSockConstants.rsockTestEndpoint,
+                RSockConstants.rsockTestEndpoint);
 
         System.out.println("testRsock sent data of " + data_64051.length());
 
@@ -119,9 +119,9 @@ public class testRsock {
                 "nothing",
                 "8877417A2CBA0D19636B44702E7DB497B5834559",
                 0,
-                "default",
-                "default",
-                "default");
+                RSockConstants.rsockTestEndpoint,
+                RSockConstants.rsockTestEndpoint,
+                RSockConstants.rsockTestEndpoint);
 
         System.out.println("testRsock sent data of " + data_12899.length());
 
@@ -146,9 +146,9 @@ public class testRsock {
                 "nothing",
                 "8877417A2CBA0D19636B44702E7DB497B5834559",
                 0,
-                "default",
-                "default",
-                "default");
+                RSockConstants.rsockTestEndpoint,
+                RSockConstants.rsockTestEndpoint,
+                RSockConstants.rsockTestEndpoint);
 
 
         System.out.println("testRsock sent data of " + data_128100.length());
@@ -172,9 +172,9 @@ public class testRsock {
                 "nothing",
                 "8877417A2CBA0D19636B44702E7DB497B5834559",
                 0,
-                "default",
-                "default",
-                "default");
+                RSockConstants.rsockTestEndpoint,
+                RSockConstants.rsockTestEndpoint,
+                RSockConstants.rsockTestEndpoint);
 
         System.out.println("testRsock sent data of " + data_128101.length());
 
@@ -196,9 +196,9 @@ public class testRsock {
                 "nothing",
                 "8877417A2CBA0D19636B44702E7DB497B5834559",
                 0,
-                "default",
-                "default",
-                "default");
+                RSockConstants.rsockTestEndpoint,
+                RSockConstants.rsockTestEndpoint,
+                RSockConstants.rsockTestEndpoint);
 
         System.out.println("testRsock sent data of " + data_1.length());
         //-------------------------------------------------------------------
@@ -215,9 +215,9 @@ public class testRsock {
                 "nothing",
                 "8877417A2CBA0D19636B44702E7DB497B5834559",
                 0,
-                "default",
-                "default",
-                "default");
+                RSockConstants.rsockTestEndpoint,
+                RSockConstants.rsockTestEndpoint,
+                RSockConstants.rsockTestEndpoint);
 
         System.out.println("testRsock sent data of " + data_0.length());
     }

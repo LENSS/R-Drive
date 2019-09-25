@@ -3,6 +3,7 @@ package edu.tamu.cse.lenss.CLI;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.ServerSocket;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -14,7 +15,7 @@ public class cli_processor extends Thread {
 
     public static final int JAVA_PORT = CLIConstants.CLI_PORT;
 
-    public ExecutorService executor = Executors.newFixedThreadPool(5);
+    public ExecutorService executor = Executors.newSingleThreadExecutor();
     public ServerSocket serverSocket;
     public boolean isRunning = false;
 
@@ -39,9 +40,13 @@ public class cli_processor extends Thread {
             try {
                 //put the request in a new thread
                 cSocket = serverSocket.accept();
-                System.out.println("CLIII received new connection..." );
-                executor.execute(new RequestHandler(cSocket));
+                System.out.println("CLI received new connection..." );
 
+                try {
+                    executor.submit(new RequestHandler(cSocket)).get();
+                } catch (InterruptedException | ExecutionException e) {
+                    System.out.println("Exception in handeling the request in cli_processor. " + e);
+                }
             } catch (IOException e) {
                 System.out.println("CLIII Error in accepting client connection"+ e);
             }

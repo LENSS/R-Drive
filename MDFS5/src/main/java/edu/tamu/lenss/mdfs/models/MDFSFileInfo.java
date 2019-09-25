@@ -62,6 +62,7 @@ public class MDFSFileInfo implements Serializable {
 	}
 
 
+	//returns: /MDFS/test1.jpg__0123/
 	public static String getFileDirPath(String fileName, long createdTime){
 		return Constants.ANDROID_DIR_ROOT + File.separator
 				+ getFileDirName(fileName, createdTime);
@@ -73,6 +74,7 @@ public class MDFSFileInfo implements Serializable {
 	 * @param createdTime
 	 * @return fileName_MMddyyy_HHmmss
 	 */
+	//returns: test1.jpg__0123/
 	public static String getFileDirName(String fileName, long createdTime){
 		return fileName + "__" + createdTime;
 	}
@@ -83,10 +85,12 @@ public class MDFSFileInfo implements Serializable {
 	 * @param blockIdx
 	 * @return
 	 */
+	//returns: test1.jpg__0
 	public static String getBlockDirName(String fileName, byte blockIdx){
 		return fileName + "__" + blockIdx;
 	}
-	
+
+	//returns: test1.jpg_-blk__0
 	public static String getBlockName(String fileName, byte blockIdx){
 		return fileName + "__blk__" + blockIdx;
 	}
@@ -98,6 +102,7 @@ public class MDFSFileInfo implements Serializable {
 	 * @param fragIdx
 	 * @return
 	 */
+	//returns: test1.jpg__0__frag__0
 	public static String getFragName(String fileName, byte blockIdx, byte fragIdx){
 		return fileName + "__" + blockIdx + "__frag__" + fragIdx; 
 	}
@@ -108,6 +113,7 @@ public class MDFSFileInfo implements Serializable {
 	 * @param blockIdx
 	 * @return
 	 */
+	//returns: /MDFS/test1.jpg__0123/test1.jpg__0/
 	public static String getBlockDirPath(String fileName, long creationTime, byte blockIdx){
 		return Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(fileName, creationTime) + File.separator + MDFSFileInfo.getBlockDirName(fileName, blockIdx);
 	}
@@ -119,6 +125,7 @@ public class MDFSFileInfo implements Serializable {
 	 * @param fragIdx
 	 * @return
 	 */
+	//returns: /MDFS/test1.jpg__0123/test1.jpg__0/test1.jpg__0__frag__0
 	public static String getFragmentPath(String fileName, long fileId, byte blockIdx, byte fragIdx){
 		return MDFSFileInfo.getBlockDirPath(fileName, fileId, blockIdx)     + File.separator + MDFSFileInfo.getFragName(fileName, blockIdx, fragIdx);
 	}

@@ -37,7 +37,7 @@ import edu.tamu.lenss.mdfs.handleCommands.get.MDFSBlockRetrieverViaRsock.BlockRe
 public class MDFSFileRetrieverViaRsock {
 
     //log
-    static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(MDFSFileRetrieverViaRsock.class);
+    public static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(MDFSFileRetrieverViaRsock.class);
 
     private static final String TAG = MDFSFileRetrieverViaRsock.class.getSimpleName();
     private byte[] decryptKey;
@@ -182,7 +182,8 @@ public class MDFSFileRetrieverViaRsock {
         logger.log(Level.ALL, "Merging single block.");
 
         // move block to the decrypted directory and rename
-        File from = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFileDirPath(fileInfo.getFileName(), fileInfo.getCreatedTime()) + File.separator + MDFSFileInfo.getBlockName(fileInfo.getFileName(), (byte)0));
+        File from = AndroidIOUtils.getExternalFile(MDFSFileInfo.
+                getFileDirPath(fileInfo.getFileName(), fileInfo.getCreatedTime()) + File.separator + MDFSFileInfo.getBlockName(fileInfo.getFileName(), (byte)0));
         File to = IOUtilities.createNewFile(getDecryptedFilePath());
 
         try {

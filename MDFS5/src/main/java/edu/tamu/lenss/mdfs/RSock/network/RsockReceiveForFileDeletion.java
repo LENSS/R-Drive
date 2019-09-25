@@ -23,7 +23,7 @@ public class RsockReceiveForFileDeletion implements Runnable{
 
         //if rsock client library object is null, init it once.
         if(RSockConstants.intrfc_deletion==null) {
-            RSockConstants.intrfc_deletion = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_deletion_appid, 999);
+            RSockConstants.intrfc_deletion = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_deletion_appid, 3600);
         }
 
         //variables
@@ -38,7 +38,7 @@ public class RsockReceiveForFileDeletion implements Runnable{
 
             //blocking on receiving through rsock at a particular endpoint
             try {
-                rcvdfile = RSockConstants.intrfc_deletion.receive(100, "default"); }
+                rcvdfile = RSockConstants.intrfc_deletion.receive(100, RSockConstants.fileDeleteEndpoint); }
             catch (InterruptedException e) {
                 e.printStackTrace();
             }

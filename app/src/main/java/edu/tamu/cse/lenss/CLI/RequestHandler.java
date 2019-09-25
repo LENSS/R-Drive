@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 
 import edu.tamu.lenss.mdfs.RSock.testRsock;
 import edu.tamu.lenss.mdfs.handleCommands.copyfromlocal.copyfromlocal;
@@ -23,7 +24,7 @@ import edu.tamu.lenss.mdfs.utils.IOUtilities;
 
 
 //
-class RequestHandler implements Runnable{
+class RequestHandler implements Callable<Boolean> {
 
     //class variables
     private Socket cSocket;
@@ -38,7 +39,7 @@ class RequestHandler implements Runnable{
     }
 
     @Override
-    public void run() {
+    public Boolean call() {
 
         try{
             //Read the request from the CPP daemon
@@ -58,8 +59,12 @@ class RequestHandler implements Runnable{
             //process req
             processRequestCpp(clientID, command);
 
+            return true;
+
+
         }catch (IOException e) {
             System.out.println("Problem handling client socket in RequestHandler "+ e);
+            return false;
 
         }
 
@@ -232,7 +237,7 @@ class RequestHandler implements Runnable{
                                             if(locDirValid.equals("OK")){
 
                                                 //handle getcommand
-                                                clientSockets.sendAndClose(clientID, get.get(mdfsDirWithFilename, locDir));
+                                                clientSockets.sendAndClose(clientID, get.get_devel(mdfsDirWithFilename, locDir));
 
                                             }else{
                                                 clientSockets.sendAndClose(clientID, "Invalid Android directory, " + locDirValid);

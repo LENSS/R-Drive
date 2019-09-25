@@ -32,7 +32,7 @@ public class RsockReceiveForRsockTest implements Runnable{
 
             //blocking on receiving through rsock at a particular endpoint
             try {
-                rcvdfile = RSockConstants.intrfc_test.receive(100, "default"); }
+                rcvdfile = RSockConstants.intrfc_test.receive(100, RSockConstants.rsockTestEndpoint); }
             catch (InterruptedException e) {
                 e.printStackTrace();
             }

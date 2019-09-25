@@ -47,7 +47,7 @@ public class RsockReceiveForFileCreation implements Runnable{
     @Override
     public void run() {
         if(RSockConstants.intrfc_creation==null) {
-            RSockConstants.intrfc_creation = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_creation_appid, 999);
+            RSockConstants.intrfc_creation = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_creation_appid, 3600);
         }
         System.out.println("Rsock receiver thread is running...");
         ReceivedFile rcvdfile = null;
@@ -55,7 +55,7 @@ public class RsockReceiveForFileCreation implements Runnable{
             try {
                 //blocking on receiving through rsock at a particular endpoint
                 try {
-                    rcvdfile = RSockConstants.intrfc_creation.receive(100, "default"); }
+                    rcvdfile = RSockConstants.intrfc_creation.receive(100, RSockConstants.fileCreateEndpoint); }
                 catch (InterruptedException e) {e.printStackTrace(); }
 
                 //check for null
@@ -106,6 +106,7 @@ public class RsockReceiveForFileCreation implements Runnable{
         //create file
         File tmp0 = null;
 
+
             tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileName, fileCreatedTime, blockIdx));
 
             if(!tmp0.exists()){
@@ -125,7 +126,7 @@ public class RsockReceiveForFileCreation implements Runnable{
                  System.out.println("Could not convert fragment bytes into fragment file.");
              }
 
-            //update own local directory data
+            //update own local directory object
             ServiceHelper.getInstance().getDirectory().addBlockFragment(fileCreatedTime, blockIdx, fragmentIdx);
 
             //add info of the fragment I received and update to edgekeeper.

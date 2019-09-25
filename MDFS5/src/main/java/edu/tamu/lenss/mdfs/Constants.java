@@ -7,7 +7,7 @@ public class Constants {
 	public static final long FRAGMENT_RETRIEVAL_TIMEOUT_INTERVAL = 10000 * 6;		//Timeout of retrieving file fragments, after this time a thread stops trying
 	public static final int FILE_RETRIEVAL_RETRIALS = 1;						//how many times
 
-	public static final int MAX_BLOCK_SIZE = 2048*2048;   //3 * (1024*1024);					// Max size of each data block || must not be set larger than (Integer.MAX - Integer.BYTES - 1)
+	public static final int MAX_BLOCK_SIZE = 1024* 1024; //2048*2048;   //3 * (1024*1024);					// Max size of each data block || must not be set larger than (Integer.MAX - Integer.BYTES - 1)
 	public static final long IDLE_BTW_FAILURE = 10000;							// Idle time between successive upload/download a block
 
 	public static final int FILE_SYNC_PERIOD = 1*60000;	// Each file has to be synchronized at least every 1 min
