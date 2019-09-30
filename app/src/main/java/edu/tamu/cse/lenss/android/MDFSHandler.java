@@ -2,8 +2,7 @@ package edu.tamu.cse.lenss.android;
 
 
 import edu.tamu.cse.lenss.CLI.cli_processor;
-import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
-import edu.tamu.lenss.mdfs.handler.ServiceHelper;
+import edu.tamu.lenss.mdfs.Handler.ServiceHelper;
 
 
 //this is the mdfs handler that starts the command line interface(cli) and the MDFS library.

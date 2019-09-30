@@ -1,31 +1,16 @@
 package edu.tamu.lenss.mdfs.ReedSolomon;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.ShortBufferException;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 
 import edu.tamu.lenss.mdfs.Constants;
-import edu.tamu.lenss.mdfs.cipher.FragmentInfo;
-import edu.tamu.lenss.mdfs.cipher.MDFSCipher;
-import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
-import edu.tamu.lenss.mdfs.utils.IOUtilities;
+import edu.tamu.lenss.mdfs.Cipher.FragmentInfo;
+import edu.tamu.lenss.mdfs.Cipher.MDFSCipher;
+import edu.tamu.lenss.mdfs.Utils.AndroidIOUtils;
+import edu.tamu.lenss.mdfs.Utils.IOUtilities;
 
 public class EnCoDer {
     private byte[] encryptKey;

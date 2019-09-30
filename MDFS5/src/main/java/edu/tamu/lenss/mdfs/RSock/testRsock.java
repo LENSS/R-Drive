@@ -10,20 +10,29 @@ public class testRsock {
 
         //check if testRsock is enables
         if(!Constants.testRsock){
+
+            //return
             return "testRsock is turned off in Constants file.";
+
+        }else {
+
+            //destination
+            String remoteAddr = "05EE5FDB77AC19C7FBE5F92DD493B039BB4CD869";
+
+            //print
+            System.out.println("inside test.java file");
+
+            //test
+            test(remoteAddr);
+
+            //return
+            return "Rsock test packets sent!";
         }
 
-
-        System.out.println("inside test.java file");
-
-        //test
-        test();
-
-        return "Rsock test!";
     }
 
 
-    private static void test(){
+    private static void test(String remoteAddr){
 
 
 
@@ -40,7 +49,7 @@ public class testRsock {
                 data_64049.length(),
                 "nothing",
                 "nothing",
-                "8877417A2CBA0D19636B44702E7DB497B5834559",
+                remoteAddr,
                 0,
                 RSockConstants.rsockTestEndpoint,
                 RSockConstants.rsockTestEndpoint,
@@ -66,7 +75,7 @@ public class testRsock {
                 data_64050.length(),
                 "nothing",
                 "nothing",
-                "8877417A2CBA0D19636B44702E7DB497B5834559",
+                remoteAddr,
                 0,
                 RSockConstants.rsockTestEndpoint,
                 RSockConstants.rsockTestEndpoint,
@@ -92,7 +101,7 @@ public class testRsock {
                 data_64051.length(),
                 "nothing",
                 "nothing",
-                "8877417A2CBA0D19636B44702E7DB497B5834559",
+                remoteAddr,
                 0,
                 RSockConstants.rsockTestEndpoint,
                 RSockConstants.rsockTestEndpoint,
@@ -117,7 +126,7 @@ public class testRsock {
                 data_12899.length(),
                 "nothing",
                 "nothing",
-                "8877417A2CBA0D19636B44702E7DB497B5834559",
+                remoteAddr,
                 0,
                 RSockConstants.rsockTestEndpoint,
                 RSockConstants.rsockTestEndpoint,
@@ -144,7 +153,7 @@ public class testRsock {
                 data_128100.length(),
                 "nothing",
                 "nothing",
-                "8877417A2CBA0D19636B44702E7DB497B5834559",
+                remoteAddr,
                 0,
                 RSockConstants.rsockTestEndpoint,
                 RSockConstants.rsockTestEndpoint,
@@ -170,7 +179,7 @@ public class testRsock {
                 data_128101.length(),
                 "nothing",
                 "nothing",
-                "8877417A2CBA0D19636B44702E7DB497B5834559",
+                remoteAddr,
                 0,
                 RSockConstants.rsockTestEndpoint,
                 RSockConstants.rsockTestEndpoint,
@@ -194,7 +203,7 @@ public class testRsock {
                 data_1.length(),
                 "nothing",
                 "nothing",
-                "8877417A2CBA0D19636B44702E7DB497B5834559",
+                remoteAddr,
                 0,
                 RSockConstants.rsockTestEndpoint,
                 RSockConstants.rsockTestEndpoint,
@@ -213,7 +222,7 @@ public class testRsock {
                 data_0.length(),
                 "nothing",
                 "nothing",
-                "8877417A2CBA0D19636B44702E7DB497B5834559",
+                remoteAddr,
                 0,
                 RSockConstants.rsockTestEndpoint,
                 RSockConstants.rsockTestEndpoint,

@@ -1,9 +1,7 @@
 package edu.tamu.lenss.mdfs.RSock.network;
 
-import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
+import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeper;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
-import edu.tamu.lenss.mdfs.handler.ServiceHelper;
-import edu.tamu.lenss.mdfs.utils.IOUtilities;
 import example.Interface;
 import example.ReceivedFile;
 
@@ -21,7 +19,7 @@ public class RsockReceiveForRsockTest implements Runnable{
 
         //if rsock client library object is null, init it once.
         if(RSockConstants.intrfc_test==null) {
-            RSockConstants.intrfc_test = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_test_appid, 999);
+            RSockConstants.intrfc_test = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_test_appid, 999, false);
         }
 
         //variables

@@ -6,16 +6,22 @@ import java.net.ServerSocket;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Logger;
 
+import edu.tamu.lenss.mdfs.Commands.get.MDFSFileRetrieverViaRsock;
 
 
 //this class runs on a thread as a server, and receives new client connection.
 //clients connect this server to send commands and do MDFS jobs
 public class cli_processor extends Thread {
 
+
+    //logger
+    public static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(cli_processor.class);
+
     public static final int JAVA_PORT = CLIConstants.CLI_PORT;
 
-    public ExecutorService executor = Executors.newSingleThreadExecutor();
+    //public ExecutorService executor = Executors.newSingleThreadExecutor();
     public ServerSocket serverSocket;
     public boolean isRunning = false;
 
@@ -28,6 +34,7 @@ public class cli_processor extends Thread {
         try {
             serverSocket = new ServerSocket(JAVA_PORT);
             System.out.println("CLIII server is running" );
+            logger.log();
         } catch (IOException e) {
             System.out.println("CLIII server init failed" );
             e.printStackTrace();
@@ -43,8 +50,9 @@ public class cli_processor extends Thread {
                 System.out.println("CLI received new connection..." );
 
                 try {
-                    executor.submit(new RequestHandler(cSocket)).get();
-                } catch (InterruptedException | ExecutionException e) {
+                    new Thread(new RequestHandler(cSocket)).run();
+
+                } catch (Exception e) {
                     System.out.println("Exception in handeling the request in cli_processor. " + e);
                 }
             } catch (IOException e) {

@@ -10,21 +10,20 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 
 import edu.tamu.lenss.mdfs.RSock.testRsock;
-import edu.tamu.lenss.mdfs.handleCommands.copyfromlocal.copyfromlocal;
-import edu.tamu.lenss.mdfs.handleCommands.get.get;
-import edu.tamu.lenss.mdfs.handleCommands.help.help;
-import edu.tamu.lenss.mdfs.handleCommands.ls.ls;
-import edu.tamu.lenss.mdfs.handleCommands.mkdir.mkdir;
-import edu.tamu.lenss.mdfs.handleCommands.put.put;
-import edu.tamu.lenss.mdfs.handleCommands.rm.rm;
-import edu.tamu.lenss.mdfs.utils.IOUtilities;
+import edu.tamu.lenss.mdfs.Commands.copyfromlocal.copyfromlocal;
+import edu.tamu.lenss.mdfs.Commands.get.get;
+import edu.tamu.lenss.mdfs.Commands.help.help;
+import edu.tamu.lenss.mdfs.Commands.ls.ls;
+import edu.tamu.lenss.mdfs.Commands.mkdir.mkdir;
+import edu.tamu.lenss.mdfs.Commands.put.put;
+import edu.tamu.lenss.mdfs.Commands.rm.rm;
+import edu.tamu.lenss.mdfs.Utils.IOUtilities;
 
 
 //
-class RequestHandler implements Callable<Boolean> {
+class RequestHandler implements Runnable {
 
     //class variables
     private Socket cSocket;
@@ -39,7 +38,7 @@ class RequestHandler implements Callable<Boolean> {
     }
 
     @Override
-    public Boolean call() {
+    public void run() {
 
         try{
             //Read the request from the CPP daemon
@@ -59,12 +58,8 @@ class RequestHandler implements Callable<Boolean> {
             //process req
             processRequestCpp(clientID, command);
 
-            return true;
-
-
         }catch (IOException e) {
             System.out.println("Problem handling client socket in RequestHandler "+ e);
-            return false;
 
         }
 
@@ -237,7 +232,7 @@ class RequestHandler implements Callable<Boolean> {
                                             if(locDirValid.equals("OK")){
 
                                                 //handle getcommand
-                                                clientSockets.sendAndClose(clientID, get.get_devel(mdfsDirWithFilename, locDir));
+                                                clientSockets.sendAndClose(clientID, get.get(mdfsDirWithFilename, locDir));
 
                                             }else{
                                                 clientSockets.sendAndClose(clientID, "Invalid Android directory, " + locDirValid);

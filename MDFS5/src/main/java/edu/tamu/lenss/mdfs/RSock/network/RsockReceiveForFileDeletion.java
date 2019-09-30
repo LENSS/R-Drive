@@ -1,10 +1,10 @@
 package edu.tamu.lenss.mdfs.RSock.network;
 
 
-import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
+import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeper;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
-import edu.tamu.lenss.mdfs.handler.ServiceHelper;
-import edu.tamu.lenss.mdfs.utils.IOUtilities;
+import edu.tamu.lenss.mdfs.Handler.ServiceHelper;
+import edu.tamu.lenss.mdfs.Utils.IOUtilities;
 import example.Interface;
 import example.ReceivedFile;
 
@@ -23,7 +23,7 @@ public class RsockReceiveForFileDeletion implements Runnable{
 
         //if rsock client library object is null, init it once.
         if(RSockConstants.intrfc_deletion==null) {
-            RSockConstants.intrfc_deletion = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_deletion_appid, 3600);
+            RSockConstants.intrfc_deletion = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_deletion_appid, 3600, false);
         }
 
         //variables

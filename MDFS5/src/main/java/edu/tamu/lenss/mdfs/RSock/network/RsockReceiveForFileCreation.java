@@ -2,23 +2,19 @@ package edu.tamu.lenss.mdfs.RSock.network;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
-import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
 import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
-import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
+import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeper;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
-import edu.tamu.lenss.mdfs.handler.ServiceHelper;
-import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
-import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
-import edu.tamu.lenss.mdfs.models.MDFSRsockBlockForFileCreate;
+import edu.tamu.lenss.mdfs.Model.MDFSFileInfo;
+import edu.tamu.lenss.mdfs.Utils.AndroidIOUtils;
+import edu.tamu.lenss.mdfs.Model.MDFSRsockBlockForFileCreate;
 import example.Interface;
 import example.ReceivedFile;
 
@@ -47,7 +43,7 @@ public class RsockReceiveForFileCreation implements Runnable{
     @Override
     public void run() {
         if(RSockConstants.intrfc_creation==null) {
-            RSockConstants.intrfc_creation = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_creation_appid, 3600);
+            RSockConstants.intrfc_creation = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_creation_appid, 3600, true);
         }
         System.out.println("Rsock receiver thread is running...");
         ReceivedFile rcvdfile = null;
@@ -123,11 +119,8 @@ public class RsockReceiveForFileCreation implements Runnable{
                  outputStream.flush();
                  outputStream.close();
              }catch(IOException e){
-                 System.out.println("Could not convert fragment bytes into fragment file.");
+                 logger.log(Level.DEBUG,"Could not write fragment bytes into file for fragment# " + fragmentIdx + " of block# " + blockIdx + " of filename " + fileName + ".");
              }
-
-            //update own local directory object
-            ServiceHelper.getInstance().getDirectory().addBlockFragment(fileCreatedTime, blockIdx, fragmentIdx);
 
             //add info of the fragment I received and update to edgekeeper.
             MDFSMetadata metadata = MDFSMetadata.createFileMetadata(uniquereqid, fileCreatedTime, filesize, fileCreatorGUID, EdgeKeeper.ownGUID, filePathMDFS + "/" + fileName, isGlobal);

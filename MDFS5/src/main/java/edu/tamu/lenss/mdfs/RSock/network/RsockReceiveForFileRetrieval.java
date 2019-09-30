@@ -15,15 +15,15 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.UUID;
 
-import edu.tamu.lenss.mdfs.EDGEKEEPER.EdgeKeeper;
-import edu.tamu.lenss.mdfs.handleCommands.get.FileMerge;
-import edu.tamu.lenss.mdfs.handleCommands.get.MDFSFileRetrieverViaRsock;
-import edu.tamu.lenss.mdfs.handleCommands.get.getUtils;
-import edu.tamu.lenss.mdfs.models.MDFSFileInfo;
-import edu.tamu.lenss.mdfs.models.MDFSRsockBlockForFileRetrieveNG;
+import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeper;
+import edu.tamu.lenss.mdfs.Commands.get.FileMerge;
+import edu.tamu.lenss.mdfs.Commands.get.MDFSFileRetrieverViaRsock;
+import edu.tamu.lenss.mdfs.Commands.get.getUtils;
+import edu.tamu.lenss.mdfs.Model.MDFSFileInfo;
+import edu.tamu.lenss.mdfs.Model.MDFSRsockBlockForFileRetrieve;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
-import edu.tamu.lenss.mdfs.utils.AndroidIOUtils;
-import edu.tamu.lenss.mdfs.utils.IOUtilities;
+import edu.tamu.lenss.mdfs.Utils.AndroidIOUtils;
+import edu.tamu.lenss.mdfs.Utils.IOUtilities;
 import example.*;
 
 import static java.lang.Thread.sleep;
@@ -47,7 +47,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
 
 
         //create rsock Interface intrfc
-        RSockConstants.intrfc_retrieval = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_retrieval_appid, 3600);
+        RSockConstants.intrfc_retrieval = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_retrieval_appid, 3600, true);
 
         //variable
         boolean classConversion = false;
@@ -57,7 +57,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
         ObjectInputStream ois = null;
         File tmp0 = null;
         boolean success = false;
-        MDFSRsockBlockForFileRetrieveNG mdfsrsockblock = null;
+        MDFSRsockBlockForFileRetrieve mdfsrsockblock = null;
 
 
         while (isRunning) {
@@ -82,7 +82,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                     //create MDFSRsockBlockRetrieval object from raw byteArray
                     bis = new ByteArrayInputStream(receivedFile.getFileArray());
                     ois = new ObjectInputStream(bis);
-                    mdfsrsockblock = (MDFSRsockBlockForFileRetrieveNG) ois.readObject();
+                    mdfsrsockblock = (MDFSRsockBlockForFileRetrieve) ois.readObject();
                     bis.close();
                     ois.close();
                     classConversion = true;
@@ -94,11 +94,11 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                 if(classConversion) {
 
                     //get type variable inside mdfsrsockblock
-                    MDFSRsockBlockForFileRetrieveNG.Type type = (MDFSRsockBlockForFileRetrieveNG.Type) mdfsrsockblock.type;
+                    MDFSRsockBlockForFileRetrieve.Type type = (MDFSRsockBlockForFileRetrieve.Type) mdfsrsockblock.type;
 
                     //if the other party is asking for a fragment.
                     //then, we send the fragment if we have it.
-                    if (type == MDFSRsockBlockForFileRetrieveNG.Type.Request) {
+                    if (type == MDFSRsockBlockForFileRetrieve.Type.Request) {
 
                         logger.log(Level.ALL, "fraggg received fragment request from node " + mdfsrsockblock.srcGUID + " for fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName);
 
@@ -153,7 +153,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
 
                     //if other party sent a fragment that I asked for sometimes before.
                     //then process it.
-                    else if(type == MDFSRsockBlockForFileRetrieveNG.Type.Reply){
+                    else if(type == MDFSRsockBlockForFileRetrieve.Type.Reply){
 
                         //check if the received file is not null
                         if(mdfsrsockblock.fileFrag!=null){
@@ -202,7 +202,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
 
 
                             //log
-                            logger.log(Level.ALL, "Received fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName + " from node " + mdfsrsockblock.destGUID);
+                            logger.log(Level.ALL, "Received fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName + " from node " + mdfsrsockblock.srcGUID);
 
                             // Rename the fragment without the DOWNLOADING_SIGNATURE
                             ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg_0123__0/test1.jpg_0123__frag__0 (file)
@@ -213,7 +213,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                             try { sleep(100); } catch (InterruptedException e) { e.printStackTrace(); }
 
                             //log
-                            MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Finish downloading fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName + " from node " + mdfsrsockblock.destGUID );
+                            MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Finish downloading fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName + " from node " + mdfsrsockblock.srcGUID );
 
                             //after receiving each fragment, we check enough fragments are available for this block.
                             //check if enough fragment has received for this block
