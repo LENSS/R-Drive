@@ -16,9 +16,6 @@ import edu.tamu.lenss.mdfs.Commands.get.MDFSFileRetrieverViaRsock;
 public class cli_processor extends Thread {
 
 
-    //logger
-    public static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(cli_processor.class);
-
     public static final int JAVA_PORT = CLIConstants.CLI_PORT;
 
     //public ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -34,7 +31,6 @@ public class cli_processor extends Thread {
         try {
             serverSocket = new ServerSocket(JAVA_PORT);
             System.out.println("CLIII server is running" );
-            logger.log();
         } catch (IOException e) {
             System.out.println("CLIII server init failed" );
             e.printStackTrace();

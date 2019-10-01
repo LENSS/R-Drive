@@ -9,7 +9,6 @@ import android.os.IBinder;
 //this is the mdfs service that runs of the phones background.
 public class MDFSService extends Service {
 
-    public static final String loggerLocation = Environment.getExternalStorageDirectory().toString() + "/distressnet/mdfs.log";
     MDFSHandler mdfsHandler;
 
     @Override

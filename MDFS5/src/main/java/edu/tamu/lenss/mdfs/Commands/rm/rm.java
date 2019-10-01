@@ -1,5 +1,6 @@
 package edu.tamu.lenss.mdfs.Commands.rm;
 
+import org.apache.log4j.Level;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -9,15 +10,24 @@ import java.util.UUID;
 import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
 import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
 import edu.tamu.cse.lenss.edgeKeeper.server.RequestTranslator;
+import edu.tamu.lenss.mdfs.Commands.get.MDFSFileRetrieverViaRsock;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.Handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.Utils.IOUtilities;
 
 public class rm {
 
+    //logger
+    public static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(rm.class);
+
     public static String rm(String mdfsPath, String reqType){
+
+
         try {
             if (reqType.equals("del_file")) {
+
+                //log
+                logger.log(Level.ALL, "Command:rm | log: Starting to perform rm command for file " + mdfsPath);
 
                 //send rm_file request
                 JSONObject repJSON = EKClient.rm_file(mdfsPath);
@@ -55,19 +65,35 @@ public class rm {
                                 sendDeletionReq(fileName, fileID, guid);
                             }
 
+                            //log
+                            logger.log(Level.ALL, "File deletion success!");
+
                             //return success message
                             return "File deletion success!";
 
                         }else{
+
+                            //log
+                            logger.log(Level.DEBUG, "Command:rm | log: File has been deleted from edgeKeeper but could not trigger deletion to other MDFS devices.");
+
+                            //return
                             return "File has been deleted from edgeKeeper but could not trigger deletion to other MDFS devices.";
                         }
 
 
                     } else {
+
+                        //log
+                        logger.log(Level.DEBUG, "Command:rm | log: File " + mdfsPath + " deletion failed, " + repJSON.getString(RequestTranslator.messageField));
+
                         //return error message
                         return "-rm failed! " + repJSON.getString(RequestTranslator.messageField);
                     }
                 } else {
+
+                    //log
+                    logger.log(Level.DEBUG, "Command:rm | log: File " + mdfsPath + " deletion failed, Could not connect to local EdgeKeeper.");
+
                     //could not connect to edgekeeper
                     return "Could not connect to local EdgeKeeper.";
                 }

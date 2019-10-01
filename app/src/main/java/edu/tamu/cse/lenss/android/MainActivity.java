@@ -16,6 +16,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+
+import java.io.IOException;
+
 //import edu.tamu.cse.lenss.utils
 
 
@@ -39,9 +42,6 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
-
-
-
 
         checkPermissions();
     }

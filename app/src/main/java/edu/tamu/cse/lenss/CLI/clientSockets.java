@@ -7,8 +7,6 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
-import static java.lang.Thread.sleep;
-
 //this class temporarily contains the sockets of a newly connected CLI client, until the request has been completed.
 //when the request has been completed, the client socket is taken out of map, reply is sent and the socket is closed.
 
