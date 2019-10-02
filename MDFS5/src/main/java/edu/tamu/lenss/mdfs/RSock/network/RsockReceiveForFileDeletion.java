@@ -1,6 +1,9 @@
 package edu.tamu.lenss.mdfs.RSock.network;
 
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+
 import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeper;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.Handler.ServiceHelper;
@@ -11,6 +14,9 @@ import example.ReceivedFile;
 //this class is used for receiving packets that contains file information
 // to delete from a  device completely.
 public class RsockReceiveForFileDeletion implements Runnable{
+
+    //logger
+    public static Logger logger = Logger.getLogger(RsockReceiveForFileDeletion.class);
 
 
     private static boolean isTerminated = false;
@@ -44,6 +50,7 @@ public class RsockReceiveForFileDeletion implements Runnable{
             }
 
             if(rcvdfile!=null) {
+
                 System.out.println("new incoming rsock for file deletion");
 
                 //get file information and parse
@@ -53,9 +60,15 @@ public class RsockReceiveForFileDeletion implements Runnable{
                 fileName = tokens[0];
                 fileID = Long.parseLong(tokens[1]);
 
+                //log
+                logger.log(Level.ALL, "Received file deletion request for file " + fileName);
+
                 //trigger delete on this device
                 try {
                     ServiceHelper.getInstance().getDirectory().deleteFile(fileID, fileName);
+
+                    //log
+                    logger.log(Level.ALL, "File " + fileName + " has been deleted from disk.");
                 }catch(Exception e){
                     e.printStackTrace();
                 }

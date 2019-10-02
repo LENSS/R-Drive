@@ -1,8 +1,19 @@
 package edu.tamu.lenss.mdfs.Commands.help;
 
+import org.apache.log4j.Level;
+
+import edu.tamu.lenss.mdfs.Handler.StartAll;
+
 public class help {
 
+    //logger
+    public static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(help.class);
+
     public static String help() {
+
+        //log
+        logger.log(Level.ALL, "Starting to handle -help command.");
+
         String reply =
                 "mdfs -help                                  : Shows all MDFS commands.<newline>" +
                 "mdfs -ls <mdfs_dir>                         : Lists all directory/sub-directories in MDFS.<newline>" +
@@ -22,6 +33,11 @@ public class help {
                 //"<permission_list>                                                         : WORLD | OWNER | GUID(s) | GROUP.<newline>"
                 ;
 
+
+        //log
+        logger.log(Level.ALL, "reply sent for -help command.");
+
+        //return
         return reply;
     }
 }

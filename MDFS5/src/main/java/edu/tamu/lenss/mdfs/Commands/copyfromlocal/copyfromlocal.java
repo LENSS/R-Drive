@@ -2,15 +2,25 @@ package edu.tamu.lenss.mdfs.Commands.copyfromlocal;
 
 import android.os.Environment;
 
+import org.apache.log4j.Level;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+
+import edu.tamu.lenss.mdfs.Commands.help.help;
 
 
 //copy a file from cli client side to the android phone/linux machine where mdfs is running
 public class copyfromlocal {
 
+    //logger
+    public static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(copyfromlocal.class);
+
     public static String copyfromlocal( String[] cmd){
+
+        //log
+        logger.log(Level.ALL, "Starting to handle -copyFromLocal command.");
 
         //this command has already been verified and parsed from the client side
         //get all the variables
@@ -36,7 +46,14 @@ public class copyfromlocal {
         File dir = new File(androidDir);
         if(!dir.exists()){
             boolean mkdir = dir.mkdirs();
-            if(!mkdir){ return "Error! Cannot make directory in android phone."; }
+            if(!mkdir){
+
+                //log
+                logger.log(Level.ALL, "-copyFromLocal failed! Could not make directory in android phone.");
+
+                //return
+                return "Error! Cannot make directory in android phone.";
+            }
         }
 
         //check if the file already exists, if does, delete it first
@@ -54,6 +71,10 @@ public class copyfromlocal {
         }catch(IOException e ){
             e.printStackTrace();
         }
+
+
+        //log
+        logger.log(Level.ALL, "-copyFromLocal success");
 
         //send back reply
         return "File copy success!";

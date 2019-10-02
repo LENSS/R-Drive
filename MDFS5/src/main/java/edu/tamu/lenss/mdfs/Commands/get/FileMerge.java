@@ -42,6 +42,9 @@ public class FileMerge implements Runnable{
     @Override
     public void run() {
 
+        //log
+        MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Starting to merge file for filaname " + mdfsrsockblock.fileName);
+
         //for each block decode blockFile
         for(int i=0; i< mdfsrsockblock.totalNumOfBlocks; i++){
 
@@ -50,7 +53,9 @@ public class FileMerge implements Runnable{
 
             //decode and write the blockFile in disk
             if(fragments!=null) {
+
                 decodeBlockFile(fragments, i);
+
             }else{
 
                 //for some block, fragments couldnt be fetched form disk.
@@ -122,14 +127,14 @@ public class FileMerge implements Runnable{
             String s = blockFragments.size() + " block fragments are available locally.";
 
             //log and listener
-            MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "block# " + blockIdx + " decryption failed, insufficient fragments.");
+            MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, " decryption failed for block# " + blockIdx + " of file " + mdfsrsockblock.fileName + ", insufficient fragments.");
                 return;
         }
 
         //if decryptkey is null
         if (ServiceHelper.getInstance().getEncryptKey() == null) {
             //log and listener
-            MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "Block# " +  blockIdx + " decryption failed, no decryption key found.");
+            MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, " decryption failed for Block# " +  blockIdx + " decryption failed, no decryption key found.");
             return;
         }
 
@@ -147,12 +152,12 @@ public class FileMerge implements Runnable{
         if (decoder.ifYouSmellWhatTheRockIsCooking()) {
 
             //log
-            MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Block# " + blockIdx +" Decryption Complete");
+            MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Block# " + blockIdx +" Decryption Complete for filename " + mdfsrsockblock.fileName);
 
         } else {
 
             //log and listener
-            MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "Failed to merge fragments of block# " + blockIdx);
+            MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "Failed to merge fragments of block# " + blockIdx + " for filename " + mdfsrsockblock.fileName);
             return;
 
         }
@@ -166,7 +171,7 @@ public class FileMerge implements Runnable{
         if(!getUtils.resolvedRequests.contains(mdfsrsockblock.uuid)) {
 
             //log
-            MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple block.");
+            MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple blocks for filename " + mdfsrsockblock.fileName);
 
             boolean mergeResult = false;
             //get all the block files from disk

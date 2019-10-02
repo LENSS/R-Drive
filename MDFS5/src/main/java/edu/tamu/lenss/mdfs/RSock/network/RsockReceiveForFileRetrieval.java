@@ -169,6 +169,9 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                                     System.out.println("created file directory as it didnt exist");
                                 }else{
                                     System.out.println("couldnt create file directory");
+
+                                    //log
+                                    logger.log(Level.DEBUG, "Could not create file directory for storing fragment for file " + mdfsrsockblock.fileName);
                                 }
 
                             }
@@ -184,6 +187,9 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                                     System.out.println("created block directory.");
                                 }else{
                                     System.out.println("couldnt create block directory.");
+
+                                    //log
+                                    logger.log(Level.DEBUG, "Could not create block directory for storing fragment for file " + mdfsrsockblock.fileName);
                                 }
 
                             }

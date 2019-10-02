@@ -1,5 +1,7 @@
 package edu.tamu.lenss.mdfs.Handler;
 
+import android.os.Environment;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -8,6 +10,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import edu.tamu.cse.lenss.edgeKeeper.utils.EKUtils;
+import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.Utils.MDFSDirectory;
 
 public class ServiceHelper {
@@ -23,7 +26,7 @@ public class ServiceHelper {
 
 		//init log
 		try {
-			EKUtils.initLogger("/storage/emulated/0/MDFS/mdfs_log.log", Level.ALL);
+			EKUtils.initLogger(Constants.MDFS_LOG_PATH, Level.ALL);
 		} catch (IOException e) {
 			System.out.println("Could not init log ");
 		}

@@ -56,6 +56,7 @@ public class RsockReceiveForFileCreation implements Runnable{
 
                 //check for null
                 if(rcvdfile!=null) {
+
                     System.out.println("new incoming rsock for file creation");
 
                     //convert byteArray into MDFSRsockBlockCreator object
@@ -85,6 +86,7 @@ public class RsockReceiveForFileCreation implements Runnable{
                 }
 
             } catch (IOException | ClassNotFoundException e) {
+
                 logger.log(Level.FATAL, "Exception in constructing fragment ", e);
             }
         }
@@ -119,6 +121,8 @@ public class RsockReceiveForFileCreation implements Runnable{
                  outputStream.flush();
                  outputStream.close();
              }catch(IOException e){
+
+                 //log
                  logger.log(Level.DEBUG,"Could not write fragment bytes into file for fragment# " + fragmentIdx + " of block# " + blockIdx + " of filename " + fileName + ".");
              }
 

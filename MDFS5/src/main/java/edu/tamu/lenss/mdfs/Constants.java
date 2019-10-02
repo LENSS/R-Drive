@@ -1,5 +1,7 @@
 package edu.tamu.lenss.mdfs;
 
+import android.os.Environment;
+
 import java.io.File;
 
 public class Constants {
@@ -13,6 +15,7 @@ public class Constants {
 
 	public static final String ANDROID_DIR_ROOT = "MDFS";
 	public static final String ANDROID_DIR_CACHE = ANDROID_DIR_ROOT + File.separator + "cache";
+
     public static String ANDROID_DIR_DECRYPTED = "";
 
 	public static final String NAME_MDFS_DIRECTORY = "mdfs_directory";
@@ -21,5 +24,7 @@ public class Constants {
 	public static final int MAX_N_VAL = 8; 										// max value of n
 
     public static final boolean metadataIsGlobal = true;
-    public static boolean testRsock = true;
+    public static boolean testRsock = false;
+
+	public static final String MDFS_LOG_PATH = Environment.getExternalStorageDirectory() + "/distressnet/MDFS/mdfs_log.log";
 }

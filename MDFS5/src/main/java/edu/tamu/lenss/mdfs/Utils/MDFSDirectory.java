@@ -128,6 +128,7 @@ public class MDFSDirectory implements Serializable {
 
 	//delete everything of a file from local mdfs directory
 	public void deleteFile(long fileId, String fName) {
+
 		File rootDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT);
 		if (!rootDir.exists())
 			return;

@@ -1,5 +1,6 @@
 package edu.tamu.lenss.mdfs.Commands.get;
 
+import org.apache.log4j.Level;
 import org.json.JSONObject;
 
 import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
@@ -10,6 +11,8 @@ import edu.tamu.lenss.mdfs.Model.MDFSFileInfo;
 
 public class get {
 
+    //logger
+    public static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(get.class);
 
     public static String get(String mdfsDirWithFilename, String localDir){
 
@@ -18,6 +21,9 @@ public class get {
 
         //check for null
         if(metadata!=null){
+
+            //logger
+            logger.log(Level.ALL, "Command:get | log: Fetched file metadata for filaname " + metadata.getFileName());
 
             //re-create MDFSFileInfo object
             MDFSFileInfo fileInfo  = new MDFSFileInfo(metadata.getFileName(), metadata.getCreatedTime());
@@ -34,6 +40,10 @@ public class get {
 
 
         }else{
+
+            //log
+            logger.log(Level.ERROR, "Could not fetch file metadata from local EdgeKeeper for filename " + mdfsDirWithFilename);
+
             return "-get failed! Could not fetch file metadata from local EdgeKeeper (check connection).";
         }
     }
@@ -60,12 +70,20 @@ public class get {
                     if(metadata!=null){
                         return metadata;
                     }else{
+
+                        //log
+                        logger.log(Level.ERROR, "-get failed! Could not convert json object into metadata for file " + mdfsDirWithFilename);
+
                         return null;
                     }
                 } else {
                     return null;
                 }
             } else {
+
+                //log
+                logger.log(Level.ERROR, "-get failed! Could not fetch metadata for file " + mdfsDirWithFilename);
+
                 return null;
             }
         }catch(Exception e){

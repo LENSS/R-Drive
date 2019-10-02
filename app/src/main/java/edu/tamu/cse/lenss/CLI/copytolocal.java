@@ -17,6 +17,10 @@ public class copytolocal {
 
     public static  void copytolocal(String clientID, String[] cmd){
 
+
+        //sout
+        System.out.println("Staring to handle -copyToLocal command.");
+
         //no need to check the command this command is already verified
         String androidDir = cmd[2];
         String filename = cmd[3];
@@ -38,12 +42,15 @@ public class copytolocal {
 
         if(file.exists()){
 
-            if(file.length()>2000000){
+            if(file.length()>550000){
                 reply = "FILETOOLARGE 0 DUMMYFILEDATA";
                 readyToSend = true;
             }else {
-                //get all the files in a byteArray
+
+
                 try {
+
+                    //get all the files in a byteArray
                     byte[] bArray = new byte[(int) file.length()];  // allocate a size of 2 MB
                     FileInputStream in = new FileInputStream(androidDir + filename);
                     readLen = in.read(bArray);
@@ -64,9 +71,9 @@ public class copytolocal {
                         }
                         reply = "SUCCESS" + " " + Integer.toString(readLen) + " " + data;
 
-                        //check if the final reply variable size is less than 5 mb.
+                        //check if the final reply variable size is less than 1MB
                         //note: on the reciever side, a 5 mb size limit si sent in send_receive_ng() function.
-                        if (reply.length() > 8000000) {
+                        if (reply.length() > 1000000) {
                             reply = "FILETOOLARGE 0 DUMMYFILEDATA";
                             readyToSend = true;
                         } else {
@@ -105,6 +112,8 @@ public class copytolocal {
                 int start = 0;
                 int end = 1000;
                 int total = 0;
+
+
                 while(true) {
                     //check when to break
                     if(total>=reply.length()){break;}
@@ -113,7 +122,8 @@ public class copytolocal {
                     for (int i = start; i < end; i++) { replyToken = replyToken + reply.charAt(i); total++;}
 
                     //increment indexes for next iteration
-                    start = end; end = end + 1000;
+                    start = end;
+                    end = end + 1000;
                     if(end>=reply.length()){end = reply.length();}
 
                     //put the replyToken into array
@@ -131,19 +141,26 @@ public class copytolocal {
                 //send the reply tokens one by one
                 int count = 0;
                 for(int i=0; i< replyTokens.length; i++){
+
+                    //print first reply
+                    System.out.println(replyTokens[i]);
+
+
+                    //send and sleep
                     clientSockets.send(clientID, replyTokens[i]);
-                    Sleep(100);
+                    Sleep(500);
                 }
 
                 //when done, close the socket
-                clientSockets.close(clientID);
+                //clientSockets.close(clientID);
 
             }else{
+
                 //make the only reply
                 reply = "1" + "^"  +  reply;
 
                 //send the reply
-                clientSockets.sendAndClose(clientID, reply);
+                clientSockets.send(clientID, reply);
             }
 
         }

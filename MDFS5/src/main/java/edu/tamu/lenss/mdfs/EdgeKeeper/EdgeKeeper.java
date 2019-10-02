@@ -1,12 +1,19 @@
 package edu.tamu.lenss.mdfs.EdgeKeeper;
 
+import org.apache.log4j.Level;
+
 import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
+import edu.tamu.lenss.mdfs.Handler.StartAll;
 
 public class EdgeKeeper {
+
+    //logger
+    public static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(EdgeKeeper.class);
 
     public static String ownGUID;
 
     public EdgeKeeper(){
+
         register();
         obtainOwnGUID();
     }
@@ -16,11 +23,11 @@ public class EdgeKeeper {
     private void obtainOwnGUID() {
         ownGUID = EKClient.getOwnGuid();
         if(ownGUID==null){
-            System.out.println("EdgeKeeper Error! could not init EdgeKeeper");
+            logger.log(Level.ERROR, "EdgeKeeper Error! could not init local EdgeKeeper");
             throw new NullPointerException("EdgeKeeper initialization error...Maybe local EdgeKeeper server is not running or not connected.");
 
         }else{
-            System.out.println("own GUID: " + ownGUID);
+            logger.log(Level.ALL,"own GUID: " + ownGUID);
         }
 
     }

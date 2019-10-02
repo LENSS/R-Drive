@@ -58,12 +58,33 @@ public class clientSockets {
 
     }
 
+
+
     public static void sendAndClose(String clientID, String reply){
         send(clientID, reply);
         close(clientID);
 
         //remove the entry from the map
         sockets.remove(clientID);
+    }
+
+
+    public static void send_without_flush(String clientID, String reply){
+
+        ///get the clientSockets object from map
+        clientSockets socket = sockets.get(clientID);
+
+        //write on the socket aka send reply to client
+        if(socket!=null) {
+            try {
+                socket.os.write((reply).getBytes());
+                //socket.os.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+                close(clientID);
+            }
+        }
+
     }
 
 }
