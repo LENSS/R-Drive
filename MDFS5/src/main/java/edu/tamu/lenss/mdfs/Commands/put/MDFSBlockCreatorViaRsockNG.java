@@ -199,7 +199,7 @@ public class MDFSBlockCreatorViaRsockNG{
 
 
     //encrypt a blockfile and store in the disk.
-    //this function does erasure coding(ReedSolomon) and
+    //this function does fragmentation/erasure coding(ReedSolomon) and
     //cipher works.
     private boolean encryptFile(){
 
