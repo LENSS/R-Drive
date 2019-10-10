@@ -23,10 +23,10 @@ public class get {
         if(metadata!=null){
 
             //logger
-            logger.log(Level.ALL, "Command:get | log: Fetched file metadata for filaname " + metadata.getFileName());
+            logger.log(Level.ALL, "Command:get | log: Fetched file metadata for filaname " + metadata.getFileName() + " of fileID "  + metadata.getFileID());
 
             //re-create MDFSFileInfo object
-            MDFSFileInfo fileInfo  = new MDFSFileInfo(metadata.getFileName(), metadata.getCreatedTime());
+            MDFSFileInfo fileInfo  = new MDFSFileInfo(metadata.getFileName(), metadata.getFileID());
             fileInfo.setFileSize(metadata.getFileSize());
             fileInfo.setNumberOfBlocks((byte)metadata.getBlockCount());
             fileInfo.setFragmentsParms((byte)metadata.getn2(),  (byte)metadata.getk2());

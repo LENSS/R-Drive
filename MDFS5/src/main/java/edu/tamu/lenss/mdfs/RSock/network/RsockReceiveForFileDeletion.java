@@ -37,7 +37,7 @@ public class RsockReceiveForFileDeletion implements Runnable{
         String[] tokens = null;
         String fileInformation;
         String fileName;
-        long fileID;
+        String fileID;
 
         //while loop
         while(!isTerminated){
@@ -58,7 +58,7 @@ public class RsockReceiveForFileDeletion implements Runnable{
                 tokens = fileInformation.split(RSockConstants.deletion_tag);
                 tokens = IOUtilities.delEmptyStr(tokens);
                 fileName = tokens[0];
-                fileID = Long.parseLong(tokens[1]);
+                fileID = tokens[1];
 
                 //log
                 logger.log(Level.ALL, "Received file deletion request for file " + fileName);

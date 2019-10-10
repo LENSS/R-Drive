@@ -47,7 +47,15 @@ public class put {
             //get the file
             File file = listofFiles[index];
 
-            //check filesize is within allowed size
+            //check if filesize is 0 bytes
+            if(file.length()<=0){
+                pair.setString("-put failed! File size 0 bytes.");
+                pair.setFile(null);
+                return pair;
+            }
+
+
+            //check filesize is within allowed max size
             if(file.length()>= Constants.MAX_FILE_SIZE){
                 pair.setString("-put failed! File too large! Max allowed size " + Constants.MAX_FILE_SIZE + " bytes and filesize " + file.length() + " bytes.");
                 pair.setFile(null);
@@ -63,9 +71,10 @@ public class put {
 
 
             //check block count
-            if((file.length()/Constants.MAX_BLOCK_SIZE)>127){ //max java byte value
+            if((file.length()/Constants.MAX_BLOCK_SIZE)> Constants.MAX_BLOCK_COUNT){
                 pair.setString("-put failed! Block count exceeded. Choosing a larger block size might solve this problem.");
                 pair.setFile(null);
+                return pair;
             }else{
                 pair.setString("SUCCESS");
                 pair.setFile(file);
@@ -73,6 +82,7 @@ public class put {
         }else{
             pair.setString("-put failed! File not found.");
             pair.setFile(null);
+            return pair;
         }
 
         return pair;
@@ -82,10 +92,12 @@ public class put {
     private static String sendFile(String filename, File file, String filePathMDFS){
 
 
-        ///check block size is not exceeded beyond integer value.
+        //check block size is not exceeded beyond integer value.
+        //in that case, switch to default block count.
+        //we limit the number of blocks to be a byte value(max: 127).
         int maxBlockSize = Constants.MAX_BLOCK_SIZE;
         if(maxBlockSize >= Integer.MAX_VALUE){
-            maxBlockSize = 2048 * 2048;
+            maxBlockSize = (int) Constants.DEFAULT_BLOCK_SIZE;
         }
 
         //send the file in the same thread

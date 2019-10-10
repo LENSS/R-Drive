@@ -49,7 +49,7 @@ class RequestHandler implements Runnable {
             //make clientSockets object
             clientSockets socket = new clientSockets(inBuffer, os, cSocket);
 
-            //generate random uuid (aka clientID)
+            //generate random blockRetrieveReqUUID (aka clientID)
             String clientID = UUID.randomUUID().toString().substring(0,12);
 
             //put the clientSockets in the static map <clientID, clientSockets>

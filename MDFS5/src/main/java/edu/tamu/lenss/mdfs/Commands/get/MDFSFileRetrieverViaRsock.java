@@ -11,14 +11,13 @@ import java.util.Set;
 import java.util.UUID;
 
 import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
+import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeper;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.Model.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.Model.MDFSRsockBlockForFileRetrieve;
 import edu.tamu.lenss.mdfs.Utils.IOUtilities;
 import rsock.Topology;
-
-import static java.util.logging.Level.ALL;
 
 
 public class MDFSFileRetrieverViaRsock {
@@ -52,21 +51,20 @@ public class MDFSFileRetrieverViaRsock {
         //get/populate missingBlocksAndFrags array for each block
         boolean succeeded  = false;
         for(int i=0; i< fileInfo.getNumberOfBlocks(); i++){
-            succeeded = getUtils.getMissingFragmentsOfABlockFromDisk(missingBlocksAndFrags, fileInfo.getFileName(), fileInfo.getCreatedTime(), fileInfo.getN2() ,i);
+            succeeded = getUtils.getMissingFragmentsOfABlockFromDisk(missingBlocksAndFrags, fileInfo.getFileName(), fileInfo.getFileID(), fileInfo.getN2() ,i);
         }
 
         //check if fetching missingBlocksAndFrags information succeeded
         if(succeeded) {
 
-
             //print before normalize
-            //print2DArray(missingBlocksAndFrags, "print before normalize");
+            getUtils.print2DArray(missingBlocksAndFrags, "print before normalize");
 
             //check if this node has already K frags for each block
             if (getUtils.checkEnoughFragsAvailable(missingBlocksAndFrags, fileInfo.getK2())) {
 
                 //merge the file in a new thread
-                MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.Reply, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, "dummyDEstGUID", fileInfo.getFileName(), fileInfo.getCreatedTime(), fileInfo.getNumberOfBlocks(), (byte)0, (byte)0, localDir, null);
+                MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.Reply, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, "dummyDEstGUID", fileInfo.getFileName(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), (byte)0, (byte)0, localDir, null);
                 new FileMerge(mdfsrsockblock).run();
 
                 //log
@@ -107,7 +105,7 @@ public class MDFSFileRetrieverViaRsock {
                 }
 
                 //print after normalize
-                //print2DArray(missingBlocksAndFrags, "print after normalize");
+                getUtils.print2DArray(missingBlocksAndFrags, "print after normalize");
 
                 //choose best nodes for each block, based on metadata.
                 //this list contains each entry as block_frag_guid manner.
@@ -118,7 +116,7 @@ public class MDFSFileRetrieverViaRsock {
 
                     String chNodes = "";
                     for (int i = 0; i < chosenNodes.size(); i++) {
-                        chNodes = chNodes + chosenNodes.get(i) + " ";
+                        chNodes = chNodes + chosenNodes.get(i) + "\n";
                     }
 
                     //log
@@ -168,7 +166,7 @@ public class MDFSFileRetrieverViaRsock {
         byte fragmentIndex = (byte) Integer.parseInt(tokens[2]);
 
         //make an object of MDFSRsockBlockRetrieval with request tag
-        MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.Request, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, destGUID, fileInfo.getFileName(), fileInfo.getCreatedTime(), fileInfo.getNumberOfBlocks(), blockIdx, fragmentIndex, localDir, null);
+        MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.Request, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, destGUID, fileInfo.getFileName(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), blockIdx, fragmentIndex, localDir, null);
 
         //get byteArray and size of the MDFSRsockBlockRetreival obj
         byte[] data = null;
@@ -204,25 +202,6 @@ public class MDFSFileRetrieverViaRsock {
         return false;
 
     }
-
-
-
-    //prints the missing fragments of each block in a 2d matrix
-    //1 means: fragment missing, 0 means fragment exists in this devices disk.
-    public void print2DArray(int[][] missingBlocksAndFrags, String message){
-
-        System.out.println(message);
-        for(int i=0; i< missingBlocksAndFrags.length; i++){
-            for(int j=0; j< missingBlocksAndFrags[i].length; j++){
-                System.out.print(missingBlocksAndFrags[i][j] + " ");
-            }
-            System.out.println();
-        }
-        System.out.println();
-        System.out.println();
-        System.out.println();
-    }
-
 
 
     //this function chooses the best nodes for sending file retrieval request.
@@ -316,16 +295,4 @@ public class MDFSFileRetrieverViaRsock {
 
         return chosenNodes;
     }
-
-
-
-
-
-
-
-
-
-
-
-
 }

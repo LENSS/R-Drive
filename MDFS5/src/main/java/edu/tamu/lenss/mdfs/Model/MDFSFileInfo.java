@@ -11,8 +11,8 @@ import edu.tamu.lenss.mdfs.Constants;
  */
 public class MDFSFileInfo implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private final long createdTime;  //fileID
-	private final String fileName;
+	private String fileID;
+	private String fileName;
 	private long fileSize;   //entire file size
 	private byte k2, n2;
 	private byte numberOfBlocks;
@@ -27,13 +27,13 @@ public class MDFSFileInfo implements Serializable {
 	}
 
 	//filename fileid
-	public MDFSFileInfo(String fileName, long createdTime){
+	public MDFSFileInfo(String fileName, String fileID){
 		this.fileName = fileName;
-		this.createdTime = createdTime;
+		this.fileID = fileID;
 	}
 
-	public long getCreatedTime() {
-		return createdTime;
+	public String getFileID() {
+		return fileID;
 	}
 
 	public String getFileName() {
@@ -63,20 +63,20 @@ public class MDFSFileInfo implements Serializable {
 
 
 	//returns: /MDFS/test1.jpg__0123/
-	public static String getFileDirPath(String fileName, long createdTime){
+	public static String getFileDirPath(String fileName, String fileID){
 		return Constants.ANDROID_DIR_ROOT + File.separator
-				+ getFileDirName(fileName, createdTime);
+				+ getFileDirName(fileName, fileID);
 	}
 	
 	/**
 	 * Return the directory name of a file
 	 * @param fileName
-	 * @param createdTime
+	 * @param fileID
 	 * @return fileName_MMddyyy_HHmmss
 	 */
 	//returns: test1.jpg__0123/
-	public static String getFileDirName(String fileName, long createdTime){
-		return fileName + "__" + createdTime;
+	public static String getFileDirName(String fileName, String fileID){
+		return fileName + "__" + fileID;
 	}
 	
 	/**
@@ -114,8 +114,8 @@ public class MDFSFileInfo implements Serializable {
 	 * @return
 	 */
 	//returns: /MDFS/test1.jpg__0123/test1.jpg__0/
-	public static String getBlockDirPath(String fileName, long creationTime, byte blockIdx){
-		return Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(fileName, creationTime) + File.separator + MDFSFileInfo.getBlockDirName(fileName, blockIdx);
+	public static String getBlockDirPath(String fileName, String fileID, byte blockIdx){
+		return Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(fileName, fileID) + File.separator + MDFSFileInfo.getBlockDirName(fileName, blockIdx);
 	}
 	
 	/**
@@ -126,7 +126,7 @@ public class MDFSFileInfo implements Serializable {
 	 * @return
 	 */
 	//returns: /MDFS/test1.jpg__0123/test1.jpg__0/test1.jpg__0__frag__0
-	public static String getFragmentPath(String fileName, long fileId, byte blockIdx, byte fragIdx){
-		return MDFSFileInfo.getBlockDirPath(fileName, fileId, blockIdx)     + File.separator + MDFSFileInfo.getFragName(fileName, blockIdx, fragIdx);
+	public static String getFragmentPath(String fileName, String fileID, byte blockIdx, byte fragIdx){
+		return MDFSFileInfo.getBlockDirPath(fileName, fileID, blockIdx)     + File.separator + MDFSFileInfo.getFragName(fileName, blockIdx, fragIdx);
 	}
 }

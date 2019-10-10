@@ -14,14 +14,14 @@ public class MDFSRsockBlockForFileRetrieve implements Serializable {
     //enum
     public enum Type{ Request, Reply }
 
-    public String uuid;
+    public String blockRetrieveReqUUID;
     public Type type;
     public byte n2;
     public byte k2;
     public String srcGUID;
     public String destGUID;
     public String fileName;
-    public long fileId;
+    public String fileId;
     public byte totalNumOfBlocks;
     public byte blockIdx;
     public byte fragmentIndex;
@@ -32,8 +32,8 @@ public class MDFSRsockBlockForFileRetrieve implements Serializable {
     private MDFSRsockBlockForFileRetrieve(){}
 
     //only public constructor
-    public MDFSRsockBlockForFileRetrieve(String uuid, Type type, byte n2, byte k2, String srcGUID, String destGUID, String fileName, long fileId, byte totalNumOfBlocks , byte blockIdx, byte fragmentIndex, String locDir, byte[] fileFrag){
-        this.uuid = uuid;
+    public MDFSRsockBlockForFileRetrieve(String uuid, Type type, byte n2, byte k2, String srcGUID, String destGUID, String fileName, String fileId, byte totalNumOfBlocks , byte blockIdx, byte fragmentIndex, String locDir, byte[] fileFrag){
+        this.blockRetrieveReqUUID = uuid;
         this.type = type;
         this.n2 = n2;
         this.k2 = k2;

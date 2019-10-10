@@ -25,6 +25,7 @@ import edu.tamu.lenss.mdfs.Model.MDFSRsockBlockForFileRetrieve;
 import edu.tamu.lenss.mdfs.Utils.AndroidIOUtils;
 import edu.tamu.lenss.mdfs.Utils.IOUtilities;
 
+//this class is called by RsockReceiveForFileRetrieval.java class.
 //this class is run in a thread to merge a file after enough fragments are available for each block.
 public class FileMerge implements Runnable{
 
@@ -168,7 +169,7 @@ public class FileMerge implements Runnable{
     private void mergeMultipleBlocks() {
 
         //check if the request has already been resolved
-        if(!getUtils.resolvedRequests.contains(mdfsrsockblock.uuid)) {
+        if(!getUtils.resolvedRequests.contains(mdfsrsockblock.blockRetrieveReqUUID)) {
 
             //log
             MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple blocks for filename " + mdfsrsockblock.fileName);
@@ -229,8 +230,8 @@ public class FileMerge implements Runnable{
                 MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple blocks success!");
                 deleteBlocks();
 
-                //put uuid of this get request into resolvedRequests list
-                getUtils.resolvedRequests.add(mdfsrsockblock.uuid);
+                //put blockRetrieveReqUUID of this get request into resolvedRequests list
+                getUtils.resolvedRequests.add(mdfsrsockblock.blockRetrieveReqUUID);
 
             } else {
 
@@ -247,7 +248,7 @@ public class FileMerge implements Runnable{
     private void mergeSingleBlock(){
 
         //check if this get request has already been resolved
-        if(!getUtils.resolvedRequests.contains(mdfsrsockblock.uuid)) {
+        if(!getUtils.resolvedRequests.contains(mdfsrsockblock.blockRetrieveReqUUID)) {
 
             //log
             MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging single block.");
@@ -259,7 +260,7 @@ public class FileMerge implements Runnable{
 
             try {
                 Files.move(from, to);
-                getUtils.resolvedRequests.add(mdfsrsockblock.uuid);
+                getUtils.resolvedRequests.add(mdfsrsockblock.blockRetrieveReqUUID);
             } catch (IOException e) {
                 e.printStackTrace();
             }

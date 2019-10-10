@@ -33,8 +33,6 @@ public class ServiceHelper {
 
 		//start all
 		this.startAll = new StartAll();
-		this.directory = MDFSDirectory.readDirectory();
-		this.directory.syncLocal();
 
 
 	}
@@ -62,7 +60,6 @@ public class ServiceHelper {
 
 		//save directory and null servicehelper instance
 		if(instance != null ){
-			directory.saveDirectory();
 			instance = null;
 		}
 	}

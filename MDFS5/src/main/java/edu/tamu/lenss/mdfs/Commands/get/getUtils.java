@@ -22,12 +22,12 @@ public class getUtils {
     //all missing fragment indexes are marked 1, all available fragments are marked 0.
     //the boolean value is true when the function has executed successfully.
     //the boolean value if false, when the function execution has failed for some reason(maybe file read).
-    public static boolean getMissingFragmentsOfABlockFromDisk(int[][] missingBlocksAndFrags, String filename, Long fileid, int N2, int blockNumber){
+    public static boolean getMissingFragmentsOfABlockFromDisk(int[][] missingBlocksAndFrags, String filename, String fileID, int N2, int blockNumber){
 
         try {
             //pull the directory of the block
             ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg__0/ (directory)
-            File blockDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(filename, fileid, (byte) blockNumber));
+            File blockDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(filename, fileID, (byte) blockNumber));
 
             //check if block directory exists
             if (blockDir.exists() && blockDir.isDirectory() && blockDir.getName().contains(Integer.toString(blockNumber))) {
@@ -122,6 +122,24 @@ public class getUtils {
     private static byte parseFragNum(String fName) {
         return Byte.parseByte(fName.substring(fName.lastIndexOf("_") + 1).trim());
     }
+
+
+    //prints the missing fragments of each block in a 2d matrix
+    //1 means: fragment missing, 0 means fragment exists in this devices disk.
+    public static void print2DArray(int[][] missingBlocksAndFrags, String message){
+
+        System.out.println(message);
+        for(int i=0; i< missingBlocksAndFrags.length; i++){
+            for(int j=0; j< missingBlocksAndFrags[i].length; j++){
+                System.out.print(missingBlocksAndFrags[i][j] + " ");
+            }
+            System.out.println();
+        }
+        System.out.println();
+        System.out.println();
+        System.out.println();
+    }
+
 
 
 }

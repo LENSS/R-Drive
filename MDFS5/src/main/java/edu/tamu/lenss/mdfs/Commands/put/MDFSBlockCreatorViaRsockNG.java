@@ -34,7 +34,7 @@ public class MDFSBlockCreatorViaRsockNG{
     private File blockFile;
     private ServiceHelper serviceHelper;
     private MDFSFileInfo fileInfo;
-    String uniqueReqID;                     //unique req id fr file creation job
+    String uniqueReqID;                     //unique req id for file creation job
     String filePathMDFS;
     MDFSMetadata metadata;
 
@@ -99,7 +99,7 @@ public class MDFSBlockCreatorViaRsockNG{
         boolean result = true;
 
         // Scan through all files in the folder and load them
-        File fileFragDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileInfo.getFileName(), fileInfo.getCreatedTime(), blockIdx));
+        File fileFragDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileInfo.getFileName(), fileInfo.getFileID(), blockIdx));
         if(!fileFragDir.exists()){ return "No block directory found."; }
         File[] allFrags = fileFragDir.listFiles();
 
@@ -118,7 +118,7 @@ public class MDFSBlockCreatorViaRsockNG{
 
                     //dont sent fragments to myself again
                     if (!destNode.equals(EdgeKeeper.ownGUID)){
-                        result = result && fragmentUploaderViaRsock(oneFrag, filePathMDFS, fileInfo.getCreatedTime(), fragIndex,  destNode);
+                        result = result && fragmentUploaderViaRsock(oneFrag, filePathMDFS, fileInfo.getFileID(), fragIndex,  destNode);
                     }
                 }
             }
@@ -140,7 +140,7 @@ public class MDFSBlockCreatorViaRsockNG{
     }
 
     //this function sends the fragments to each destinations
-    private boolean fragmentUploaderViaRsock(File fileFrag, String filePathMDFS, long fileCreationTime, int fragIndex, String destGUID){
+    private boolean fragmentUploaderViaRsock(File fileFrag, String filePathMDFS, String fileID, int fragIndex, String destGUID){
 
         //return variable
         boolean result = false;
@@ -164,7 +164,7 @@ public class MDFSBlockCreatorViaRsockNG{
         }
 
         //make MDFSRsockBlockCreator obj
-        MDFSRsockBlockForFileCreate mdfsrsockblock = new MDFSRsockBlockForFileCreate(fileInfo.getFileName(), filePathMDFS, byteArray, fileCreationTime, fileInfo.getFileSize(), fileInfo.getN2(), fileInfo.getK2(), blockIndex, fragmentIndex, EdgeKeeper.ownGUID, uniqueReqID, Constants.metadataIsGlobal);
+        MDFSRsockBlockForFileCreate mdfsrsockblock = new MDFSRsockBlockForFileCreate(fileInfo.getFileName(), filePathMDFS, byteArray, fileID, fileInfo.getFileSize(), fileInfo.getN2(), fileInfo.getK2(), blockIndex, fragmentIndex, EdgeKeeper.ownGUID, uniqueReqID, Constants.metadataIsGlobal);
 
         //get byteArray and size of the MDFSRsockBlockCreator obj and do send over rsock
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -181,7 +181,7 @@ public class MDFSBlockCreatorViaRsockNG{
             //result = true; //test
 
             //log
-            MDFSFileCreatorViaRsockNG.logger.log(Level.ALL, "fragment# " + fragIndex +  " of block# " + blockIndex +" has been pushed to rsock daemon to guid: " + destGUID + "with uuid: " + uuid);
+            MDFSFileCreatorViaRsockNG.logger.log(Level.ALL, "fragment# " + fragIndex +  " of block# " + blockIndex +" has been pushed to rsock daemon to guid: " + destGUID + "with blockRetrieveReqUUID: " + uuid);
 
             //add block and fragment info into metadata
             metadata.addInfo(destGUID, blockIndex, fragIndex);
@@ -221,7 +221,7 @@ public class MDFSBlockCreatorViaRsockNG{
         if(fragInfos == null) {return false;}
 
         // Store the file fragments in local SDCard
-        File fragsDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileInfo.getFileName(), fileInfo.getCreatedTime(),	blockIdx));
+        File fragsDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileInfo.getFileName(), fileInfo.getFileID(),	blockIdx));
         HashSet<Byte> frags = new HashSet<Byte>();
 
         // Write file fragments to SD Card

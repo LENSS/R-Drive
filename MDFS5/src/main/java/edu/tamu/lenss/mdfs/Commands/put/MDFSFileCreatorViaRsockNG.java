@@ -12,9 +12,7 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -41,6 +39,7 @@ public class MDFSFileCreatorViaRsockNG{
     //variables
     private File file;                      //the actual file
     private MDFSFileInfo fileInfo;          //file information
+    private String fileID;                  //file ID
     private byte[] encryptKey;              //encryption key
     private int blockCount;
     private int maxBlockSize;
@@ -51,7 +50,7 @@ public class MDFSFileCreatorViaRsockNG{
     List<String> chosenNodes;
     MDFSMetadata metadata;                  //metadata object for this file
     String filePathMDFS;                    //virtual directory path in MDFS in which the file will be saved. if dir doesnt exist, it willbe created first
-    String uniqueReqID;                     //unique id
+    String fileCreationReqUUID;             //unique id
 
 
     //private default constructor
@@ -64,18 +63,19 @@ public class MDFSFileCreatorViaRsockNG{
                 int maxBlockSize,
                 double encodingRatio,
                 byte[] key) {
+        this.fileID = UUID.randomUUID().toString().replaceAll("-", "");
+        this.fileCreationReqUUID = UUID.randomUUID().toString();
         this.file = f;
         this.filePathMDFS = filePathMDFS;
         this.encodingRatio = encodingRatio;
         this.blockCount = (int)Math.ceil((double)file.length()/maxBlockSize);
         this.maxBlockSize = maxBlockSize;
-        this.fileInfo = new MDFSFileInfo(file.getName(), file.lastModified());
+        this.fileInfo = new MDFSFileInfo(file.getName(), fileID);
         this.fileInfo.setFileSize(file.length());
         this.fileInfo.setNumberOfBlocks((byte)blockCount);
-        this.uniqueReqID = UUID.randomUUID().toString();
         this.encryptKey = key;
         this.chosenNodes = new ArrayList<>();
-        this.metadata = MDFSMetadata.createFileMetadata(uniqueReqID, fileInfo.getCreatedTime(), fileInfo.getFileSize(), EdgeKeeper.ownGUID, EdgeKeeper.ownGUID, filePathMDFS + "/" + fileInfo.getFileName(), Constants.metadataIsGlobal);
+        this.metadata = MDFSMetadata.createFileMetadata(fileCreationReqUUID, fileID, fileInfo.getFileSize(), EdgeKeeper.ownGUID, EdgeKeeper.ownGUID, filePathMDFS + "/" + fileInfo.getFileName(), Constants.metadataIsGlobal);
     }
 
 
@@ -101,7 +101,8 @@ public class MDFSFileCreatorViaRsockNG{
                 //check if its single block or multiple blocks
                 if (blockCount > 1) {
 
-                    //partition the file
+                    //partition the file into blocks,
+                    //and write the blocks in disk
                     if (partition()) {
 
                         isPartComplete = true;
@@ -130,7 +131,7 @@ public class MDFSFileCreatorViaRsockNG{
 
                     // Single block so we create a new file and copy all the bytes from main file to new file in mdfs directory and operate on that
                     ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg_0123__blk__0 (file)
-                    File fileBlock = IOUtilities.createNewFile(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + MDFSFileInfo.getFileDirPath(file.getName(), file.lastModified()) + File.separator + MDFSFileInfo.getBlockName(file.getName(), (byte) 0));  //Isagor0!
+                    File fileBlock = IOUtilities.createNewFile(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + MDFSFileInfo.getFileDirPath(file.getName(), fileID) + File.separator + MDFSFileInfo.getBlockName(file.getName(), (byte) 0));  //Isagor0!
                     try {
                         Files.copy(file, fileBlock);
                     } catch (IOException e) {
@@ -178,46 +179,57 @@ public class MDFSFileCreatorViaRsockNG{
     }
 
 
-    //takes a file and converts it into multiple blocks.
+    //takes a file and converts it into multiple blocks,
+    //and writes the blocks in disk with the __blk__ tag.
     ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg_0123__blk__0 (file)
     private boolean partition(){
+
         boolean result = false;
 
-        ///storage/emulated/0/MDFS/test1.jpg_0123/ (directory)
-        String outputDirPath = File.separator + edu.tamu.lenss.mdfs.Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(file.getName(), file.lastModified());  //Isagor0!
+        try {
+            ///storage/emulated/0/MDFS/test1.jpg_0123/ (directory)
+            String outputDirPath = File.separator + edu.tamu.lenss.mdfs.Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(file.getName(), fileID);  //Isagor0!
 
-        byte[] fileBytes = IOUtilities.fileToByte(file);
+            byte[] fileBytes = IOUtilities.fileToByte(file);
 
-        byte[][] blockBytes = new byte[blockCount][];
+            byte[][] blockBytes = new byte[blockCount][];
 
-        int startIndex = 0;
-        int endIndex = maxBlockSize;
-        for(int i=0; i< blockCount; i++){
+            int startIndex = 0;
+            int endIndex = maxBlockSize;
+            for (int i = 0; i < blockCount; i++) {
 
-            //allocate space for ith block
-            blockBytes[i] = new byte[(endIndex -startIndex + Integer.BYTES)];
+                //allocate space for ith block
+                blockBytes[i] = new byte[(endIndex - startIndex + Integer.BYTES)];
 
-            //add the number itself of bytes about to be copied
-            ByteBuffer.wrap(blockBytes[i]).putInt(endIndex - startIndex);
+                //add the number itself of bytes about to be copied
+                ByteBuffer.wrap(blockBytes[i]).putInt(endIndex - startIndex);
 
-            //copy the file data into block file
-            System.arraycopy(fileBytes, startIndex, blockBytes[i], Integer.BYTES, (endIndex -startIndex));
+                //copy the file data into block file
+                System.arraycopy(fileBytes, startIndex, blockBytes[i], Integer.BYTES, (endIndex - startIndex));
 
-            //update start and end index for next iteration
-            startIndex = endIndex;
-            endIndex = endIndex + maxBlockSize;
-            if(endIndex>fileBytes.length){endIndex = fileBytes.length;}
+                //update start and end index for next iteration
+                startIndex = endIndex;
+                endIndex = endIndex + maxBlockSize;
+                if (endIndex > fileBytes.length) {
+                    endIndex = fileBytes.length;
+                }
+            }
+
+            //save the blockBytes into each files with appropriate naming
+            for (int i = 0; i < blockCount; i++) {
+                File blockFile = IOUtilities.byteToFile(blockBytes[i], AndroidIOUtils.getExternalFile(outputDirPath), (file.getName() + "__blk__" + i));
+
+            }
+
+            //log
+            logger.log(Level.ALL, "Successfully partitioned file into blocks.");
+
+            //coming here means all works succeeded without exception.
+            result = true;
+
+        }catch(Exception e ){
+            logger.log(Level.ERROR, "Could not partition file " + file.getName() +" into blocks.");
         }
-
-        //save the blockBytes into each files with appropriate naming
-        for(int i=0; i< blockCount; i++){
-            File blockFile = IOUtilities.byteToFile(blockBytes[i], AndroidIOUtils.getExternalFile(outputDirPath), (file.getName() + "__blk__" + i));
-        }
-
-        //log
-        logger.log(Level.ALL, "Successfully partitioned file into blocks.");
-
-        result = true;
         return result;
     }
 
@@ -239,7 +251,7 @@ public class MDFSFileCreatorViaRsockNG{
 
         //load the block directory
         ///storage/emulated/0/MDFS/test1.jpg_0123/ (directory)
-        final File fileDir = AndroidIOUtils.getExternalFile(edu.tamu.lenss.mdfs.Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(file.getName(), file.lastModified()));   //Isagor0!
+        final File fileDir = AndroidIOUtils.getExternalFile(edu.tamu.lenss.mdfs.Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(file.getName(), fileID));   //Isagor0!
 
         //array of blocks
         final File[] blocks = fileDir.listFiles(new FileFilter(){
@@ -258,7 +270,7 @@ public class MDFSFileCreatorViaRsockNG{
             byte idx = Byte.parseByte(fName.substring((fName.lastIndexOf("_")+1)));   //idx = block number
 
             //add block in uploadQ
-            uploadQ.add(new MDFSBlockCreatorViaRsockNG(blockF, filePathMDFS, fileInfo, idx, uniqueReqID, chosenNodes, encryptKey, metadata));
+            uploadQ.add(new MDFSBlockCreatorViaRsockNG(blockF, filePathMDFS, fileInfo, idx, fileCreationReqUUID, chosenNodes, encryptKey, metadata));
         }
 
         //create a result variable
@@ -316,6 +328,21 @@ public class MDFSFileCreatorViaRsockNG{
         //only cross them if both type of list are not null and size 0
         if(peerGUIDsListfromGNS!=null && peerGUIDsListfromOLSR!=null && peerGUIDsListfromGNS.size()!=0 && peerGUIDsListfromOLSR.size()!=0) {
 
+            //print MDFS peers size
+            System.out.println("mdfs peers from GNS: " + peerGUIDsListfromGNS.size());
+            for(String guid: peerGUIDsListfromGNS){
+                System.out.println(guid + " ");
+            }
+            System.out.println();
+
+            //print OLSR peers size
+            System.out.println("mdfs peers from olsr : "  + peerGUIDsListfromOLSR.size());
+            for(String guid: peerGUIDsListfromOLSR){
+                System.out.println(guid + " ");
+            }
+            System.out.println();
+
+
             try {
                 //cross the peerGUIDsListfromGNS and peerGUIDsListfromOLSR and get the common ones
                 List<String> commonPeerGUIDs = new ArrayList<>();
@@ -325,27 +352,13 @@ public class MDFSFileCreatorViaRsockNG{
                     }
                 }
 
-                //make a map<guid, pathWeight> for all nodes from ownGUID to each commonPeerGUIDs
-                HashMap<String, Double> peerGUIDsWithWeights = new HashMap<>();
+                //print common ones
+                System.out.println("size of common guids: " + commonPeerGUIDs.size());
 
-                //call Dijkstra from ownGUID to each of the commonPeerGUIDs and populate peerGUIDsWithWeights map
-                for (int i = 0; i < commonPeerGUIDs.size(); i++) {
-                    double pathWeight = Topology.getInstance(RSockConstants.intrfc_creation_appid).getShortestPathWeight(EdgeKeeper.ownGUID, commonPeerGUIDs.get(i));
-                    peerGUIDsWithWeights.put(commonPeerGUIDs.get(i), pathWeight);
-                }
+                //here
+                //get the common ones
+                chosenNodes = commonPeerGUIDs;
 
-                //sort the map by ascending order(less weight to more weight)
-                Map<String, Double> peerGUIDsWithWeightsSorted = IOUtilities.sortByComparator(peerGUIDsWithWeights, true);
-
-                //get first MAX_N_VAL(or less) number of nodes in a list(ones with less weight)
-                int count = 0;
-                for (Map.Entry<String, Double> pair : peerGUIDsWithWeightsSorted.entrySet()) {
-                    this.chosenNodes.add(pair.getKey());
-                    count++;
-                    if (count >= Constants.MAX_N_VAL) {
-                        break;
-                    }
-                }
             }catch(Exception e ){
                 //dont need to handle this error
             }
@@ -353,22 +366,10 @@ public class MDFSFileCreatorViaRsockNG{
 
 
         //log
-        logger.log(Level.ALL, "Successfully fetched neighbor nodes from olsr and MDFS nodesfrom EdgeKeeper");
+        logger.log(Level.ALL, "Successfully fetched neighbor nodes from olsr and MDFS nodes from EdgeKeeper");
 
         //add myself if it is not already in it
         if(!chosenNodes.contains(EdgeKeeper.ownGUID)){chosenNodes.add(EdgeKeeper.ownGUID);}
-
-        return "SUCCESS";
-    }
-
-    private String fetchTopDummy(){
-
-        chosenNodes.add("1BC657F8971A53E9BD90C285EB17C9080EC3EB8E");
-        chosenNodes.add("8877417A2CBA0D19636B44702E7DB497B5834559");
-        chosenNodes.add("05EE5FDB77AC19C7FBE5F92DD493B039BB4CD869");
-
-        //log
-        logger.log(Level.ALL, "Successfully fetched neighbor nodes from olsr and MDFS nodesfrom EdgeKeeper");
 
         return "SUCCESS";
     }

@@ -70,7 +70,7 @@ public class RsockReceiveForFileCreation implements Runnable{
                     String fileName = (String) mdfsrsockblock.fileName;
                     String filePathMDFS= (String) mdfsrsockblock.filePathMDFS;
                     byte[] byteArray = (byte[]) mdfsrsockblock.fileFrag;
-                    long fileCreatedTime = (long) mdfsrsockblock.fileCreatedTime;
+                    String fileID = (String) mdfsrsockblock.fileID;
                     long filesize = (long) mdfsrsockblock.entireFileSize;
                     byte n2 =  (byte) mdfsrsockblock.n2;
                     byte k2 =  (byte) mdfsrsockblock.k2;
@@ -81,7 +81,7 @@ public class RsockReceiveForFileCreation implements Runnable{
                     boolean isGlobal = (boolean) mdfsrsockblock.isGlobal;
 
                     //now save the fileFrag
-                    saveTheFileFragAndUpdateMetadataToEdgeKeeper(fileName, filePathMDFS, byteArray, fileCreatedTime, filesize, n2, k2, blockIdx, fragmentIdx, fileCreatorGUID, uniquereqid, isGlobal);
+                    saveTheFileFragAndUpdateMetadataToEdgeKeeper(fileName, filePathMDFS, byteArray, fileID, filesize, n2, k2, blockIdx, fragmentIdx, fileCreatorGUID, uniquereqid, isGlobal);
                     logger.log(Level.DEBUG, "fragment# " + fragmentIdx + " of block# " + blockIdx + " of filename " + fileName + " received from rsock.");
                 }
 
@@ -100,12 +100,12 @@ public class RsockReceiveForFileCreation implements Runnable{
     }
 
     //this function does two jobs one: save the filefrag locally in this device, two: submits fragment metadata to EdgeKeeper
-    private void saveTheFileFragAndUpdateMetadataToEdgeKeeper(String fileName, String filePathMDFS, byte[] byteArray, long fileCreatedTime, long filesize, byte n2, byte k2, byte blockIdx, byte fragmentIdx, String fileCreatorGUID, String uniquereqid, boolean isGlobal) {
+    private void saveTheFileFragAndUpdateMetadataToEdgeKeeper(String fileName, String filePathMDFS, byte[] byteArray, String fileID , long filesize, byte n2, byte k2, byte blockIdx, byte fragmentIdx, String fileCreatorGUID, String uniquereqid, boolean isGlobal) {
         //create file
         File tmp0 = null;
 
 
-            tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileName, fileCreatedTime, blockIdx));
+            tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileName, fileID, blockIdx));
 
             if(!tmp0.exists()){
                 if(!tmp0.mkdirs()){
@@ -115,7 +115,7 @@ public class RsockReceiveForFileCreation implements Runnable{
 
             //write on file
              try {
-                 tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(fileName, fileCreatedTime, blockIdx, fragmentIdx));
+                 tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(fileName, fileID, blockIdx, fragmentIdx));
                  FileOutputStream outputStream = new FileOutputStream(tmp0);
                  outputStream.write(byteArray);
                  outputStream.flush();
@@ -127,7 +127,7 @@ public class RsockReceiveForFileCreation implements Runnable{
              }
 
             //add info of the fragment I received and update to edgekeeper.
-            MDFSMetadata metadata = MDFSMetadata.createFileMetadata(uniquereqid, fileCreatedTime, filesize, fileCreatorGUID, EdgeKeeper.ownGUID, filePathMDFS + "/" + fileName, isGlobal);
+            MDFSMetadata metadata = MDFSMetadata.createFileMetadata(uniquereqid, fileID, filesize, fileCreatorGUID, EdgeKeeper.ownGUID, filePathMDFS + "/" + fileName, isGlobal);
             metadata.setn2(n2);
             metadata.setk2(k2);
             metadata.addInfo(EdgeKeeper.ownGUID, (int)blockIdx, (int)fragmentIdx);

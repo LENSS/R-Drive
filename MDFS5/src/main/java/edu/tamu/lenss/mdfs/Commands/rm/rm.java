@@ -1,19 +1,25 @@
 package edu.tamu.lenss.mdfs.Commands.rm;
 
 import org.apache.log4j.Level;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
 import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
 import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
+import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.command.RMcommand;
 import edu.tamu.cse.lenss.edgeKeeper.server.RequestTranslator;
 import edu.tamu.lenss.mdfs.Commands.get.MDFSFileRetrieverViaRsock;
+import edu.tamu.lenss.mdfs.EdgeKeeper.EdgeKeeper;
 import edu.tamu.lenss.mdfs.RSock.RSockConstants;
 import edu.tamu.lenss.mdfs.Handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.Utils.IOUtilities;
+import edu.tamu.lenss.mdfs.Utils.MDFSDirectory;
 
 public class rm {
 
@@ -48,7 +54,7 @@ public class rm {
                             String fileName = IOUtilities.getFileNameFromFullPath(metadata.getFilePathMDFS());
 
                             //get file ID
-                            long fileID = metadata.getCreatedTime();
+                            String fileID = metadata.getFileID();
 
                             //delete the fragment from my disk
                             try {
@@ -112,9 +118,48 @@ public class rm {
                     if (repJSON.getString(RequestTranslator.resultField).equals(RequestTranslator.successMessage)) {
 
                         //log
-                        logger.log(Level.ALL, "Directory " + mdfsPath + " deletion success.");
-                        //return success message
-                        return "Directory deletion success!";  //todo: delete all the file list it returns
+                        logger.log(Level.ALL, "Directory " + mdfsPath + " deletion success from EdgeKeeper, sending deletion commands to other MDFS nodes.");
+
+                        //get the list of json objects
+                        JSONArray jArray = repJSON.getJSONArray(RequestTranslator.MDFSFileList);
+
+                        if(jArray!=null){
+
+                            //for each josn object(aka for each file)
+                            for(int i=0; i< jArray.length(); i++){
+
+                                //get the json Object
+                                JSONObject obj =  jArray.getJSONObject(i);
+
+                                //parse variables
+                                String fileName = obj.getString(RequestTranslator.MDFSFileName);
+                                String fileID = obj.getString(RequestTranslator.MDFSFileID);
+                                JSONArray nodes  = obj.getJSONArray(RequestTranslator.MDFSNodes);
+
+                                //delete the file from my device
+                                ServiceHelper.getInstance().getDirectory().deleteFile(fileID, fileName);
+
+                                //send deletion to each guid
+                                for(int ii=0; ii< nodes.length(); ii++){
+                                    sendDeletionReq(fileName, fileID, nodes.getString(ii));
+                                }
+
+                            }
+
+                            //log
+                            logger.log(Level.ALL, "Successfully sent files deletion commands to other MDFS nodes." );
+
+                            //return success message
+                            return "Directory deletion success!";
+
+                        }else{
+
+                            //log
+                            logger.log(Level.ERROR, "Directories and Files deleted from edgeKeeper but could not trigger file deletion to other MDFS nodes.");
+
+                            //return failure message
+                            return "Directories and Files deleted from edgeKeeper but could not trigger file deletion to other MDFS nodes.";
+                        }
 
                     } else {
 
@@ -135,10 +180,10 @@ public class rm {
     }
 
     //takes a filename, fileid, guid, and sends deletion through rsock to destination
-    private static void sendDeletionReq(String fileName, long fileID, String GUID){
+    private static void sendDeletionReq(String fileName, String fileID, String GUID){
 
         //make deletion payload
-        String delCommand = fileName + RSockConstants.deletion_tag + Long.toString(fileID);
+        String delCommand = fileName + RSockConstants.deletion_tag + fileID;
 
         //send through rsock and dont expect reply
         RSockConstants.intrfc_deletion.send(UUID.randomUUID().toString().substring(0, 12), delCommand.getBytes(), delCommand.length(), "nothing", "nothing", GUID, 0, RSockConstants.fileDeleteEndpoint,RSockConstants.fileDeleteEndpoint, "noReply");
