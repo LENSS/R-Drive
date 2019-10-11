@@ -1,8 +1,21 @@
 package edu.tamu.cse.lenss.android;
 
 
+import android.app.Notification;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.support.v4.app.NotificationCompat;
+import android.widget.Toast;
+
 import edu.tamu.cse.lenss.CLI.cli_processor;
 import edu.tamu.lenss.mdfs.Handler.ServiceHelper;
+import edu.tamu.lenss.mdfs.Utils.IOUtilities;
+
+import static edu.tamu.cse.lenss.android.MDFSService.CHANNEL_ID;
 
 
 //this is the mdfs handler that starts the command line interface(cli) and the MDFS library.
@@ -10,8 +23,9 @@ import edu.tamu.lenss.mdfs.Handler.ServiceHelper;
 public class MDFSHandler extends Thread {
 
     public cli_processor cli;
+    public Context context;
 
-    public MDFSHandler() {}
+    public MDFSHandler(Context c) {this.context = c;}
 
     @Override
     public void run(){
@@ -20,6 +34,7 @@ public class MDFSHandler extends Thread {
         startMDFS();
         startCLI();
     }
+
 
     @Override
     public void interrupt() {
@@ -56,6 +71,5 @@ public class MDFSHandler extends Thread {
     }
 
 
-
-
+    
 }

@@ -13,6 +13,7 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
 
 
     <application
@@ -37,13 +38,6 @@
             </intent-filter>
         </activity>
 
-        <!--<activity
-            android:name="edu.tamu.cse.lenss.android.Worker"
-            android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar">
-        </activity>-->
-
-
         <service
             android:name="edu.tamu.cse.lenss.android.MDFSService"
             android:enabled="true"
@@ -64,6 +58,16 @@
             <intent-filter>
                 <action android:name="edu.tamu.cse.lenss.android.restartservice" />
             </intent-filter>
+        </receiver>
+
+        <activity
+            android:name="edu.tamu.cse.lenss.Notifications.NotificationActivity"
+            android:label="Notification"/>
+
+        <receiver android:name="edu.tamu.cse.lenss.Notifications.NotificationDo">
+            <intent-filter>
+                <action android:name="sagor.mohammad.action.DISPLAY_NOTIFICATION"/>
+            </intent-filter>>
         </receiver>
 
     </application>

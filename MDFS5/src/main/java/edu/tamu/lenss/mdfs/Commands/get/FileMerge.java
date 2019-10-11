@@ -230,6 +230,9 @@ public class FileMerge implements Runnable{
                 MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple blocks success!");
                 deleteBlocks();
 
+                //update list for notification
+                IOUtilities.decryptedFiles.add(mdfsrsockblock.fileName);
+
                 //put blockRetrieveReqUUID of this get request into resolvedRequests list
                 getUtils.resolvedRequests.add(mdfsrsockblock.blockRetrieveReqUUID);
 
@@ -257,6 +260,10 @@ public class FileMerge implements Runnable{
             File from = AndroidIOUtils.getExternalFile(MDFSFileInfo.
                     getFileDirPath(mdfsrsockblock.fileName, mdfsrsockblock.fileId) + File.separator + MDFSFileInfo.getBlockName(mdfsrsockblock.fileName, (byte) 0));  //Isagor0!
             File to = IOUtilities.createNewFile(getDecryptedFilePath());
+
+            //update list for notification
+            IOUtilities.decryptedFiles.add(mdfsrsockblock.fileName);
+
 
             try {
                 Files.move(from, to);

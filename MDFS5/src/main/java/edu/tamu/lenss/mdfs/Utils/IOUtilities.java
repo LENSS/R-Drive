@@ -21,14 +21,16 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class IOUtilities {
-	private static final String TAG = "IOUtilities";
 
-
-
+	//notification purpose
+	public static BlockingQueue<String> decryptedFiles = new LinkedBlockingQueue();
 
 	//takes a fullpath of a file and returns the name.
     //this function assumes that the last entry in the filePath is indeed fileName.
@@ -83,7 +85,6 @@ public final class IOUtilities {
 				if(f.createNewFile())
 					return f;
 			}catch(IOException e){
-				Logger.e(TAG, e.toString());
 				f = null;
 			}
 		}
@@ -126,10 +127,8 @@ public final class IOUtilities {
 			fos.write(data);
 			fos.close();
 		} catch (FileNotFoundException e) {
-			Logger.e(TAG, e.toString());
 			return null;
 		} catch (IOException e) {
-			Logger.e(TAG, e.toString());
 			return null;
 		}
 		return f;
@@ -146,9 +145,7 @@ public final class IOUtilities {
 			return b;
 
 		} catch (FileNotFoundException e) {
-			Logger.e(TAG, e.toString());
 		} catch (IOException e) {
-			Logger.e(TAG, e.toString());
 		}
 		return null;
 	}
@@ -166,7 +163,6 @@ public final class IOUtilities {
 			output.close();
 			return byteData;
 		} catch (IOException e) {
-			Logger.e(TAG, e.toString());
 			return null;
 		}
 	}

@@ -2,6 +2,7 @@ package edu.tamu.cse.lenss.android;
 
 import android.Manifest;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -26,8 +27,6 @@ import java.io.IOException;
 
 //this is the main actiivty and where the execution of this app starts.
 public class MainActivity extends AppCompatActivity {
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

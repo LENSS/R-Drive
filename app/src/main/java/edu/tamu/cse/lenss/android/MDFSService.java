@@ -1,24 +1,29 @@
 package edu.tamu.cse.lenss.android;
 
 
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.os.Build;
-import android.os.Environment;
 import android.app.Service;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 
+import java.util.Calendar;
+
+import edu.tamu.cse.lenss.Notifications.NotificationUtils;
+import edu.tamu.lenss.mdfs.Utils.IOUtilities;
+
+import static java.lang.Thread.sleep;
+
 //import org.apache.log4j.Logger;
 
 //this is the mdfs service that runs of the phones background.
 public class MDFSService extends Service {
-    //Logger logger = Logger.getLogger(this.getClass());
 
     MDFSHandler mdfsHandler;
     private Intent intent;
@@ -30,20 +35,36 @@ public class MDFSService extends Service {
 
     @Override
     public void onCreate(){
-        mdfsHandler = new MDFSHandler();
+        mdfsHandler = new MDFSHandler(getApplicationContext());
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
+        //start notification thread
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(true){
+                    try {
+                        String message = IOUtilities.decryptedFiles.take();
+                        set_alarm(0, message );
+                    } catch (InterruptedException e) {
+
+                    }
+                }
+            }
+        }).start();
+
+
+
         this.intent = intent;
-
-
 
         System.out.println("Starting service");
         mdfsHandler.run();
 
         //notification
-        showNotification("Started");
+        showNotificationAndStartService("Started");
         return START_NOT_STICKY;
     }
 
@@ -66,26 +87,26 @@ public class MDFSService extends Service {
 
 
     public static final String CHANNEL_ID = MDFSService.class.getName();
-
-    private void showNotification(String message) {
+    public void showNotificationAndStartService(String message) {
         String input = intent.getStringExtra("inputExtra");
         createNotificationChannel();
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this,
                 0, notificationIntent, 0);
 
+        long[] pattern = {0, 500, 0 };
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(message)
                 .setContentText(message)
                 .setContentText(input)
                 .setSmallIcon(R.mipmap.ic_launcher_round)
                 .setContentIntent(pendingIntent)
+                .setVibrate(pattern)
                 .build();
 
         try {
             startForeground(1, notification);
         } catch (RuntimeException e){
-            //logger.fatal("Foreground permission not granted",e);
             Toast.makeText(this, "Foreground permission not granted", Toast.LENGTH_SHORT).show();
             this.onDestroy();
         }
@@ -105,5 +126,29 @@ public class MDFSService extends Service {
         }
     }
 
+
+    public void  set_alarm(long timeUntilNotification, String filename){
+
+        Calendar clndr = Calendar.getInstance();
+        clndr.add(Calendar.SECOND, 1);  //redundant line
+
+        //create intent
+        Intent intentA = new Intent("sagor.mohammad.action.DISPLAY_NOTIFICATION");
+
+        //put extra
+        intentA.putExtra("code",Integer.toString(NotificationUtils.code));
+        intentA.putExtra("filename", filename);
+
+        PendingIntent pendingIntentX = PendingIntent.getBroadcast(getApplicationContext(), NotificationUtils.req_code, intentA, PendingIntent.FLAG_UPDATE_CURRENT);
+        AlarmManager alarmManagerX = (AlarmManager)getSystemService(ALARM_SERVICE);
+        alarmManagerX.cancel(pendingIntentX);
+        alarmManagerX.set(AlarmManager.RTC,clndr.getTimeInMillis()+timeUntilNotification, pendingIntentX);
+        NotificationUtils.code++;
+        NotificationUtils.req_code++;
+
+        //set the dummy intent
+        intentA.setAction(Long.toString(System.currentTimeMillis()));
+
+    }
 
 }
