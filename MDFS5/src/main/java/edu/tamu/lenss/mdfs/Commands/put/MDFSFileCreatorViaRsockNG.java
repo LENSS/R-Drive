@@ -12,6 +12,7 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -103,7 +104,7 @@ public class MDFSFileCreatorViaRsockNG{
 
                     //partition the file into blocks,
                     //and write the blocks in disk
-                    if (partition()) {
+                    if (partitionSmart()) {
 
                         isPartComplete = true;
                         String sendRet = sendBlocks();
@@ -230,6 +231,51 @@ public class MDFSFileCreatorViaRsockNG{
         }catch(Exception e ){
             logger.log(Level.ERROR, "Could not partition file " + file.getName() +" into blocks.");
         }
+        return result;
+    }
+
+    public boolean partitionSmart(){
+        boolean result = false;
+        try{
+
+            ///storage/emulated/0/MDFS/test1.jpg_0123/ (directory)
+            String outputDirPath = File.separator + edu.tamu.lenss.mdfs.Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(file.getName(), fileID);  //Isagor0!
+
+            int filesize = (int)file.length();
+            int startIndex = 0;
+            int endIndex = maxBlockSize;
+            byte[] blockBytes;
+            for (int i = 0; i < blockCount; i++) {
+
+                //allocate space for ONE block
+                blockBytes = new byte[Integer.BYTES + (int)(endIndex - startIndex)];
+
+                //add the number itself of bytes about to be copied
+                ByteBuffer.wrap(blockBytes).putInt((int)(endIndex - startIndex));
+
+                //read one block amount of data
+                IOUtilities.fileToByte(file, startIndex, endIndex, blockBytes, Integer.BYTES);
+
+                //write the block as a file in disk
+                File blockFile = IOUtilities.byteToFile(blockBytes, AndroidIOUtils.getExternalFile(outputDirPath), (file.getName() + "__blk__" + i));
+
+                //update start and end index for next iteration
+                startIndex = endIndex;
+                endIndex = endIndex + maxBlockSize;
+                if (endIndex > filesize) {
+                    endIndex = filesize;
+                }
+
+            }
+
+            //update boolean
+            result = true;
+
+        }catch(Exception e){
+            e.printStackTrace();
+            logger.log(Level.ERROR, "Could not partition file " + file.getName() + " into blocks.");
+        }
+
         return result;
     }
 

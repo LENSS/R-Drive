@@ -150,6 +150,19 @@ public final class IOUtilities {
 		return null;
 	}
 
+	//read file bytes from start index upto end index
+	public static void fileToByte(File source, int startIndex, int endIndex, byte[] destination, int offset){
+		try{
+			RandomAccessFile randF = new RandomAccessFile(source, "r");
+			randF.seek(startIndex);
+			randF.read(destination, offset, (endIndex-startIndex));
+			randF.close();
+
+		}catch (FileNotFoundException e) {
+		} catch (IOException e) {
+		}
+	}
+
 	
 
 	//Covert a Serializable Object to a byte array

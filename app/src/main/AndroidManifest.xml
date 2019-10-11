@@ -52,9 +52,7 @@
         </receiver>
 
         <receiver
-            android:name="edu.tamu.cse.lenss.android.Restarter"
-            android:enabled="true"
-            android:exported="true">
+            android:name="edu.tamu.cse.lenss.android.Restarter">
             <intent-filter>
                 <action android:name="edu.tamu.cse.lenss.android.restartservice" />
             </intent-filter>
@@ -67,7 +65,7 @@
         <receiver android:name="edu.tamu.cse.lenss.Notifications.NotificationDo">
             <intent-filter>
                 <action android:name="sagor.mohammad.action.DISPLAY_NOTIFICATION"/>
-            </intent-filter>>
+            </intent-filter>
         </receiver>
 
     </application>

@@ -1,6 +1,7 @@
 package edu.tamu.cse.lenss.android;
 
 
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -11,10 +12,15 @@ import android.os.Vibrator;
 import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 
+import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
+
 import edu.tamu.cse.lenss.CLI.cli_processor;
+import edu.tamu.cse.lenss.Notifications.NotificationUtils;
 import edu.tamu.lenss.mdfs.Handler.ServiceHelper;
 import edu.tamu.lenss.mdfs.Utils.IOUtilities;
 
+import static android.content.Context.ALARM_SERVICE;
 import static edu.tamu.cse.lenss.android.MDFSService.CHANNEL_ID;
 
 
@@ -24,7 +30,6 @@ public class MDFSHandler extends Thread {
 
     public cli_processor cli;
     public Context context;
-
     public MDFSHandler(Context c) {this.context = c;}
 
     @Override
@@ -35,12 +40,8 @@ public class MDFSHandler extends Thread {
         startCLI();
     }
 
-
     @Override
     public void interrupt() {
-
-
-
         super.interrupt();
         ServiceHelper.releaseService();
         cli.interrupt();
@@ -70,6 +71,29 @@ public class MDFSHandler extends Thread {
         cli.start();
     }
 
+    public void  set_alarm(long timeUntilNotification, String filename){
 
-    
+        Calendar clndr = Calendar.getInstance();
+        clndr.add(Calendar.SECOND, 1);  //redundant line
+
+        //create intent
+        Intent intentA = new Intent("sagor.mohammad.action.DISPLAY_NOTIFICATION");
+
+        //put extra
+        intentA.putExtra("code",Integer.toString(NotificationUtils.code));
+        intentA.putExtra("filename", filename);
+
+        PendingIntent pendingIntentX = PendingIntent.getBroadcast(context, NotificationUtils.req_code, intentA, PendingIntent.FLAG_UPDATE_CURRENT);
+        AlarmManager alarmManagerX = (AlarmManager) context.getSystemService(ALARM_SERVICE);
+        alarmManagerX.cancel(pendingIntentX);
+        alarmManagerX.set(AlarmManager.RTC,clndr.getTimeInMillis()+timeUntilNotification, pendingIntentX);
+        NotificationUtils.code++;
+        NotificationUtils.req_code++;
+
+        //set the dummy intent
+        intentA.setAction(Long.toString(System.currentTimeMillis()));
+
+    }
+
+
 }

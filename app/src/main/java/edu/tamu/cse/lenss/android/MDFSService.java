@@ -14,6 +14,7 @@ import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 
 import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
 
 import edu.tamu.cse.lenss.Notifications.NotificationUtils;
 import edu.tamu.lenss.mdfs.Utils.IOUtilities;
@@ -27,6 +28,9 @@ public class MDFSService extends Service {
 
     MDFSHandler mdfsHandler;
     private Intent intent;
+    public Thread notify;
+    public boolean notifyEnabled = true;
+
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -41,22 +45,24 @@ public class MDFSService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        //start notification thread
-        new Thread(new Runnable() {
+        //start notification
+        notify = new Thread(new Runnable() {
             @Override
             public void run() {
-                while(true){
-                    try {
-                        String message = IOUtilities.decryptedFiles.take();
-                        set_alarm(0, message );
-                    } catch (InterruptedException e) {
-
+                try {
+                    while (notifyEnabled) {
+                        String message = IOUtilities.decryptedFiles.poll(10, TimeUnit.MILLISECONDS);
+                        if(message!=null) {
+                            set_alarm(0, message);
+                        }
+                        sleep(0);
                     }
+                }catch(InterruptedException e){
+                    e.printStackTrace();
                 }
             }
-        }).start();
-
-
+        });
+        notify.start();
 
         this.intent = intent;
 
@@ -73,6 +79,7 @@ public class MDFSService extends Service {
 
         System.out.println("Stopping service");
 
+        if(notify!=null){notifyEnabled = false; /*notify.interrupt();*/}
         mdfsHandler.interrupt();
         super.onDestroy();
 
@@ -150,5 +157,8 @@ public class MDFSService extends Service {
         intentA.setAction(Long.toString(System.currentTimeMillis()));
 
     }
+
+
+
 
 }

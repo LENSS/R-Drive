@@ -29,7 +29,7 @@ public class RsockReceiveForFileDeletion implements Runnable{
 
         //if rsock client library object is null, init it once.
         if(RSockConstants.intrfc_deletion==null) {
-            RSockConstants.intrfc_deletion = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_deletion_appid, 3600, true);
+            RSockConstants.intrfc_deletion = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_deletion_appid, 3600, false);
         }
 
         //variables
@@ -79,8 +79,11 @@ public class RsockReceiveForFileDeletion implements Runnable{
         //execution only comes here when the above while loop is broken.
         //above while loop is only broken when mdfs is closing.
         //came out of while loop, now close the rsock client library object.
+
         RSockConstants.intrfc_deletion.close();
         RSockConstants.intrfc_deletion = null;
+
+
     }
 
     public static void stop(){

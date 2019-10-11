@@ -165,7 +165,8 @@ public class FileMerge implements Runnable{
 
     }
 
-    //this function is the new implementation of merging block.
+    //This function merges multiple blocks into a file and writes the file into disk.
+    //this function loads all the blockFiles(with "__blk__" tag one by one and appends them into a file.
     private void mergeMultipleBlocks() {
 
         //check if the request has already been resolved
@@ -175,7 +176,8 @@ public class FileMerge implements Runnable{
             MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple blocks for filename " + mdfsrsockblock.fileName);
 
             boolean mergeResult = false;
-            //get all the block files from disk
+
+            //get all the block files from disk.
             ///storage/emulated/0/MDFS/test1.jpg_0123/
             File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(mdfsrsockblock.fileName, mdfsrsockblock.fileId));  //Isagor0!
             File[] blockFiles = fileDir.listFiles(new FileFilter() {
@@ -190,8 +192,11 @@ public class FileMerge implements Runnable{
 
 
             //create a map with blockName to byte[] mapping
-            Map<String, byte[]> fileMap = new HashMap<>();
+            Map<String, byte[]> blockMap = new HashMap<>();
+
+            //populate block
             for (int i = 0; i < blockFiles.length; i++) {
+
                 //get the bytes of the block files
                 byte[] blockBytes = IOUtilities.fileToByte(blockFiles[i]);
 
@@ -205,7 +210,7 @@ public class FileMerge implements Runnable{
                 System.arraycopy(blockBytes, Integer.BYTES, blockData, 0, blockLength);
 
                 //put blockData[] into map
-                fileMap.put(blockFiles[i].getName(), blockData);
+                blockMap.put(blockFiles[i].getName(), blockData);
             }
 
 
@@ -213,10 +218,96 @@ public class FileMerge implements Runnable{
             File file = IOUtilities.createNewFile(getDecryptedFilePath());
             file.setWritable(true);
 
-            for (int i = 0; i < fileMap.size(); i++) {
+            for (int i = 0; i < blockMap.size(); i++) {
                 try {
                     FileOutputStream fos = new FileOutputStream(file, true);
-                    fos.write(fileMap.get(mdfsrsockblock.fileName + "__blk__" + i));
+                    fos.write(blockMap.get(mdfsrsockblock.fileName + "__blk__" + i));
+                    fos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            mergeResult = true;
+
+            if (mergeResult) {
+
+                //log and listener
+                MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple blocks success!");
+                deleteBlocks();
+
+                //update list for notification
+                IOUtilities.decryptedFiles.add(mdfsrsockblock.fileName);
+
+                //put blockRetrieveReqUUID of this get request into resolvedRequests list
+                getUtils.resolvedRequests.add(mdfsrsockblock.blockRetrieveReqUUID);
+
+            } else {
+
+                //log and listener
+                MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Failed to merge multiple blocks.");
+                return;
+            }
+        }
+
+    }
+
+    //This function merges multiple blocks into a file and writes the file into disk.
+    //this function loads all the blockFiles(with "__blk__" tag one by one and appends them into a file.
+    private void mergeMultipleBlocksSmart() {
+
+        //check if the request has already been resolved
+        if(!getUtils.resolvedRequests.contains(mdfsrsockblock.blockRetrieveReqUUID)) {
+
+            //log
+            MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple blocks for filename " + mdfsrsockblock.fileName);
+
+            boolean mergeResult = false;
+
+            //get all the block files from disk.
+            ///storage/emulated/0/MDFS/test1.jpg_0123/
+            File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(mdfsrsockblock.fileName, mdfsrsockblock.fileId));  //Isagor0!
+            File[] blockFiles = fileDir.listFiles(new FileFilter() {
+                @Override
+                public boolean accept(File file) {
+                    if (file.isFile() && file.getName().contains(mdfsrsockblock.fileName + "__blk__")) {
+                        return true;
+                    }
+                    return false;
+                }
+            });
+
+
+            //create a map with blockName to byte[] mapping
+            Map<String, byte[]> blockMap = new HashMap<>();
+
+            //populate block
+            for (int i = 0; i < blockFiles.length; i++) {
+
+                //get the bytes of the block files
+                byte[] blockBytes = IOUtilities.fileToByte(blockFiles[i]);
+
+                //get the length of bytes which are actual data (a block file = size_of_data + data)
+                int blockLength = ByteBuffer.wrap(blockBytes).getInt();
+
+                //allocate the blockLength amount of size in each array
+                byte[] blockData = new byte[blockLength];
+
+                //copy data from blockBytes[] to blockData[]
+                System.arraycopy(blockBytes, Integer.BYTES, blockData, 0, blockLength);
+
+                //put blockData[] into map
+                blockMap.put(blockFiles[i].getName(), blockData);
+            }
+
+
+            //create a new file and append bytes in it
+            File file = IOUtilities.createNewFile(getDecryptedFilePath());
+            file.setWritable(true);
+
+            for (int i = 0; i < blockMap.size(); i++) {
+                try {
+                    FileOutputStream fos = new FileOutputStream(file, true);
+                    fos.write(blockMap.get(mdfsrsockblock.fileName + "__blk__" + i));
                     fos.close();
                 } catch (IOException e) {
                     e.printStackTrace();
