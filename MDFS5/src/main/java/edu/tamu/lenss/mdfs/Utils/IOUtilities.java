@@ -158,9 +158,19 @@ public final class IOUtilities {
 			randF.read(destination, offset, (endIndex-startIndex));
 			randF.close();
 
-		}catch (FileNotFoundException e) {
-		} catch (IOException e) {
-		}
+		}catch (Exception e) {}
+	}
+
+	//Appends file bytes into file from start index upto end
+	public static void byteToFile(byte[] source, int offset, int length, File destination, int startIndex){
+		try{
+			destination.setWritable(true);
+			RandomAccessFile randF = new RandomAccessFile(destination, "rw");
+			randF.seek(startIndex);
+			randF.write(source, offset, length);
+			randF.close();
+
+		}catch (Exception e) {}
 	}
 
 	

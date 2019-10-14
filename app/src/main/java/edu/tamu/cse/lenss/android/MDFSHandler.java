@@ -12,6 +12,7 @@ import android.os.Vibrator;
 import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 
+import java.io.File;
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 
@@ -94,6 +95,32 @@ public class MDFSHandler extends Thread {
         intentA.setAction(Long.toString(System.currentTimeMillis()));
 
     }
+
+    //simple tuple class in java
+    static class Pair{
+        private boolean result;
+        private String message;
+
+        public Pair(){ }
+
+
+        public boolean isResult() {
+            return result;
+        }
+
+        public void setResult(boolean result) {
+            this.result = result;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+    }
+
 
 
 }

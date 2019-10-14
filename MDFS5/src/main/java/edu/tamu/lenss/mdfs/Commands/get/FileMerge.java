@@ -72,7 +72,7 @@ public class FileMerge implements Runnable{
         if(mdfsrsockblock.totalNumOfBlocks==1){
             mergeSingleBlock();
         }else{
-            mergeMultipleBlocks();
+            mergeMultipleBlocksSmart();
         }
 
     }
@@ -277,10 +277,12 @@ public class FileMerge implements Runnable{
             });
 
 
-            //create a map with blockName to byte[] mapping
-            Map<String, byte[]> blockMap = new HashMap<>();
+            //create a new file and append bytes in it
+            File file = IOUtilities.createNewFile(getDecryptedFilePath());
+            file.setWritable(true);
 
-            //populate block
+            //populate file with bytes of block
+            int startIndex = 0;
             for (int i = 0; i < blockFiles.length; i++) {
 
                 //get the bytes of the block files
@@ -289,30 +291,14 @@ public class FileMerge implements Runnable{
                 //get the length of bytes which are actual data (a block file = size_of_data + data)
                 int blockLength = ByteBuffer.wrap(blockBytes).getInt();
 
-                //allocate the blockLength amount of size in each array
-                byte[] blockData = new byte[blockLength];
+                //appends block bytes into file
+                IOUtilities.byteToFile(blockBytes, Integer.BYTES, blockLength, file, startIndex);
 
-                //copy data from blockBytes[] to blockData[]
-                System.arraycopy(blockBytes, Integer.BYTES, blockData, 0, blockLength);
+                //increment startIndex
+                startIndex = startIndex + (blockLength);
 
-                //put blockData[] into map
-                blockMap.put(blockFiles[i].getName(), blockData);
             }
 
-
-            //create a new file and append bytes in it
-            File file = IOUtilities.createNewFile(getDecryptedFilePath());
-            file.setWritable(true);
-
-            for (int i = 0; i < blockMap.size(); i++) {
-                try {
-                    FileOutputStream fos = new FileOutputStream(file, true);
-                    fos.write(blockMap.get(mdfsrsockblock.fileName + "__blk__" + i));
-                    fos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
             mergeResult = true;
 
             if (mergeResult) {
