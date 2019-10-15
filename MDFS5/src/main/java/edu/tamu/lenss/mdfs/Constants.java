@@ -28,4 +28,9 @@ public class Constants {
     public static final boolean metadataIsGlobal = true;
     public static boolean testRsock = false;
 
+    public final static String NOTIFICATION = "NOTIFICATION";
+    public final static String UPDATETEXTVIEW = "UPDATETEXTVIEW";
+	public static final String NON_CLI_CLIENT = "NONCLICLIENT";
+
+
 }

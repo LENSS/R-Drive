@@ -1,6 +1,7 @@
 package edu.tamu.cse.lenss.android;
 
 
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -17,7 +18,9 @@ import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 
 import edu.tamu.cse.lenss.Notifications.NotificationUtils;
+import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.Utils.IOUtilities;
+import edu.tamu.lenss.mdfs.Utils.Pair;
 
 import static java.lang.Thread.sleep;
 
@@ -28,8 +31,11 @@ public class MDFSService extends Service {
 
     MDFSHandler mdfsHandler;
     private Intent intent;
-    public Thread notify;
-    public boolean notifyEnabled = true;
+
+    //A thread that does all the miscellaneous works.
+    //such as : notification.
+    public Thread miscellaneous;
+    public boolean miscThdEnabled = true;
 
 
     @Override
@@ -45,24 +51,26 @@ public class MDFSService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        //start notification
-        notify = new Thread(new Runnable() {
+        //start miscellaneous thread
+        miscellaneous = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    while (notifyEnabled) {
-                        String message = IOUtilities.decryptedFiles.poll(10, TimeUnit.MILLISECONDS);
-                        if(message!=null) {
-                            set_alarm(0, message);
+                    while (miscThdEnabled) {
+                        Pair p = IOUtilities.miscellaneousWorks.poll(10, TimeUnit.MILLISECONDS);
+                        if(p!=null) {
+                            if (p.getString_1().equals(Constants.NOTIFICATION)) {
+                                set_alarm(0, p.getString_2());
+                            }
+                            sleep(0);
                         }
-                        sleep(0);
                     }
                 }catch(InterruptedException e){
                     e.printStackTrace();
                 }
             }
         });
-        notify.start();
+        miscellaneous.start();
 
         this.intent = intent;
 
@@ -78,8 +86,7 @@ public class MDFSService extends Service {
     public void onDestroy() {
 
         System.out.println("Stopping service");
-
-        if(notify!=null){notifyEnabled = false; /*notify.interrupt();*/}
+        if(miscellaneous !=null){miscThdEnabled = false;}
         mdfsHandler.interrupt();
         super.onDestroy();
 
@@ -134,7 +141,7 @@ public class MDFSService extends Service {
     }
 
 
-    public void  set_alarm(long timeUntilNotification, String filename){
+    public void set_alarm(long timeUntilNotification, String filename){
 
         Calendar clndr = Calendar.getInstance();
         clndr.add(Calendar.SECOND, 1);  //redundant line

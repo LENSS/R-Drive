@@ -1,5 +1,4 @@
  package edu.tamu.lenss.mdfs.Utils;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -13,24 +12,32 @@ import java.io.ObjectOutputStream;
 import java.io.OptionalDataException;
 import java.io.RandomAccessFile;
 import java.io.StreamCorruptedException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import edu.tamu.lenss.mdfs.Utils.Pair;
 
-public final class IOUtilities {
+public class IOUtilities {
 
-	//notification purpose
-	public static BlockingQueue<String> decryptedFiles = new LinkedBlockingQueue();
+    //miscellaneous purpose
+	public static BlockingQueue<Pair> miscellaneousWorks = new LinkedBlockingQueue(5);
 
 	//takes a fullpath of a file and returns the name.
     //this function assumes that the last entry in the filePath is indeed fileName.
@@ -47,6 +54,26 @@ public final class IOUtilities {
     }
 
 
+	public static List<String> getOwnIPv4s() {
+		List<String> addrList = new ArrayList<String>();
+		try {
+			Enumeration<NetworkInterface> enumNI = NetworkInterface.getNetworkInterfaces();
+			while ( enumNI.hasMoreElements() ){
+				NetworkInterface ifc = enumNI.nextElement();
+				if( ifc.isUp() ){
+					Enumeration<InetAddress> enumAdds = ifc.getInetAddresses();
+					while ( enumAdds.hasMoreElements() ){
+						InetAddress addr = enumAdds.nextElement();
+						// Now discard the local and loopback addresses
+						if (! (addr.isLoopbackAddress() || addr.isAnyLocalAddress() || addr.isLinkLocalAddress()))
+							if (addr instanceof Inet4Address)
+								addrList.add(addr.getHostAddress());
+					}
+				}
+			}
+		}catch(SocketException e) {}
+		return addrList;
+	}
 
 	//eliminates empty string tokens
 	public static String[] delEmptyStr(String[] tokens){
@@ -60,6 +87,33 @@ public final class IOUtilities {
 		return newTokens.toArray(new String[0]);
 	}
 
+
+	public static boolean isValidInet4Address(String ip) {
+
+		if (ip == null) {
+			return false;
+		}
+
+		if (!Pattern.compile("^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$").matcher(ip).matches())
+			return false;
+
+		String[] parts = ip.split("\\.");
+
+		// verify that each of the four subgroups of IPv4 address is legal
+		try {
+			for (String segment: parts) {
+				// x.0.x.x is accepted but x.01.x.x is not
+				if (Integer.parseInt(segment) > 255 ||
+						(segment.length() > 1 && segment.startsWith("0"))) {
+					return false;
+				}
+			}
+		} catch(NumberFormatException e) {
+			return false;
+		}
+
+		return true;
+	}
 
 
 	/**
@@ -422,5 +476,6 @@ public final class IOUtilities {
 		for (Map.Entry<String, Double> entry : list) { sortedMap.put(entry.getKey(), entry.getValue()); }
 		return sortedMap;
 	}
+
 
 }

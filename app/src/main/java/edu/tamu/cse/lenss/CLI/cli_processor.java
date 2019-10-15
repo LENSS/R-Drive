@@ -3,12 +3,6 @@ package edu.tamu.cse.lenss.CLI;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.ServerSocket;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.logging.Logger;
-
-import edu.tamu.lenss.mdfs.Commands.get.MDFSFileRetrieverViaRsock;
 
 
 //this class runs on a thread as a server, and receives new client connection.
@@ -16,7 +10,7 @@ import edu.tamu.lenss.mdfs.Commands.get.MDFSFileRetrieverViaRsock;
 public class cli_processor extends Thread {
 
 
-    public static final int JAVA_PORT = CLIConstants.CLI_PORT;
+    public static final int JAVA_PORT = CLIConstants.CLI_JAVA_PORT;
 
     //public ExecutorService executor = Executors.newSingleThreadExecutor();
     public ServerSocket serverSocket;
@@ -69,6 +63,7 @@ public class cli_processor extends Thread {
         }
 
     }
+
 
 }
 

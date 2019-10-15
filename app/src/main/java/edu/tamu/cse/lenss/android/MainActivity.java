@@ -1,15 +1,12 @@
 package edu.tamu.cse.lenss.android;
 
 import android.Manifest;
+import android.app.AlarmManager;
 import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -17,16 +14,44 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
+
+import edu.tamu.cse.lenss.CLI.CLIConstants;
+import edu.tamu.cse.lenss.CLI.RequestHandler;
+import edu.tamu.cse.lenss.Notifications.NotificationUtils;
+import edu.tamu.lenss.mdfs.Constants;
+import edu.tamu.lenss.mdfs.Utils.IOUtilities;
+import edu.tamu.lenss.mdfs.Utils.Pair;
+
+import static java.lang.Thread.sleep;
 
 //import edu.tamu.cse.lenss.utils
 
 
 //this is the main actiivty and where the execution of this app starts.
 public class MainActivity extends AppCompatActivity {
+
+
+    //global variables
+    private EditText ET;
+    private TextView TV;
+    private Button send;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,14 +60,10 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+        //initialize editText and Button
+        this.ET = (EditText) findViewById(R.id.editText);
+        this.TV= (TextView) findViewById(R.id.view_reply);
+        this.send = (Button) findViewById(R.id.buttonSend);
 
         checkPermissions();
     }
@@ -55,8 +76,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     protected void onDestroy() {
+
         // Stop the service
         this.stopService(new Intent(this, MDFSService.class));
+
 
         /*
         //this block of code restarts the service once again after the app is closed
@@ -151,6 +174,95 @@ public class MainActivity extends AppCompatActivity {
                 }
         }
     }
+
+    public void inputTakenClick(View view){
+
+        //get MDFS command String
+        String command = ET.getText().toString();
+        ET.setText("");
+
+        //tokenize the command
+        String[] tokens = removeAllSpacesAndTokenize(command);
+
+        //check if the command contains the "-d" flag
+        //if it contains D flag, then we parse the IP.
+        int indexOfDFlag = -1;
+        int indexOfIPFlag = -1;
+        for(int i=0; i< tokens.length; i++){
+
+            //check if any token is -d flag
+            if(tokens[i].equals("-d")){
+
+                //check if next token is a valid IP
+                if(i<tokens.length-1 && IOUtilities.isValidInet4Address(tokens[tokens.length-1])){
+
+                    indexOfDFlag = i;
+                    indexOfIPFlag = i+1;
+                    break;
+
+                }else{
+
+                    //return
+                    TV.setText("Command failed! Provide a valid local IP address (Or, dont use -d flag at all.)");
+                    break;
+                }
+            }
+        }
+
+        if(indexOfDFlag!=-1 && indexOfIPFlag!=-1) {
+
+            //check if the IP is not mine
+            if (IOUtilities.getOwnIPv4s().contains(tokens[indexOfIPFlag])) {
+
+                //recreate command without -d flag and IP field
+                String comm = "";
+                for (int i = 0; i < tokens.length; i++) {
+                    if (i != indexOfDFlag || i != indexOfIPFlag) {
+                        comm = comm + tokens[i] + " ";
+                    }
+                }
+
+                //send command for execution
+                System.out.println("The command pre: " +  comm);
+                Foo(comm);
+
+            } else {
+                TV.setText("Command failed! Provided IP is not one of available local IPs.");
+            }
+        }else{
+
+            //send command for execution
+            Foo(command);
+        }
+    }
+
+    //utility function
+    public static String[] removeAllSpacesAndTokenize(String command){
+
+        //replace tab with space
+        command = command.replaceAll("\t", " ");
+
+        //trim the leading and trailing whitespaces
+        command = command.trim();
+
+        //replace multiple spaces into one
+        command = command.replaceAll("( +)"," ");
+
+        //split the command into space separated tokens
+        String[] cmd = command.split(" ");
+
+        return IOUtilities.delEmptyStr(cmd);
+    }
+
+    public void Foo(String command) {
+        String reply = RequestHandler.processRequestCpp(Constants.NON_CLI_CLIENT, command);
+        if(!reply.equals("OK")) {
+            TV.setText(reply);
+
+        }
+    }
+
+
 
 
 }

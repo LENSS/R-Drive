@@ -1,11 +1,16 @@
 package edu.tamu.cse.lenss.CLI;
 
+
+import edu.tamu.lenss.mdfs.Utils.Pair;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+
+import edu.tamu.lenss.mdfs.Constants;
+import edu.tamu.lenss.mdfs.Utils.IOUtilities;
 
 //this class temporarily contains the sockets of a newly connected CLI client, until the request has been completed.
 //when the request has been completed, the client socket is taken out of map, reply is sent and the socket is closed.
@@ -25,6 +30,7 @@ public class clientSockets {
     }
 
     public static void close(String clientID){
+
         ///get the clientSockets object from map
         clientSockets socket = sockets.get(clientID);
 
@@ -42,11 +48,12 @@ public class clientSockets {
 
     public static void send(String clientID, String reply){
 
+
         ///get the clientSockets object from map
         clientSockets socket = sockets.get(clientID);
 
         //write on the socket aka send reply to client
-        if(socket!=null) {
+        if (socket != null) {
             try {
                 socket.os.write((reply + "\n").getBytes());
                 socket.os.flush();
@@ -55,7 +62,6 @@ public class clientSockets {
                 close(clientID);
             }
         }
-
     }
 
 
@@ -66,25 +72,9 @@ public class clientSockets {
 
         //remove the entry from the map
         sockets.remove(clientID);
-    }
-
-
-    public static void send_without_flush(String clientID, String reply){
-
-        ///get the clientSockets object from map
-        clientSockets socket = sockets.get(clientID);
-
-        //write on the socket aka send reply to client
-        if(socket!=null) {
-            try {
-                socket.os.write((reply).getBytes());
-                //socket.os.flush();
-            } catch (IOException e) {
-                e.printStackTrace();
-                close(clientID);
-            }
-        }
 
     }
+
+
 
 }

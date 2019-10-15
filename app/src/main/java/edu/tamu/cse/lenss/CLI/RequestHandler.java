@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.RSock.testRsock;
 import edu.tamu.lenss.mdfs.Commands.copyfromlocal.copyfromlocal;
 import edu.tamu.lenss.mdfs.Commands.get.get;
@@ -23,15 +24,15 @@ import edu.tamu.lenss.mdfs.Utils.IOUtilities;
 
 
 //
-class RequestHandler implements Runnable {
+public class RequestHandler implements Runnable {
 
     //class variables
     private Socket cSocket;
 
 
     //commands
-    String[] comm = { "-help", "-ls", "-list", "-mkdir", "-rm", "-setfacl", "-getfacl", "-put", "-get", "-copyFromLocal", "-copyToLocal", "-hdfs", "-testRsock"};
-    Set<String> commandNames = new HashSet<>(Arrays.asList(comm));
+    private static String[] comm = { "-help", "-ls", "-list", "-mkdir", "-rm", "-setfacl", "-getfacl", "-put", "-get", "-copyFromLocal", "-copyToLocal", "-hdfs", "-testRsock"};
+    private static Set<String> commandNames = new HashSet<>(Arrays.asList(comm));
 
     public RequestHandler( Socket cSocket) {
         this.cSocket = cSocket;
@@ -42,14 +43,16 @@ class RequestHandler implements Runnable {
 
         try{
             //Read the request from the CPP daemon
-            BufferedReader inBuffer = new BufferedReader(new InputStreamReader( cSocket.getInputStream() ));
+            System.out.println("RequestHandler reading command from socket..");
+            BufferedReader inBuffer = new BufferedReader(new InputStreamReader( cSocket.getInputStream()));
             OutputStream os = cSocket.getOutputStream();
             String command = inBuffer.readLine();  //note: the reading finishes until one or more \n is read
+            System.out.println("RequestHandler command: "  + command);
 
             //make clientSockets object
             clientSockets socket = new clientSockets(inBuffer, os, cSocket);
 
-            //generate random blockRetrieveReqUUID (aka clientID)
+            //generate random clientID
             String clientID = UUID.randomUUID().toString().substring(0,12);
 
             //put the clientSockets in the static map <clientID, clientSockets>
@@ -66,12 +69,13 @@ class RequestHandler implements Runnable {
     }
 
     //this function works as a parser and syntactical analyzer
-    private void processRequestCpp(String clientID, String command) {
+    public static String processRequestCpp(String clientID, String command) {
 
         //check if its an empty string
         if(command.equals("")){
-            clientSockets.sendAndClose(clientID, "No such command found. Type \"mdfs help\" for more information.");
-            return;
+            if(!clientID.equals(Constants.NON_CLI_CLIENT)) {
+                clientSockets.sendAndClose(clientID, "No such command found. Type \"mdfs help\" for more information.");
+            }
         }
 
         //replace tab with space
@@ -90,7 +94,7 @@ class RequestHandler implements Runnable {
         //for(int i=0; i<cmd.length; i++){ System.out.println("tokens: " + cmd[i]); }
 
         //check if the first token is "mdfs"
-        if(cmd.length>0 && cmd[0].equals("mdfs") || cmd.length>0 && cmd[0].equals("./mdfs")){
+        if(cmd.length>0 && cmd[0].equals("Mdfs")  || cmd.length>0 && cmd[0].equals("mdfs") || cmd.length>0 && cmd[0].equals("./mdfs")  || cmd.length>0 && cmd[0].equals("./Mdfs")){
 
             //check if there is any second token
             if(cmd.length>1){
@@ -101,8 +105,9 @@ class RequestHandler implements Runnable {
                     //operand exists, take action based on operand type
                     if (cmd[1].equals("-help")) {
 
-                        //handle help command
-                        clientSockets.sendAndClose(clientID, help.help());
+                        //handle help command and return reply
+                        String reply = help.help(clientID);
+                        if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; }
 
                     } else if (cmd[1].equals("-put")) {
 
@@ -159,27 +164,33 @@ class RequestHandler implements Runnable {
                                             String dirValidCheck = utils.isValidMDFSDir(filePathMDFS);
                                             if (dirValidCheck.equals("OK")) {
 
-                                                //handle put command
-                                                clientSockets.sendAndClose(clientID, put.put(filepathLocal, filePathMDFS, filename, clientID));
+                                                //handle put command and return reply
+                                                String reply = put.put(filepathLocal, filePathMDFS, filename, clientID);
+                                                if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; }
 
                                             } else {
-                                                clientSockets.sendAndClose(clientID, "Error! " + "MDFS " + dirValidCheck);
+                                                String reply = "Error! " + "MDFS " + dirValidCheck;
+                                                if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; }
                                             }
-
                                         } else {
-                                            clientSockets.sendAndClose(clientID, "Command not complete, mention a filepath in MDFS where the file will be stored.");
+                                            String reply = "Command not complete, mention a filepath in MDFS where the file will be stored.";
+                                            if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                                         }
                                     } else {
-                                        clientSockets.sendAndClose(clientID, "File Extension not supported.");
+                                        String reply = "File Extension not supported.";
+                                        if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                                     }
                                 } else {
-                                    clientSockets.sendAndClose(clientID, "Directory/file does not exist.");
+                                    String reply = "Directory/file does not exist.";
+                                    if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                                 }
                             }else{
-                                clientSockets.sendAndClose(clientID, "Error! " + "Android " + isValLocDir);   //Isagor0!
+                                String reply = "Error! " + "Android " + isValLocDir;   //Isagor0!
+                                if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                             }
                         } else {
-                            clientSockets.sendAndClose(clientID, "Command not complete, mention a filename with absolute path...ex:/storage/emulated/0/.../test.jpg ");  //Isagor0!
+                            String reply = "Command not complete, mention a filename with absolute path...ex:/storage/emulated/0/.../test.jpg ";   //Isagor0!
+                            if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                         }
                     }else if(cmd[1].equals("-get")){
 
@@ -191,7 +202,10 @@ class RequestHandler implements Runnable {
 
                             //check if the last char of mdfsDirWithFilename is slash
                             if(mdfsDirWithFilename.charAt(mdfsDirWithFilename.length()-1)=='/'){
-                                clientSockets.sendAndClose(clientID, "Filename not mentioned.");
+
+                                String reply = "Filename not mentioned.";
+                                if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
+
                             }else{
 
                                 //divide the mdfsDirWithFilename in tokens
@@ -231,30 +245,36 @@ class RequestHandler implements Runnable {
 
                                             if(locDirValid.equals("OK")){
 
-                                                //handle getcommand
-                                                clientSockets.sendAndClose(clientID, get.get(mdfsDirWithFilename, locDir));
+                                                //handle get command and return reply
+                                                String reply = get.get(mdfsDirWithFilename, locDir);
+                                                if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
 
                                             }else{
-                                                clientSockets.sendAndClose(clientID, "Invalid Android directory, " + locDirValid);
+                                                String reply = "Invalid Android directory, " + locDirValid;
+                                                if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                                             }
 
 
                                         }else{
-                                            clientSockets.sendAndClose(clientID, "Command not comeplete, local Android filepath not mentioned.");
+                                            String reply = "Command not comeplete, local Android filepath not mentioned.";
+                                            if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                                         }
 
 
                                     }else{
-                                        clientSockets.sendAndClose(clientID, "Error! MDFS " + isMDFSdirValid);
+                                        String reply = "Error! MDFS " + isMDFSdirValid;
+                                        if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                                     }
 
                                 }else{
-                                    clientSockets.sendAndClose(clientID, "Command not complete, Filename not mentioned.");
+                                    String reply = "Command not complete, Filename not mentioned.";
+                                    if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                                 }
 
                             }
                         }else{
-                            clientSockets.sendAndClose(clientID, "Command not complete, mention a filename with MDFS filepath.");
+                            String reply = "Command not complete, mention a filename with MDFS filepath.";
+                            if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                         }
                     }else if (cmd[1].equals("-mkdir")) {
 
@@ -268,14 +288,17 @@ class RequestHandler implements Runnable {
                             String isDirValid = utils.isValidMDFSDir(mdfsDir);
                             if(isDirValid.equals("OK")){
 
-                                //handle mkdir command
-                                clientSockets.sendAndClose(clientID, mkdir.mkdir(mdfsDir));
+                                //handle mkdir command and return reply
+                                String reply = mkdir.mkdir(mdfsDir);
+                                if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
 
                             }else{
-                                clientSockets.sendAndClose(clientID, "Error! MDFS " + isDirValid);
+                                String reply = "Error! MDFS " + isDirValid;
+                                if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                             }
                         } else {
-                            clientSockets.sendAndClose(clientID, "Command not complete, mention a new MDFS directory.");
+                            String reply = "Command not complete, mention a new MDFS directory.";
+                            if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                         }
                     }else if(cmd[1].equals("-rm")){
 
@@ -290,7 +313,8 @@ class RequestHandler implements Runnable {
                             if(dir.equals("/")){
 
                                 //cannot delete root
-                                clientSockets.sendAndClose(clientID, "Cannot delete / directory.");
+                                String reply  = "Cannot delete / directory.";
+                                if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
 
                             }else {
 
@@ -310,13 +334,15 @@ class RequestHandler implements Runnable {
                                     reqType = "del_dir";
                                 }
 
-                                //handle rm command
-                                clientSockets.sendAndClose(clientID, rm.rm(dir,reqType));
+                                //handle rm command and return reply
+                                String reply = rm.rm(dir,reqType);
+                                if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
 
                             }
 
                         }else{
-                            clientSockets.sendAndClose(clientID, "Mention a MDFS directory or a MDFS filepath with filename to delete.");
+                            String reply = "Mention a MDFS directory or a MDFS filepath with filename to delete.";
+                            if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                         }
                     }else if(cmd[1].equals("-ls")){
 
@@ -332,37 +358,55 @@ class RequestHandler implements Runnable {
 
                             if(isDirValid.equals("OK")){
 
-                                //handle ls command
-                                clientSockets.sendAndClose(clientID, ls.ls(mdfsDir));
+                                //handle ls command and return reply
+                                String reply = ls.ls(mdfsDir);
+                                if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
 
                             }else{
-                                clientSockets.sendAndClose(clientID, "MDFS " + isDirValid);
+                                String reply = "MDFS " + isDirValid;
+                                if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                             }
                         }else{
-                            clientSockets.sendAndClose(clientID, "Mention a MDFS directory to list files and folders.");
+                            String reply = "Mention a MDFS directory to list files and folders.";
+                            if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                         }
                     }else if(cmd[1].equals("-copyFromLocal")){
-                        //handle copyfromlocal command
+
+                        //handle copyfromlocal command and return reply
                         clientSockets.sendAndClose(clientID, copyfromlocal.copyfromlocal(cmd));
+
                     }else if(cmd[1].equals("-copyToLocal")){
+
                         //handle copytolocal command
                         copytolocal.copytolocal(clientID, cmd);
+
                     }else if(cmd[1].equals("-hdfs")){
-                        clientSockets.sendAndClose(clientID, "Hadoop HDFS commands are not supported.");
+
+                        String reply = "Hadoop HDFS commands are not supported.";
+                        if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
+
                     }else if(cmd[1].equals("-testRsock")){
-                        clientSockets.sendAndClose(clientID, testRsock.testrsock());
+                        String reply = testRsock.testrsock();
+                        if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                     }else{
-                        clientSockets.sendAndClose(clientID, "Command has not been implemented yet.");
+                        String reply = "Command has not been implemented yet.";
+                        if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                     }
                 }else{
-                    clientSockets.sendAndClose(clientID, "No command "+ cmd[1] + " found.");
+                    String reply = "No command "+ cmd[1] + " found.";
+                    if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
                 }
             }else{
-                clientSockets.sendAndClose(clientID, "Operand missing.");
+                String reply = "Operand missing.";
+                if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
             }
         }else{
-            clientSockets.sendAndClose(clientID, "Not a MDFS command...Type \"mdfs -help\" for more information.");
+            String reply = "Not a MDFS command...Type \"mdfs -help\" for more information.";
+            if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
+
         }
+
+        return "OK";
     }
 
 

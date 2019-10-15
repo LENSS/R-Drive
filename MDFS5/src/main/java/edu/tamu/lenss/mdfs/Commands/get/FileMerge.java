@@ -24,6 +24,7 @@ import edu.tamu.lenss.mdfs.Model.MDFSFileInfo;
 import edu.tamu.lenss.mdfs.Model.MDFSRsockBlockForFileRetrieve;
 import edu.tamu.lenss.mdfs.Utils.AndroidIOUtils;
 import edu.tamu.lenss.mdfs.Utils.IOUtilities;
+import edu.tamu.lenss.mdfs.Utils.Pair;
 
 //this class is called by RsockReceiveForFileRetrieval.java class.
 //this class is run in a thread to merge a file after enough fragments are available for each block.
@@ -233,10 +234,12 @@ public class FileMerge implements Runnable{
 
                 //log and listener
                 MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple blocks success!");
-                deleteBlocks();
+                deleteDecryptedBlocks();
 
-                //update list for notification
-                IOUtilities.decryptedFiles.add(mdfsrsockblock.fileName);
+
+                //update miscellaneousWorks list for notification
+                Pair p = new Pair(Constants.NOTIFICATION, mdfsrsockblock.fileName);
+                IOUtilities.miscellaneousWorks.add(p);
 
                 //put blockRetrieveReqUUID of this get request into resolvedRequests list
                 getUtils.resolvedRequests.add(mdfsrsockblock.blockRetrieveReqUUID);
@@ -281,6 +284,13 @@ public class FileMerge implements Runnable{
             File file = IOUtilities.createNewFile(getDecryptedFilePath());
             file.setWritable(true);
 
+            //check if file was created
+            if(file==null){
+                MDFSFileRetrieverViaRsock.logger.log(Level.ERROR, "All blocks have been retrieved and decrypted, but, Could not create file " + mdfsrsockblock.fileName + " and hence could not write block bytes into the file.");
+                deleteDecryptedBlocks();
+                return;
+            }
+
             //populate file with bytes of block
             int startIndex = 0;
             for (int i = 0; i < blockFiles.length; i++) {
@@ -305,10 +315,11 @@ public class FileMerge implements Runnable{
 
                 //log and listener
                 MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple blocks success!");
-                deleteBlocks();
+                deleteDecryptedBlocks();
 
-                //update list for notification
-                IOUtilities.decryptedFiles.add(mdfsrsockblock.fileName);
+                //update miscellaneousWorks list for notification
+                Pair p = new Pair(Constants.NOTIFICATION, mdfsrsockblock.fileName);
+                IOUtilities.miscellaneousWorks.add(p);
 
                 //put blockRetrieveReqUUID of this get request into resolvedRequests list
                 getUtils.resolvedRequests.add(mdfsrsockblock.blockRetrieveReqUUID);
@@ -338,8 +349,10 @@ public class FileMerge implements Runnable{
                     getFileDirPath(mdfsrsockblock.fileName, mdfsrsockblock.fileId) + File.separator + MDFSFileInfo.getBlockName(mdfsrsockblock.fileName, (byte) 0));  //Isagor0!
             File to = IOUtilities.createNewFile(getDecryptedFilePath());
 
-            //update list for notification
-            IOUtilities.decryptedFiles.add(mdfsrsockblock.fileName);
+
+            //update miscellaneousWorks list for notification
+            Pair p = new Pair(Constants.NOTIFICATION, mdfsrsockblock.fileName);
+            IOUtilities.miscellaneousWorks.add(p);
 
 
             try {
@@ -371,7 +384,7 @@ public class FileMerge implements Runnable{
     //all the files consists of both block directories(like "test1.jpg_0123_0/" that contains fragments)
     // and the block file (with "__blk__" in name) itself.
     //this function only deletes the block files and doesnt affect the block directories.
-    private void deleteBlocks(){
+    private void deleteDecryptedBlocks(){
         File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(mdfsrsockblock.fileName, mdfsrsockblock.fileId));  //Isagor0!
         File[] blockFiles = fileDir.listFiles(new FileFilter(){
             @Override
