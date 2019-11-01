@@ -203,8 +203,6 @@ public class MainActivity extends AppCompatActivity {
                 //check if next token is a valid IP
                 if(i<tokens.length-1 && IOUtilities.isValidInet4Address(tokens[i+1])){
 
-                    System.out.println("delete ip is valid");
-
                     indexOfDFlag = i;
                     indexOfIPFlag = i+1;
                     break;
@@ -212,7 +210,7 @@ public class MainActivity extends AppCompatActivity {
                 }else{
 
                     //set textview and must return
-                    TV.setText("Command failed! Provide a valid local IP address \n (Or, dont use -d flag at all).");
+                    TV.setText("Command failed! Provide a valid local IP address \n (You can choose to not use -d flag at all).");
                     return;
                 }
             }
@@ -220,11 +218,7 @@ public class MainActivity extends AppCompatActivity {
 
         if(indexOfDFlag!=-1 && indexOfIPFlag!=-1) {
 
-            System.out.println("delete index: " + indexOfDFlag + " " + indexOfIPFlag);
-
             //check if the IP is not mine
-            System.out.println("delete own ips: "+IOUtilities.getOwnIPv4s());
-
             if (tokens[indexOfIPFlag].equals("localhost") || IOUtilities.getOwnIPv4s().contains(tokens[indexOfIPFlag])) {
 
                 //recreate command without -d flag and IP field
@@ -239,7 +233,6 @@ public class MainActivity extends AppCompatActivity {
 
                 //set new command
                 command = comm;
-                System.out.println("delete new command is: " + command);
 
             } else {
 
