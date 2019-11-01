@@ -168,7 +168,7 @@ public class MDFSFileRetrieverViaRsock {
         //make an object of MDFSRsockBlockRetrieval with request tag
         MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.Request, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, destGUID, fileInfo.getFileName(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), blockIdx, fragmentIndex, localDir, null);
 
-        //get byteArray and size of the MDFSRsockBlockRetreival obj
+        //get byteArray from object and size of the MDFSRsockBlockRetreival obj
         byte[] data = null;
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();

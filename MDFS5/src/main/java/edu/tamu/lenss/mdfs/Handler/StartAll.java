@@ -7,6 +7,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import edu.tamu.lenss.mdfs.HealthStatusUpdate.HealthStatusUpdate;
+
 
 //this class is basically runs all the other necessary classes
 public class StartAll {
@@ -19,9 +21,14 @@ public class StartAll {
 
 	public StartAll(){
 
-		//start everything
+		//start rsock
 		this.rungnsandrsock = new runGNSandRsock();
+
+		//start thread pool
 		pool = Executors.newCachedThreadPool();
+
+		//start health status update thread
+		//new Thread(new HealthStatusUpdate()).start();
 
 		//log
 		logger.log(Level.ALL, "MDFS has been started.");

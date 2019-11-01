@@ -1,4 +1,6 @@
  package edu.tamu.lenss.mdfs.Utils;
+import org.sat4j.pb.tools.INegator;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -18,6 +20,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
@@ -53,7 +56,6 @@ public class IOUtilities {
 
     }
 
-
 	public static List<String> getOwnIPv4s() {
 		List<String> addrList = new ArrayList<String>();
 		try {
@@ -75,6 +77,26 @@ public class IOUtilities {
 		return addrList;
 	}
 
+
+	//takes a string and tokenizes
+	public static String[] removeAllSpacesAndTokenize(String command, String delimeter){
+
+		//replace tab with space
+		command = command.replaceAll("\t", " ");
+
+		//trim the leading and trailing whitespaces
+		command = command.trim();
+
+		//replace multiple spaces into one
+		command = command.replaceAll("( +)"," ");
+
+		//split the command into separated tokens
+		String[] cmd = command.split(delimeter);
+
+		return IOUtilities.delEmptyStr(cmd);
+	}
+
+
 	//eliminates empty string tokens
 	public static String[] delEmptyStr(String[] tokens){
 		List<String> newTokens = new ArrayList<>();
@@ -90,28 +112,24 @@ public class IOUtilities {
 
 	public static boolean isValidInet4Address(String ip) {
 
-		if (ip == null) {
+    	//tokenize
+		String[] IPnumbers = IOUtilities.removeAllSpacesAndTokenize(ip, "\\.");
+
+		//check if there are four tokens
+		if(IPnumbers.length!= 4){
 			return false;
 		}
 
-		if (!Pattern.compile("^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$").matcher(ip).matches())
-			return false;
-
-		String[] parts = ip.split("\\.");
-
-		// verify that each of the four subgroups of IPv4 address is legal
-		try {
-			for (String segment: parts) {
-				// x.0.x.x is accepted but x.01.x.x is not
-				if (Integer.parseInt(segment) > 255 ||
-						(segment.length() > 1 && segment.startsWith("0"))) {
-					return false;
-				}
+		//check each value is between 0 to 255
+		for(String val: IPnumbers){
+			int value = -1;
+			try{ value = Integer.parseInt(val); }catch(Exception e){ return false; }
+			if(value<0 || value > 255){
+				return false;
 			}
-		} catch(NumberFormatException e) {
-			return false;
 		}
 
+		//coming here means all checks succeeded.
 		return true;
 	}
 

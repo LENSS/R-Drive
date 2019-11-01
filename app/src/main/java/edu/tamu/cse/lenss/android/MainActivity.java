@@ -28,6 +28,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 
@@ -65,11 +66,13 @@ public class MainActivity extends AppCompatActivity {
         this.TV= (TextView) findViewById(R.id.view_reply);
         this.send = (Button) findViewById(R.id.buttonSend);
 
+        //check permission for this app
         checkPermissions();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
@@ -175,6 +178,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //this function is triggered when input is taken via typing it on the screen, instead of CLI.
     public void inputTakenClick(View view){
 
         //get MDFS command String
@@ -182,10 +186,13 @@ public class MainActivity extends AppCompatActivity {
         ET.setText("");
 
         //tokenize the command
-        String[] tokens = removeAllSpacesAndTokenize(command);
+        String[] tokens = IOUtilities.removeAllSpacesAndTokenize(command, " ");
+
+        //print
+        System.out.println(Arrays.toString(tokens));
 
         //check if the command contains the "-d" flag
-        //if it contains D flag, then we parse the IP.
+        //if it contains -d flag, then we parse the IP.
         int indexOfDFlag = -1;
         int indexOfIPFlag = -1;
         for(int i=0; i< tokens.length; i++){
@@ -194,7 +201,9 @@ public class MainActivity extends AppCompatActivity {
             if(tokens[i].equals("-d")){
 
                 //check if next token is a valid IP
-                if(i<tokens.length-1 && IOUtilities.isValidInet4Address(tokens[tokens.length-1])){
+                if(i<tokens.length-1 && IOUtilities.isValidInet4Address(tokens[i+1])){
+
+                    System.out.println("delete ip is valid");
 
                     indexOfDFlag = i;
                     indexOfIPFlag = i+1;
@@ -202,57 +211,54 @@ public class MainActivity extends AppCompatActivity {
 
                 }else{
 
-                    //return
-                    TV.setText("Command failed! Provide a valid local IP address (Or, dont use -d flag at all.)");
-                    break;
+                    //set textview and must return
+                    TV.setText("Command failed! Provide a valid local IP address \n (Or, dont use -d flag at all).");
+                    return;
                 }
             }
         }
 
         if(indexOfDFlag!=-1 && indexOfIPFlag!=-1) {
 
+            System.out.println("delete index: " + indexOfDFlag + " " + indexOfIPFlag);
+
             //check if the IP is not mine
-            if (IOUtilities.getOwnIPv4s().contains(tokens[indexOfIPFlag])) {
+            System.out.println("delete own ips: "+IOUtilities.getOwnIPv4s());
+
+            if (tokens[indexOfIPFlag].equals("localhost") || IOUtilities.getOwnIPv4s().contains(tokens[indexOfIPFlag])) {
 
                 //recreate command without -d flag and IP field
                 String comm = "";
                 for (int i = 0; i < tokens.length; i++) {
-                    if (i != indexOfDFlag || i != indexOfIPFlag) {
+                    if (i != indexOfDFlag && i != indexOfIPFlag) {
                         comm = comm + tokens[i] + " ";
                     }
                 }
 
-                //send command for execution
-                System.out.println("The command pre: " +  comm);
-                Foo(comm);
+                System.out.println("comm: " + comm);
+
+                //set new command
+                command = comm;
+                System.out.println("delete new command is: " + command);
 
             } else {
-                TV.setText("Command failed! Provided IP is not one of available local IPs.");
+
+                //set textview and must return
+                TV.setText("Command failed! Provided IP is not one of available local IPs \n (You can choose to not use -d flag at all).");
+                return;
             }
-        }else{
-
-            //send command for execution
-            Foo(command);
         }
+
+        //check for illegal commands
+        if(command.contains("copyToLocal") || command.contains("copyFromLocal")){
+            TV.setText("Command failed! copyToLocal or copyFromLocal commands are only allowed on MDFS Command Line Interface.");
+            return;
+        }
+
+        //send
+        Foo(command);
     }
 
-    //utility function
-    public static String[] removeAllSpacesAndTokenize(String command){
-
-        //replace tab with space
-        command = command.replaceAll("\t", " ");
-
-        //trim the leading and trailing whitespaces
-        command = command.trim();
-
-        //replace multiple spaces into one
-        command = command.replaceAll("( +)"," ");
-
-        //split the command into space separated tokens
-        String[] cmd = command.split(" ");
-
-        return IOUtilities.delEmptyStr(cmd);
-    }
 
     public void Foo(String command) {
         String reply = RequestHandler.processRequestCpp(Constants.NON_CLI_CLIENT, command);

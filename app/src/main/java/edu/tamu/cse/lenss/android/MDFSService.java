@@ -121,7 +121,7 @@ public class MDFSService extends Service {
         try {
             startForeground(1, notification);
         } catch (RuntimeException e){
-            Toast.makeText(this, "Foreground permission not granted", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Foreground permission not granted", Toast.LENGTH_LONG).show();
             this.onDestroy();
         }
 

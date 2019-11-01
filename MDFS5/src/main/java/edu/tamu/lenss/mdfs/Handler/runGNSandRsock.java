@@ -19,21 +19,21 @@ public class runGNSandRsock {
 
         //start file creator rsock in a thread
         Thread t1 = new Thread(new RsockReceiveForFileCreation());
-        t1.start();
+        //t1.start();
 
 
         // start file retriever rsock in a thread
         Thread t2 = new Thread(new RsockReceiveForFileRetrieval());
-        t2.start();
+        //t2.start();
 
         // start file deletion rsock in a thread
         Thread t3 = new Thread(new RsockReceiveForFileDeletion());
-        t3.start();
+        //t3.start();
 
         // start file test rsock in a thread
         if(Constants.testRsock) {
             Thread t4 = new Thread(new RsockReceiveForRsockTest());
-            t4.start();
+            //t4.start();
         }
     }
 
