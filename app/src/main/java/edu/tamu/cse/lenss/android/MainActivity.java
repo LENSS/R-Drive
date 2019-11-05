@@ -1,7 +1,6 @@
 package edu.tamu.cse.lenss.android;
 
 import android.Manifest;
-import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -10,38 +9,30 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.view.ContextMenu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
-import java.util.concurrent.TimeUnit;
 
-import edu.tamu.cse.lenss.CLI.CLIConstants;
 import edu.tamu.cse.lenss.CLI.RequestHandler;
-import edu.tamu.cse.lenss.Notifications.NotificationUtils;
 import edu.tamu.lenss.mdfs.Constants;
 import edu.tamu.lenss.mdfs.Utils.IOUtilities;
-import edu.tamu.lenss.mdfs.Utils.Pair;
 
 import static java.lang.Thread.sleep;
 
 //import edu.tamu.cse.lenss.utils
+
 
 
 //this is the main actiivty and where the execution of this app starts.
@@ -49,26 +40,119 @@ public class MainActivity extends AppCompatActivity {
 
 
     //global variables
-    private EditText ET;
-    private TextView TV;
-    private Button send;
+    TextView textView;
+    ListView listView;
+    Button backButton;
+    Button refreshButton;
+    ArrayAdapter arrayAdapter;
+    private static String currentView = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
-        //initialize editText and Button
-        this.ET = (EditText) findViewById(R.id.editText);
-        this.TV= (TextView) findViewById(R.id.view_reply);
-        this.send = (Button) findViewById(R.id.buttonSend);
+
+        this.backButton = (Button) findViewById(R.id.backButton);
+        this.refreshButton = (Button) findViewById(R.id.refreshButton);
+        this.textView = (TextView) findViewById(R.id.textview);
+        this.listView = (ListView)  findViewById(R.id.listview);
+        this.listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView <? > arg0, View view, int position, long id) {
+
+                //get item
+                String item =  (String)((TextView) view).getText();
+
+                //check its a directory or file
+                if(item.charAt(0)=='/'){
+                    //item is a directory
+                    //tokenize current directory
+                    String[] tokens = IOUtilities.delEmptyStr(currentView.split("/"));
+
+                    //make new directory
+                    String newDir = currentView +item.subSequence(1, item.length()) + "/";
+
+                    //setview
+                    setView(newDir);
+
+                }
+            }
+
+        });
+
+        registerForContextMenu(listView);
 
         //check permission for this app
         checkPermissions();
+        setView("/");
     }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo)
+    {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_main, menu);
+        menu.setHeaderTitle("Select The Action");
+    }
+
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item){
+
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        String value = ((TextView) info.targetView).getText().toString();
+
+        //check if value is a directory or file
+        if(value.charAt(0)=='/') {
+
+            //value is a directory
+            if (item.getItemId() == R.id.open) {
+
+                //just fetch directory ans set view
+                setView(currentView + value.substring(1, value.length()) + "/");
+
+            } else if (item.getItemId() == R.id.delete) {
+
+                //delete the directory and refresh
+                String ret = Foo("mdfs -rm " + currentView + value.substring(1, value.length()) + "/");
+
+                //check reply
+                if(ret!=null){
+                    Toast.makeText(this, ret, Toast.LENGTH_SHORT).show();
+                    try { Thread.sleep(500); } catch (InterruptedException e) { e.printStackTrace(); }
+                    setView(currentView);
+                }else{
+                    Toast.makeText(this, "Could not delete directory, " + ret , Toast.LENGTH_SHORT).show();
+                }
+            }
+        }else{
+            //value is a file
+            if(item.getItemId() == R.id.open){
+
+                //make mdfs get request
+                String ret = Foo("mdfs -get " + currentView + value + " /storage/emulated/0/decrypted/");
+                Toast.makeText(this, ret, Toast.LENGTH_SHORT).show();
+
+            }else if(item.getItemId() == R.id.delete){
+
+                //delete the file and refresh
+                String ret = Foo("mdfs -rm " + currentView + value);
+
+                //check reply
+                if(ret!=null){
+                    Toast.makeText(this, ret, Toast.LENGTH_SHORT).show();
+                    try { Thread.sleep(500); } catch (InterruptedException e) { e.printStackTrace(); }
+                    setView(currentView);
+                }else{
+                    Toast.makeText(this, "Could not delete file " + value + ", " + ret , Toast.LENGTH_SHORT).show();
+                }
+            }
+
+        }
+        return true;
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -103,12 +187,6 @@ public class MainActivity extends AppCompatActivity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -141,8 +219,6 @@ public class MainActivity extends AppCompatActivity {
 
         //this.startService(intent);
     }
-
-
 
 
     //Before executing any code, the app should check whether the permissions are granted or not.
@@ -178,88 +254,102 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //this function is triggered when input is taken via typing it on the screen, instead of CLI.
-    public void inputTakenClick(View view){
+    //=========================================================================
 
-        //get MDFS command String
-        String command = ET.getText().toString();
-        ET.setText("");
-
-        //tokenize the command
-        String[] tokens = IOUtilities.removeAllSpacesAndTokenize(command, " ");
-
-        //print
-        System.out.println(Arrays.toString(tokens));
-
-        //check if the command contains the "-d" flag
-        //if it contains -d flag, then we parse the IP.
-        int indexOfDFlag = -1;
-        int indexOfIPFlag = -1;
-        for(int i=0; i< tokens.length; i++){
-
-            //check if any token is -d flag
-            if(tokens[i].equals("-d")){
-
-                //check if next token is a valid IP
-                if(i<tokens.length-1 && IOUtilities.isValidInet4Address(tokens[i+1])){
-
-                    indexOfDFlag = i;
-                    indexOfIPFlag = i+1;
-                    break;
-
-                }else{
-
-                    //set textview and must return
-                    TV.setText("Command failed! Provide a valid local IP address \n (You can choose to not use -d flag at all).");
-                    return;
-                }
-            }
-        }
-
-        if(indexOfDFlag!=-1 && indexOfIPFlag!=-1) {
-
-            //check if the IP is not mine
-            if (tokens[indexOfIPFlag].equals("localhost") || IOUtilities.getOwnIPv4s().contains(tokens[indexOfIPFlag])) {
-
-                //recreate command without -d flag and IP field
-                String comm = "";
-                for (int i = 0; i < tokens.length; i++) {
-                    if (i != indexOfDFlag && i != indexOfIPFlag) {
-                        comm = comm + tokens[i] + " ";
-                    }
-                }
-
-                System.out.println("comm: " + comm);
-
-                //set new command
-                command = comm;
-
-            } else {
-
-                //set textview and must return
-                TV.setText("Command failed! Provided IP is not one of available local IPs \n (You can choose to not use -d flag at all).");
-                return;
-            }
-        }
-
-        //check for illegal commands
-        if(command.contains("copyToLocal") || command.contains("copyFromLocal")){
-            TV.setText("Command failed! copyToLocal or copyFromLocal commands are only allowed on MDFS Command Line Interface.");
-            return;
-        }
-
-        //send
-        Foo(command);
-    }
-
-
-    public void Foo(String command) {
+    //takes mdfs command and execute it
+    public String Foo(String command) {
         String reply = RequestHandler.processRequestCpp(Constants.NON_CLI_CLIENT, command);
-        if(!reply.equals("OK")) {
-            TV.setText(reply);
+
+        if(reply!=null){
+            return reply;
+        }else{
+            return "Returned null!";
+        }
+    }
+
+
+    //takes a directory string, fetch directory and sets view.
+    public void setView(String directory){
+
+        //first set current directory
+        currentView = directory;
+
+        //first get reply for ls command for / directory
+        String reply = Foo("mdfs -ls " + directory);
+
+        //check if reply is correct
+        if(reply!=null){
+
+            //toast
+            //sToast.makeText(this, "Fetched root directory.", Toast.LENGTH_SHORT).show();
+
+            //set current directory
+            textView.setText("Directory: " + currentView);
+
+            //tokenize the elements and delete empty strings
+            String[] tokens = IOUtilities.delEmptyStr(reply.split("   "));
+
+            //create arrayList and populate
+            ArrayList arrayList = new ArrayList(Arrays.asList(tokens));
+
+            //initialize and set array adapter
+            this.arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, arrayList);
+            listView.setAdapter(arrayAdapter);
+
+
+
+        }else{
+            Toast.makeText(this, "Could not fetch root directory.", Toast.LENGTH_SHORT).show();
+            textView.setText(currentView);
+        }
+    }
+
+
+
+    //back button pressed
+    public void backButtonClicked(View view) {
+        if(currentView.equals("/")){
+            Toast.makeText(this, "Cannot go back beyond / directory", Toast.LENGTH_SHORT).show();
+        }else{
+            //first tokenize current directory
+            String[] tokens = IOUtilities.delEmptyStr(currentView.split("/"));
+
+            //then take only tokens.length -1 numbers of tokens
+            String newDir = "/";
+            for(int i=0; i< tokens.length-1; i++){newDir = newDir + tokens[i] + "/";}
+
+            //fetch directory from edgeKeeper
+            String reply = Foo("mdfs -ls " + newDir);
+
+            //check
+            if(reply!=null){
+
+                //tokenize the elements and delete empty strings
+                tokens = IOUtilities.delEmptyStr(reply.split("   "));
+
+                //create arrayList and populate
+                ArrayList arrayList = new ArrayList(Arrays.asList(tokens));
+
+                //initialize and set array adapter
+                this.arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, arrayList);
+                listView.setAdapter(arrayAdapter);
+
+                //set current direcotory to newDir
+                currentView = newDir;
+                textView.setText("Directory: " + currentView);
+
+            }else{
+                Toast.makeText(this, "Could not fetch directory", Toast.LENGTH_SHORT).show();
+            }
 
         }
     }
+
+    //refresh button pressed
+    public void refreshButtonClicked(View view){
+        setView(currentView);
+    }
+
 
 
 
