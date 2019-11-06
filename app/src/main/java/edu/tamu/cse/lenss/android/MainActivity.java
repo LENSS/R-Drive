@@ -5,8 +5,10 @@ import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -48,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     Button backButton;
     Button refreshButton;
     Button mkdirButton;
+    Button putButton;
     ArrayAdapter arrayAdapter;
     private static String currentView = "";
 
@@ -60,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
         this.backButton = (Button) findViewById(R.id.backButton);
         this.refreshButton = (Button) findViewById(R.id.refreshButton);
         this.mkdirButton = (Button) findViewById(R.id.mkdirButton);
+        this.putButton = (Button) findViewById(R.id.putButton);
         this.textView = (TextView) findViewById(R.id.textview);
         this.listView = (ListView)  findViewById(R.id.listview);
         this.listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -362,7 +366,114 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 
         LayoutInflater inflater = getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.alertdialog_custom_view,null);
+        View dialogView = inflater.inflate(R.layout.mkdir_view,null);
+
+        // Specify alert dialog is not cancelable/not ignorable
+        builder.setCancelable(true);
+
+        // Set the custom layout as alert dialog view
+        builder.setView(dialogView);
+
+        // Get the custom alert dialog view widgets reference
+        Button cancelDialogButton = (Button) dialogView.findViewById(R.id.cancelButton);
+        Button OKBUtton = (Button) dialogView.findViewById(R.id.OKButton);
+        EditText inputFolder = (EditText) dialogView.findViewById(R.id.folderNames);
+
+        // Create the alert dialog
+        final AlertDialog dialog = builder.create();
+
+        // Set Cancel button click listener
+        cancelDialogButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                // Dismiss the alert dialog
+                dialog.cancel();
+
+            }
+        });
+
+        // Set OK button click listener
+        OKBUtton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                //get value
+                String value = inputFolder.getText().toString();
+
+                //check for null and empty
+                if(value!=null && value.length()!=0){
+
+                    //remove beginning slash if present
+                    if(value.charAt(0)=='/'){
+                        value = value.substring(1, value.length());
+                    }
+
+                    //execute command
+                    String ret = Foo("mdfs -mkdir " + currentView+value);
+
+                    //check ret
+                    if(ret!=null){
+                        Toast.makeText(getApplicationContext(), ret, Toast.LENGTH_SHORT).show();
+                        setView(currentView);
+                    }else{
+                        Toast.makeText(getApplicationContext(), "Could not get reply from EdgeKeeper.", Toast.LENGTH_SHORT).show();
+                    }
+
+                }else{
+                    Toast.makeText(getApplicationContext(), "Provided folder is empty.", Toast.LENGTH_SHORT).show();
+                }
+
+                //dialog.cancel();
+                dialog.dismiss();
+            }
+        });
+
+        // Display the custom alert dialog on interface
+        dialog.show();
+    }
+
+    //put button clicked
+    private static final int READ_REQUEST_CODE = 42;
+    public void putButtonClicked(View view){
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        startActivityForResult(intent, READ_REQUEST_CODE);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
+
+        if (requestCode == READ_REQUEST_CODE && resultCode == RESULT_OK) {
+
+            Uri uri = null;
+            if (resultData != null) {
+                uri = resultData.getData();
+
+                String path = uri.getPath();
+
+                // Now check if this filepath is from internal memory or not
+                if (path.toLowerCase().startsWith("/document/primary:") )
+                {
+                    path = path.replaceFirst("/document/primary:", Environment.getExternalStorageDirectory().toString()+ "/");
+                    showDialogue(path);
+
+                }else{
+                    Toast.makeText(this, "Choose a file from sdcard.", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    }
+
+    //input event for passing MDFS directory value
+    private void showDialogue(String localfilepath) {
+
+        // Build an AlertDialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.put_view,null);
 
         // Specify alert dialog is not cancelable/not ignorable
         builder.setCancelable(true);
@@ -398,29 +509,27 @@ public class MainActivity extends AppCompatActivity {
                 String value = inputFolder.getText().toString();
 
                 //check for null or empty
-                if(value!=null && value!=""){
+                if(value!=null){
 
                     //remove beginning slash if present
-                    if(value.charAt(0)=='/'){
+                    if (!value.equals("") && value.charAt(0) == '/') {
                         value = value.substring(1, value.length());
                     }
 
                     //execute command
-                    String ret = Foo("mdfs -mkdir " + currentView+value);
+                    String ret = Foo("mdfs -put " + localfilepath + " " + currentView + value);
 
-                    //check ret
-                    if(ret!=null){
+                    //check
+                    if (ret != null) {
                         Toast.makeText(getApplicationContext(), ret, Toast.LENGTH_SHORT).show();
                         setView(currentView);
-                    }else{
+                    } else {
                         Toast.makeText(getApplicationContext(), "Could not get reply from EdgeKeeper.", Toast.LENGTH_SHORT).show();
                     }
 
                 }else{
-                    Toast.makeText(getApplicationContext(), "Provided folder is empty.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Provided mdfs directory is empty.", Toast.LENGTH_SHORT).show();
                 }
-
-                //dialog.cancel();
                 dialog.dismiss();
             }
         });
@@ -428,9 +537,6 @@ public class MainActivity extends AppCompatActivity {
         // Display the custom alert dialog on interface
         dialog.show();
     }
-
-
-
 
 
 }
