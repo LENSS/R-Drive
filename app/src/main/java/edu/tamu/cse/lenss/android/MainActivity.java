@@ -1,6 +1,7 @@
 package edu.tamu.cse.lenss.android;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -10,6 +11,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.ContextMenu;
+import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.Menu;
@@ -17,6 +19,7 @@ import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     ListView listView;
     Button backButton;
     Button refreshButton;
+    Button mkdirButton;
     ArrayAdapter arrayAdapter;
     private static String currentView = "";
 
@@ -55,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
 
         this.backButton = (Button) findViewById(R.id.backButton);
         this.refreshButton = (Button) findViewById(R.id.refreshButton);
+        this.mkdirButton = (Button) findViewById(R.id.mkdirButton);
         this.textView = (TextView) findViewById(R.id.textview);
         this.listView = (ListView)  findViewById(R.id.listview);
         this.listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -93,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreateContextMenu(menu, v, menuInfo);
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_main, menu);
-        menu.setHeaderTitle("Select The Action");
+        menu.setHeaderTitle("Select Action");
     }
 
 
@@ -348,6 +353,80 @@ public class MainActivity extends AppCompatActivity {
     //refresh button pressed
     public void refreshButtonClicked(View view){
         setView(currentView);
+    }
+
+    //mkdir button pressed
+    public void mkdirButtonClicked(View view){
+
+        // Build an AlertDialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.alertdialog_custom_view,null);
+
+        // Specify alert dialog is not cancelable/not ignorable
+        builder.setCancelable(true);
+
+        // Set the custom layout as alert dialog view
+        builder.setView(dialogView);
+
+        // Get the custom alert dialog view widgets reference
+        Button cancelDialogButton = (Button) dialogView.findViewById(R.id.cancelButton);
+        Button OKBUtton = (Button) dialogView.findViewById(R.id.OKButton);
+        EditText inputFolder = (EditText) dialogView.findViewById(R.id.folderNames);
+
+        // Create the alert dialog
+        final AlertDialog dialog = builder.create();
+
+        // Set Cancel button click listener
+        cancelDialogButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                // Dismiss the alert dialog
+                dialog.cancel();
+
+            }
+        });
+
+        // Set OK button click listener
+        OKBUtton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                //get value
+                String value = inputFolder.getText().toString();
+
+                //check for null or empty
+                if(value!=null && value!=""){
+
+                    //remove beginning slash if present
+                    if(value.charAt(0)=='/'){
+                        value = value.substring(1, value.length());
+                    }
+
+                    //execute command
+                    String ret = Foo("mdfs -mkdir " + currentView+value);
+
+                    //check ret
+                    if(ret!=null){
+                        Toast.makeText(getApplicationContext(), ret, Toast.LENGTH_SHORT).show();
+                        setView(currentView);
+                    }else{
+                        Toast.makeText(getApplicationContext(), "Could not get reply from EdgeKeeper.", Toast.LENGTH_SHORT).show();
+                    }
+
+                }else{
+                    Toast.makeText(getApplicationContext(), "Provided folder is empty.", Toast.LENGTH_SHORT).show();
+                }
+
+                //dialog.cancel();
+                dialog.dismiss();
+            }
+        });
+
+        // Display the custom alert dialog on interface
+        dialog.show();
     }
 
 
