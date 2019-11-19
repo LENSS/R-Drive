@@ -1,16 +1,12 @@
 package edu.tamu.cse.lenss.CLI;
 
 
-import edu.tamu.lenss.mdfs.Utils.Pair;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
-
-import edu.tamu.lenss.mdfs.Constants;
-import edu.tamu.lenss.mdfs.Utils.IOUtilities;
 
 //this class temporarily contains the sockets of a newly connected CLI client, until the request has been completed.
 //when the request has been completed, the client socket is taken out of map, reply is sent and the socket is closed.
@@ -52,7 +48,7 @@ public class clientSockets {
         ///get the clientSockets object from map
         clientSockets socket = sockets.get(clientID);
 
-        //write on the socket aka send reply to client
+        //write on the socket aka QueueToSend reply to client
         if (socket != null) {
             try {
                 socket.os.write((reply + "\n").getBytes());

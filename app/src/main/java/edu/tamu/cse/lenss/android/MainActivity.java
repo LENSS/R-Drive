@@ -31,8 +31,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import edu.tamu.cse.lenss.CLI.RequestHandler;
-import edu.tamu.lenss.mdfs.Constants;
-import edu.tamu.lenss.mdfs.Utils.IOUtilities;
+import edu.tamu.lenss.MDFS.Constants;
+import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 
 import static java.lang.Thread.sleep;
 
@@ -97,8 +97,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo)
-    {
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_main, menu);
@@ -208,7 +207,6 @@ public class MainActivity extends AppCompatActivity {
 
     //this function starts a service
     void runService(){
-        //this.stopService(new Intent(this, MDFSService.class));
 
         // First stop the already running service
         this.stopService(new Intent(this, MDFSService.class));
@@ -224,9 +222,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             startService(intent);
         }
-
-
-        //this.startService(intent);
     }
 
 
@@ -249,6 +244,7 @@ public class MainActivity extends AppCompatActivity {
         else
             initializeApp();
     }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
 

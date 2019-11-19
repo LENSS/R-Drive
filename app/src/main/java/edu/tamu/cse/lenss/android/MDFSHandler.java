@@ -2,27 +2,17 @@ package edu.tamu.cse.lenss.android;
 
 
 import android.app.AlarmManager;
-import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
-import android.os.VibrationEffect;
-import android.os.Vibrator;
-import android.support.v4.app.NotificationCompat;
-import android.widget.Toast;
 
-import java.io.File;
 import java.util.Calendar;
-import java.util.concurrent.TimeUnit;
 
 import edu.tamu.cse.lenss.CLI.cli_processor;
 import edu.tamu.cse.lenss.Notifications.NotificationUtils;
-import edu.tamu.lenss.mdfs.Handler.ServiceHelper;
-import edu.tamu.lenss.mdfs.Utils.IOUtilities;
+import edu.tamu.lenss.MDFS.Handler.ServiceHelper;
 
 import static android.content.Context.ALARM_SERVICE;
-import static edu.tamu.cse.lenss.android.MDFSService.CHANNEL_ID;
 
 
 //this is the mdfs handler that starts the command line interface(cli) and the MDFS library.

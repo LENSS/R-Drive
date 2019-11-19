@@ -90,7 +90,7 @@ public class copytolocal {
             readyToSend = true;
         }
 
-        //now send it part by part
+        //now QueueToSend it part by part
         //this is done due to mac layer mtu being 1500 for wifi
         if(readyToSend) {
             //separate the reply string into different 1000 pieces
@@ -138,7 +138,7 @@ public class copytolocal {
                 //add the numbers of replyTokens at the beginning of the first token
                 replyTokens[0] = Integer.toString(numOfReplyTokens) + "^" + replyTokens[0];
 
-                //send the reply tokens one by one
+                //QueueToSend the reply tokens one by one
                 int count = 0;
                 for(int i=0; i< replyTokens.length; i++){
 
@@ -146,7 +146,7 @@ public class copytolocal {
                     System.out.println(replyTokens[i]);
 
 
-                    //send and sleep
+                    //QueueToSend and sleep
                     clientSockets.send(clientID, replyTokens[i]);
                     Sleep(500);
                 }
@@ -159,7 +159,7 @@ public class copytolocal {
                 //make the only reply
                 reply = "1" + "^"  +  reply;
 
-                //send the reply
+                //QueueToSend the reply
                 clientSockets.send(clientID, reply);
             }
 

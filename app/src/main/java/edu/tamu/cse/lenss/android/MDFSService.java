@@ -1,7 +1,6 @@
 package edu.tamu.cse.lenss.android;
 
 
-import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -18,9 +17,9 @@ import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 
 import edu.tamu.cse.lenss.Notifications.NotificationUtils;
-import edu.tamu.lenss.mdfs.Constants;
-import edu.tamu.lenss.mdfs.Utils.IOUtilities;
-import edu.tamu.lenss.mdfs.Utils.Pair;
+import edu.tamu.lenss.MDFS.Constants;
+import edu.tamu.lenss.MDFS.Utils.IOUtilities;
+import edu.tamu.lenss.MDFS.Utils.Pair;
 
 import static java.lang.Thread.sleep;
 

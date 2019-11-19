@@ -11,16 +11,16 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import edu.tamu.lenss.mdfs.Constants;
-import edu.tamu.lenss.mdfs.RSock.testRsock;
-import edu.tamu.lenss.mdfs.Commands.copyfromlocal.copyfromlocal;
-import edu.tamu.lenss.mdfs.Commands.get.get;
-import edu.tamu.lenss.mdfs.Commands.help.help;
-import edu.tamu.lenss.mdfs.Commands.ls.ls;
-import edu.tamu.lenss.mdfs.Commands.mkdir.mkdir;
-import edu.tamu.lenss.mdfs.Commands.put.put;
-import edu.tamu.lenss.mdfs.Commands.rm.rm;
-import edu.tamu.lenss.mdfs.Utils.IOUtilities;
+import edu.tamu.lenss.MDFS.Constants;
+import edu.tamu.lenss.MDFS.RSock.testRsock;
+import edu.tamu.lenss.MDFS.Commands.copyfromlocal.copyfromlocal;
+import edu.tamu.lenss.MDFS.Commands.get.get;
+import edu.tamu.lenss.MDFS.Commands.help.help;
+import edu.tamu.lenss.MDFS.Commands.ls.ls;
+import edu.tamu.lenss.MDFS.Commands.mkdir.mkdir;
+import edu.tamu.lenss.MDFS.Commands.put.put;
+import edu.tamu.lenss.MDFS.Commands.rm.rm;
+import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 
 
 //
