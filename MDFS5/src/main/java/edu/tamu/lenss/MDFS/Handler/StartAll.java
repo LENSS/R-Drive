@@ -7,8 +7,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import edu.tamu.lenss.MDFS.mdfs_api_server.MDFS_API_SERVER;
-
 
 //this class is basically runs all the other necessary classes
 public class StartAll {
@@ -18,7 +16,6 @@ public class StartAll {
 
 	private runGNSandRsock rungnsandrsock;
 	private ExecutorService pool;
-	private Thread mdfs_api_server;
 
 	public StartAll(){
 
@@ -30,10 +27,6 @@ public class StartAll {
 
 		//start health status update thread
 		//new Thread(new HealthStatusUpdate()).start();
-
-		//start MDFS_API thread
-		this.mdfs_api_server = new Thread(new MDFS_API_SERVER());
-		this.mdfs_api_server.start();
 
 		//log
 		logger.log(Level.ALL, "MDFS has been started.");
@@ -52,6 +45,7 @@ public class StartAll {
 	public void shutdown(){
 		pool.shutdown();
 		rungnsandrsock.stopAll();
+
 		//log
 		logger.log(Level.ALL, "MDFS has been stopped.");
 	}

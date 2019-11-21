@@ -216,8 +216,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Intent notificationIntent = new Intent(this, MainActivity.class);
-            PendingIntent pendingIntent = PendingIntent.getActivity(
-                    this, 0, notificationIntent, 0);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
             startForegroundService(intent);
         } else {
             startService(intent);
@@ -262,7 +261,7 @@ public class MainActivity extends AppCompatActivity {
     //=========================================================================
 
     //takes mdfs command and execute it
-    public String Foo(String command) {
+    public static String Foo(String command) {
         String reply = RequestHandler.processRequestCpp(Constants.NON_CLI_CLIENT, command);
 
         if(reply!=null){
