@@ -13,9 +13,9 @@ import java.net.InetAddress;
 public class MDFS_API_CLIENT {
 
     //constant static fields
-    public static String LOCALFILEPATH = "LOCALFILEPATH";
-    public static String MDFSFILEPATH = "MDFSFILEPATH";
-    public static int MDFS_API_PORT = 5153;
+    private static String LOCALFILEPATH = "LOCALFILEPATH";
+    private static String MDFSFILEPATH = "MDFSFILEPATH";
+    private static int MDFS_API_PORT = 5153;
 
     //put function
     public static void put(String filepathWithName, String mdfsDirectory){
@@ -38,13 +38,15 @@ public class MDFS_API_CLIENT {
 
             //init socket and ip
             DatagramSocket ds = new DatagramSocket();
-            InetAddress ip = InetAddress.getLocalHost();
+            InetAddress ip = InetAddress.getByName("127.0.0.1");
 
             //make UDP packet
             DatagramPacket DpSend = new DatagramPacket(data, data.length, ip, MDFS_API_PORT);
 
             //send
             ds.send(DpSend);
+
+            System.out.println("request sent to MDFS");
 
         }catch(IOException e){
             e.printStackTrace();

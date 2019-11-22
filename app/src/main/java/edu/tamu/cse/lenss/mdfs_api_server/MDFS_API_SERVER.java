@@ -9,6 +9,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 
+import edu.tamu.cse.lenss.CLI.RequestHandler;
 import edu.tamu.cse.lenss.android.MainActivity;
 
 public class MDFS_API_SERVER extends Thread {
@@ -30,11 +31,13 @@ public class MDFS_API_SERVER extends Thread {
         this.isRunning = true;
 
         //init server
-        try { ds= new DatagramSocket(MDFS_API_PORT); } catch (SocketException e) { e.printStackTrace(); }
+        try { ds= new DatagramSocket(MDFS_API_PORT,InetAddress.getByName("127.0.0.1")); } catch (Exception e) { e.printStackTrace(); }
 
         //init buffer
-        byte[] receive = new byte[65535];
+        byte[] receive = new byte[64000];
         DatagramPacket DpReceive = null;
+
+        System.out.println("MDFS_API_SERVER is running...");
 
         while(isRunning){
 
@@ -53,15 +56,22 @@ public class MDFS_API_SERVER extends Thread {
                 //get reqJSON
                 JSONObject req = new JSONObject(new String(DpReceive.getData()));
 
-                //execute request
-                String ret = MainActivity.Foo("mdfs -put " + req.get(LOCALFILEPATH) + " " + req.get(MDFSFILEPATH));
+                //check
+                if(!req.get(LOCALFILEPATH).equals("") && !req.get(MDFSFILEPATH).equals("")) {
+
+                    //execute request command
+                    String command = "mdfs -put " + req.get(LOCALFILEPATH) + " " + req.get(MDFSFILEPATH);
+                    String ret = MainActivity.Foo(command);
+
+                    System.out.println("return from MainActivity: " + ret);
+                }
 
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
             // Clear the buffer after every message.
-            receive = new byte[65535];
+            receive = new byte[64000];
         }
     }
 
