@@ -44,8 +44,8 @@ public class RsockReceiveForRsockTest implements Runnable{
         //execution only comes here when the above while loop is broken.
         //above while loop is only broken when mdfs is closing.
         //came out of while loop, now close the rsock client library object.
-        RSockConstants.intrfc_deletion.close();
-        RSockConstants.intrfc_deletion = null;
+        RSockConstants.intrfc_test.close();
+        RSockConstants.intrfc_test = null;
     }
 
     public static void stop(){

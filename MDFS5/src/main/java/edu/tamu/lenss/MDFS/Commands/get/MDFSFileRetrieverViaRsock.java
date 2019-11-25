@@ -183,7 +183,10 @@ public class MDFSFileRetrieverViaRsock {
         //QueueToSend request
         if (data != null) {
             String uuid = UUID.randomUUID().toString().substring(0, 12);
-            boolean sent = RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing", "nothing", destGUID, 500, RSockConstants.fileRetrieveEndpoint, RSockConstants.fileRetrieveEndpoint, RSockConstants.fileRetrieveEndpoint);
+            boolean sent = false;
+            if(RSockConstants.RSOCK) {
+                sent = RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing", "nothing", destGUID, 500, RSockConstants.fileRetrieveEndpoint, RSockConstants.fileRetrieveEndpoint, RSockConstants.fileRetrieveEndpoint);
+            }
 
             if(sent){
                 //log

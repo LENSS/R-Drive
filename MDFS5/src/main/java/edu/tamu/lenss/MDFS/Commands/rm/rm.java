@@ -180,7 +180,8 @@ public class rm {
         String delCommand = fileName + RSockConstants.deletion_tag + fileID;
 
         //QueueToSend through rsock and dont expect reply
-        RSockConstants.intrfc_deletion.send(UUID.randomUUID().toString().substring(0, 12), delCommand.getBytes(), delCommand.length(), "nothing", "nothing", GUID, 0, RSockConstants.fileDeleteEndpoint,RSockConstants.fileDeleteEndpoint, "noReply");
-
+        if(RSockConstants.RSOCK) {
+            RSockConstants.intrfc_deletion.send(UUID.randomUUID().toString().substring(0, 12), delCommand.getBytes(), delCommand.length(), "nothing", "nothing", GUID, 0, RSockConstants.fileDeleteEndpoint, RSockConstants.fileDeleteEndpoint, "noReply");
+        }
     }
 }

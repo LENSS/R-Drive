@@ -177,7 +177,9 @@ public class MDFSBlockCreatorViaRsockNG{
 
             //QueueToSend the object over rsock and dont expect reply
             String uuid = UUID.randomUUID().toString().substring(0, 12);
-            result = RSockConstants.intrfc_creation.send(uuid, data, data.length, "nothing", "nothing", destGUID, 500, RSockConstants.fileCreateEndpoint, RSockConstants.fileCreateEndpoint, "noReply");
+            if(RSockConstants.RSOCK) {
+                result = RSockConstants.intrfc_creation.send(uuid, data, data.length, "nothing", "nothing", destGUID, 500, RSockConstants.fileCreateEndpoint, RSockConstants.fileCreateEndpoint, "noReply");
+            }
 
             //log
             MDFSFileCreatorViaRsockNG.logger.log(Level.ALL, "fragment# " + fragIndex +  " of block# " + blockIndex +" has been pushed to rsock daemon to guid: " + destGUID + "with blockRetrieveReqUUID: " + uuid);

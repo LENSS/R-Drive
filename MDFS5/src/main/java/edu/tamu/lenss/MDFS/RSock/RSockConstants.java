@@ -6,6 +6,11 @@ import example.Interface;
 //this class contains constants for Rsock initialization.
 public class RSockConstants {
 
+
+    //enable/disable rsock from the whole project
+    public static final boolean RSOCK = false;
+
+
     //rsock api instances.
     public static Interface intrfc_creation;
     public static Interface intrfc_retrieval;
