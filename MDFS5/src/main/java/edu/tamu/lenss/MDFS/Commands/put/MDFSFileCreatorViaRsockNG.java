@@ -284,7 +284,7 @@ public class MDFSFileCreatorViaRsockNG{
         //check before proceeding
         synchronized(fileInfo){
             if(!isN2K2Chosen || !isPartComplete || isSending){
-                return "Failed to QueueToSend block.";
+                return "Failed to send block.";
             }
         }
 
@@ -467,7 +467,7 @@ public class MDFSFileCreatorViaRsockNG{
             }
         }
 
-        //QueueToSend the metadata to the local edgeKeeper
+        //send the metadata to the local edgeKeeper
         JSONObject repJSON = EKClient.putMetadata(metadata);
 
         //check reply

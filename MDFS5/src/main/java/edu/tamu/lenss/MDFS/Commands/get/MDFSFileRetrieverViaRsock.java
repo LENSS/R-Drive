@@ -121,7 +121,7 @@ public class MDFSFileRetrieverViaRsock {
                     //log
                     logger.log(Level.ALL,"chosen nodes: " + chNodes);
 
-                    //QueueToSend out the requests for each tokens
+                    //send out the requests for each tokens
                     for (int i = 0; i < chosenNodes.size(); i++) {
                         sendFragmentRequest(chosenNodes.get(i));
                     }
@@ -180,7 +180,7 @@ public class MDFSFileRetrieverViaRsock {
             //logger: could not convert object into bytes
         }
 
-        //QueueToSend request
+        //send request
         if (data != null) {
             String uuid = UUID.randomUUID().toString().substring(0, 12);
             boolean sent = false;
@@ -197,7 +197,7 @@ public class MDFSFileRetrieverViaRsock {
             }else{
 
                 //log
-                logger.log(Level.ALL, "failed to QueueToSend fragment request: " + s);
+                logger.log(Level.ALL, "failed to send fragment request: " + s);
             }
         }
 

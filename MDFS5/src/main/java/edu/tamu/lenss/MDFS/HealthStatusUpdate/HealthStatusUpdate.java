@@ -18,7 +18,7 @@ public class HealthStatusUpdate implements Runnable {
                 mdfsHealth.put("mdfs_status", "Alive");
                 mdfsHealth.put("mdfs_network_status", "Good");
 
-                //QueueToSend
+                //send
                 EKClient.putAppStatus("MDFS", mdfsHealth);
 
                 //sleep

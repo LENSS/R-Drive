@@ -6,7 +6,7 @@ import java.net.ServerSocket;
 
 
 //this class runs on a thread as a server, and receives new client connection.
-//clients connect this server to QueueToSend commands and do MDFS jobs
+//clients connect this server to send commands and do MDFS jobs
 public class cli_processor extends Thread {
 
 

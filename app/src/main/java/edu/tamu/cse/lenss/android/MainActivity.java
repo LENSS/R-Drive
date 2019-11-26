@@ -29,8 +29,10 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import edu.tamu.cse.lenss.CLI.RequestHandler;
+import edu.tamu.lenss.MDFS.Commands.ls.ls;
 import edu.tamu.lenss.MDFS.Constants;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 
@@ -284,17 +286,11 @@ public class MainActivity extends AppCompatActivity {
         //check if reply is correct
         if(reply!=null){
 
-            //toast
-            //sToast.makeText(this, "Fetched root directory.", Toast.LENGTH_SHORT).show();
-
             //set current directory
             textView.setText("Directory: " + currentView);
 
-            //tokenize the elements and delete empty strings
-            String[] tokens = IOUtilities.delEmptyStr(reply.split("   "));
-
-            //create arrayList and populate
-            ArrayList arrayList = new ArrayList(Arrays.asList(tokens));
+            //create List and populate with ls info
+            List<String> arrayList = ls.jsonToList(reply);
 
             //initialize and set array adapter
             this.arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, arrayList);
@@ -328,11 +324,8 @@ public class MainActivity extends AppCompatActivity {
             //check
             if(reply!=null){
 
-                //tokenize the elements and delete empty strings
-                tokens = IOUtilities.delEmptyStr(reply.split("   "));
-
                 //create arrayList and populate
-                ArrayList arrayList = new ArrayList(Arrays.asList(tokens));
+                List<String> arrayList = ls.jsonToList(reply);
 
                 //initialize and set array adapter
                 this.arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, arrayList);

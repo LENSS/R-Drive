@@ -42,7 +42,7 @@ public class RequestHandler implements Runnable {
     public void run() {
 
         try{
-            //Read the request from the CPP daemon
+            //Read the request from CLI socket
             System.out.println("RequestHandler reading command from socket..");
             BufferedReader inBuffer = new BufferedReader(new InputStreamReader( cSocket.getInputStream()));
             OutputStream os = cSocket.getOutputStream();
@@ -360,7 +360,7 @@ public class RequestHandler implements Runnable {
 
                                 //handle ls command and return reply
                                 String reply = ls.ls(mdfsDir);
-                                if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, reply); }else{ return reply; };
+                                if(!clientID.equals(Constants.NON_CLI_CLIENT)) { clientSockets.sendAndClose(clientID, ls.jsonToPlainString(reply)); }else{ return reply; };
 
                             }else{
                                 String reply = "MDFS " + isDirValid;

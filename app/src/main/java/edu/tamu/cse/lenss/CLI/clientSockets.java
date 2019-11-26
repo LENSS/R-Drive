@@ -48,7 +48,7 @@ public class clientSockets {
         ///get the clientSockets object from map
         clientSockets socket = sockets.get(clientID);
 
-        //write on the socket aka QueueToSend reply to client
+        //write on the socket aka send reply to client
         if (socket != null) {
             try {
                 socket.os.write((reply + "\n").getBytes());

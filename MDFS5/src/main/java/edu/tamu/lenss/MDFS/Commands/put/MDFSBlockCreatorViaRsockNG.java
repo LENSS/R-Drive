@@ -70,7 +70,7 @@ public class MDFSBlockCreatorViaRsockNG{
                 //log
                 MDFSFileCreatorViaRsockNG.logger.log(Level.ALL, "Block creation success.");
 
-                //there is no other nodes to QueueToSend the fragments to so return.
+                //there is no other nodes to send the fragments to so return.
                 return "SUCCESS";
 
             }else{
@@ -93,7 +93,7 @@ public class MDFSBlockCreatorViaRsockNG{
     //returns SUCCESS if all succeeds, Error message if not.
     private String distributeFragments() {
 
-        MDFSFileCreatorViaRsockNG.logger.log(Level.ALL, "Starting to QueueToSend block fragments of block# " + blockIdx);
+        MDFSFileCreatorViaRsockNG.logger.log(Level.ALL, "Starting to send block fragments of block# " + blockIdx);
 
         //result to return
         boolean result = true;
@@ -103,8 +103,8 @@ public class MDFSBlockCreatorViaRsockNG{
         if(!fileFragDir.exists()){ return "No block directory found."; }
         File[] allFrags = fileFragDir.listFiles();
 
-        //now QueueToSend them one by one
-        //iterate through all fragments and QueueToSend each to each destGUIDs except myself
+        //now send them one by one
+        //iterate through all fragments and send each to each destGUIDs except myself
         Iterator<String> nodesIter = fileStorageGUIDs.iterator();
         for (File oneFrag : allFrags) {
             if (oneFrag.getName().contains("__frag__")) {
@@ -166,7 +166,7 @@ public class MDFSBlockCreatorViaRsockNG{
         //make MDFSRsockBlockCreator obj
         MDFSRsockBlockForFileCreate mdfsrsockblock = new MDFSRsockBlockForFileCreate(fileInfo.getFileName(), filePathMDFS, byteArray, fileID, fileInfo.getFileSize(), fileInfo.getN2(), fileInfo.getK2(), blockIndex, fragmentIndex, EdgeKeeper.ownGUID, uniqueReqID, Constants.metadataIsGlobal);
 
-        //get byteArray and size of the MDFSRsockBlockCreator obj and do QueueToSend over rsock
+        //get byteArray and size of the MDFSRsockBlockCreator obj and do send over rsock
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutputStream oos = null;
         try {
@@ -175,7 +175,7 @@ public class MDFSBlockCreatorViaRsockNG{
             oos.flush();
             byte [] data = bos.toByteArray();
 
-            //QueueToSend the object over rsock and dont expect reply
+            //send the object over rsock and dont expect reply
             String uuid = UUID.randomUUID().toString().substring(0, 12);
             if(RSockConstants.RSOCK) {
                 result = RSockConstants.intrfc_creation.send(uuid, data, data.length, "nothing", "nothing", destGUID, 500, RSockConstants.fileCreateEndpoint, RSockConstants.fileCreateEndpoint, "noReply");

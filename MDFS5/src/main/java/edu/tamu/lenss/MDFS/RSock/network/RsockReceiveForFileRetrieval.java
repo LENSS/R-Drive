@@ -30,7 +30,7 @@ import static java.lang.Thread.sleep;
 
 
 //this class is used for block retrieval via rsock.
-//this class receives fragment requests and QueueToSend the fragment to the requestor.
+//this class receives fragment requests and send the fragment to the requestor.
 public class RsockReceiveForFileRetrieval implements Runnable {
 
 
@@ -97,7 +97,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                     MDFSRsockBlockForFileRetrieve.Type type = (MDFSRsockBlockForFileRetrieve.Type) mdfsrsockblock.type;
 
                     //if the other party is asking for a fragment.
-                    //then, we QueueToSend the fragment if we have it.
+                    //then, we send the fragment if we have it.
                     if (type == MDFSRsockBlockForFileRetrieve.Type.Request) {
 
                         logger.log(Level.ALL, "fraggg received fragment request from node " + mdfsrsockblock.srcGUID + " for fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName);
@@ -125,7 +125,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                             //now, change mdfsrsockblock into a Reply object
                             mdfsrsockblock.flipIntoReply(byteArray);
 
-                            //convert mdfsrsockblock object into bytearray and do QueueToSend
+                            //convert mdfsrsockblock object into bytearray and do send
                             ByteArrayOutputStream bos = new ByteArrayOutputStream();
                             ObjectOutputStream ooos = null;
                             try {
@@ -134,7 +134,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                                 ooos.flush();
                                 byte[] data = bos.toByteArray();
 
-                                //QueueToSend the object over rsock and expect no reply
+                                //send the object over rsock and expect no reply
                                 String uuid = UUID.randomUUID().toString().substring(0, 12);
                                 RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing", "nothing", mdfsrsockblock.destGUID, 500, "hdrRecv", receivedFile.getReplyEndpoint(), "noReply");
 

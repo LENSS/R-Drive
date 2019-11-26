@@ -15,7 +15,7 @@ public class mkdir {
         //make json object
         JSONObject reqJSON = new JSONObject();
 
-        //QueueToSend mkdir request
+        //send mkdir request
         JSONObject repJSON = EKClient.mkdir(mdfsDir, EdgeKeeper.ownGUID, Constants.metadataIsGlobal);
 
         //check reply

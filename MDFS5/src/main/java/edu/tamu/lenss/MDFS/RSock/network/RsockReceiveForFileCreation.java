@@ -132,7 +132,7 @@ public class RsockReceiveForFileCreation implements Runnable{
             metadata.setk2(k2);
             metadata.addInfo(EdgeKeeper.ownGUID, (int)blockIdx, (int)fragmentIdx);
 
-            //QueueToSend metadata to local edgeKeeper
+            //send metadata to local edgeKeeper
             // JSONObject repJSON = EKClient.putMetadata(metadata);
 
 

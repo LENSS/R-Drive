@@ -29,7 +29,7 @@ public class rm {
                 //log
                 logger.log(Level.ALL, "Starting to perform -rm command for file " + mdfsPath);
 
-                //QueueToSend rm_file request
+                //send rm_file request
                 JSONObject repJSON = EKClient.rm_file(mdfsPath);
 
                 //check reply
@@ -60,7 +60,7 @@ public class rm {
                             //get all unique fragmentHoldersGUIDs
                             List<String> uniqueFragHoldersGUIDs = metadata.getAllUniqueFragmentHolders();
 
-                            //QueueToSend deletion to each guid
+                            //send deletion to each guid
                             for(String guid: uniqueFragHoldersGUIDs){
 
                                 sendDeletionReq(fileName, fileID, guid);
@@ -102,7 +102,7 @@ public class rm {
 
             } else if (reqType.equals("del_dir")) {
 
-                //QueueToSend rm_directory request
+                //send rm_directory request
                 JSONObject repJSON = EKClient.rm_directory(mdfsPath);
 
                 //check reply
@@ -133,7 +133,7 @@ public class rm {
                                 //delete the file from my device
                                 ServiceHelper.getInstance().getDirectory().deleteFile(fileID, fileName);
 
-                                //QueueToSend deletion to each guid
+                                //send deletion to each guid
                                 for(int ii=0; ii< nodes.length(); ii++){
                                     sendDeletionReq(fileName, fileID, nodes.getString(ii));
                                 }
@@ -179,7 +179,7 @@ public class rm {
         //make deletion payload
         String delCommand = fileName + RSockConstants.deletion_tag + fileID;
 
-        //QueueToSend through rsock and dont expect reply
+        //send through rsock and dont expect reply
         if(RSockConstants.RSOCK) {
             RSockConstants.intrfc_deletion.send(UUID.randomUUID().toString().substring(0, 12), delCommand.getBytes(), delCommand.length(), "nothing", "nothing", GUID, 0, RSockConstants.fileDeleteEndpoint, RSockConstants.fileDeleteEndpoint, "noReply");
         }

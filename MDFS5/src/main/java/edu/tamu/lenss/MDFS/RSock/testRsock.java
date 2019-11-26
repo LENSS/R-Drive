@@ -43,7 +43,7 @@ public class testRsock {
                 data_64049 = data_64049 + "Z";
             }
 
-            //QueueToSend 64049
+            //send 64049
             RSockConstants.intrfc_test.send(
                     UUID.randomUUID().toString().substring(0, 12),
                     data_64049.getBytes(),
@@ -68,7 +68,7 @@ public class testRsock {
             }
 
 
-            //QueueToSend 64050
+            //send 64050
             RSockConstants.intrfc_test.send(
                     UUID.randomUUID().toString().substring(0, 12),
                     data_64050.getBytes(),
@@ -93,7 +93,7 @@ public class testRsock {
                 data_64051 = data_64051 + "Z";
             }
 
-            //QueueToSend 64051
+            //send 64051
             RSockConstants.intrfc_test.send(
                     UUID.randomUUID().toString().substring(0, 12),
                     data_64051.getBytes(),
@@ -118,7 +118,7 @@ public class testRsock {
                 data_12899 = data_12899 + "Z";
             }
 
-            //QueueToSend 12899
+            //send 12899
             RSockConstants.intrfc_test.send(
                     UUID.randomUUID().toString().substring(0, 12),
                     data_12899.getBytes(),
@@ -144,7 +144,7 @@ public class testRsock {
             }
 
 
-            //QueueToSend 128100
+            //send 128100
             RSockConstants.intrfc_test.send(
                     UUID.randomUUID().toString().substring(0, 12),
                     data_128100.getBytes(),
@@ -169,7 +169,7 @@ public class testRsock {
                 data_128101 = data_128101 + "Z";
             }
 
-            //QueueToSend 128101
+            //send 128101
             RSockConstants.intrfc_test.send(
                     UUID.randomUUID().toString().substring(0, 12),
                     data_128101.getBytes(),
@@ -193,7 +193,7 @@ public class testRsock {
                 data_1 = data_1 + "Z";
             }
 
-            //QueueToSend 128101
+            //send 128101
             RSockConstants.intrfc_test.send(
                     UUID.randomUUID().toString().substring(0, 12),
                     data_1.getBytes(),
@@ -212,7 +212,7 @@ public class testRsock {
             //0
             String data_0 = "";
 
-            //QueueToSend 0
+            //send 0
             RSockConstants.intrfc_test.send(
                     UUID.randomUUID().toString().substring(0, 12),
                     data_0.getBytes(),

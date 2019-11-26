@@ -74,7 +74,7 @@ public class copyfromlocal {
         //log
         logger.log(Level.ALL, "-copyFromLocal success");
 
-        //QueueToSend back reply
+        //send back reply
         return "File copy success!";
     }
 }

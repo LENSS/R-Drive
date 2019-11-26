@@ -11,7 +11,7 @@ public class put {
 
         Pair pair =  loadFile(filePathLocal, filename, clientID);
 
-        //if file has been loaded, then QueueToSend
+        //if file has been loaded, then send
         if(pair!=null) {
             if (pair.getString().equals("SUCCESS") && pair.getFile() != null) {
                 return sendFile(filename, pair.getFile(), filePathMDFS);
@@ -100,7 +100,7 @@ public class put {
             maxBlockSize = (int) Constants.DEFAULT_BLOCK_SIZE;
         }
 
-        //QueueToSend the file in the same thread
+        //send the file in the same thread
         MDFSFileCreatorViaRsockNG curFile = new MDFSFileCreatorViaRsockNG(file, filePathMDFS, maxBlockSize, Constants.K_N_RATIO, ServiceHelper.getInstance().getEncryptKey());
         String ret = curFile.start();
 

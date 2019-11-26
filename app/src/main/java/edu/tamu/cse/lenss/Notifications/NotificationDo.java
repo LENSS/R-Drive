@@ -14,8 +14,8 @@ import edu.tamu.cse.lenss.android.R;
 
 
 //
-//This class is used to actually QueueToSend out a notification.
-//when alarm gets triggered, it calls out this class to QueueToSend out a notification.
+//This class is used to actually send out a notification.
+//when alarm gets triggered, it calls out this class to send out a notification.
 //
 public class NotificationDo extends BroadcastReceiver {
 
