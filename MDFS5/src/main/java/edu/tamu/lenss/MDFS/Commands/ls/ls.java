@@ -38,7 +38,7 @@ public class ls {
                     logger.log(Level.ALL, "Received SUCCESS reply from edgeKeeper for -ls command");
 
                     //return
-                    repJSON.toString();
+                    return repJSON.toString();
 
                 } else {
 

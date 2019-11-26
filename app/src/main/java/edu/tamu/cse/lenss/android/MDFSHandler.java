@@ -32,7 +32,7 @@ public class MDFSHandler extends Thread {
         startMDFS();
         startCLI();
         this.mdfs_api_server = new MDFS_API_SERVER();
-        this.mdfs_api_server.start();
+        //this.mdfs_api_server.start();
     }
 
     @Override
