@@ -29,6 +29,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.List;
 
 import edu.tamu.cse.lenss.CLI.CLIRequestHandler;
@@ -65,11 +68,13 @@ public class MainActivity extends AppCompatActivity {
 
     //current browsing direcotory for neighbor edge
     private static String neighborEdgeCurrentDir = "";
-    private static String currentNeighbor = "";
+    private static String currentBrowsingNeighbor = "";
 
     //view mode whether its ownEdgeDir or neighborEdgeDir view.
     private static final String OWNEDGEDIR = "OWNEDGEDIR";
     private static final String NEIGHBOREDGEDIR = "NEIGHBOREDGEDIR";
+    public static final String SELECTEDGEMASTER = "Select an edge directory";
+    private static String allNeighborEdgeDirsCache = "";
     private static String currentMode = OWNEDGEDIR; //start with own edge dir
 
 
@@ -93,18 +98,50 @@ public class MainActivity extends AppCompatActivity {
                 //get item
                 String item =  (String)((TextView) view).getText();
 
-                //check its a directory or file
-                if(item.charAt(0)=='/'){
+                //check if currentView is OWNEDGEDIR or NEIGHBOREDGEDIR
+                if(currentMode.equals(OWNEDGEDIR)) {
 
-                    //item is a directory
-                    //tokenize current directory
-                    String[] tokens = IOUtilities.delEmptyStr(ownEdgeCurrentDir.split("/"));
+                    //check its a directory or file
+                    if (item.charAt(0) == '/') {
 
-                    //make new directory
-                    String newDir = ownEdgeCurrentDir +item.subSequence(1, item.length()) + "/";
+                        //item is a directory
+                        //tokenize current directory
+                        String[] tokens = IOUtilities.delEmptyStr(ownEdgeCurrentDir.split("/"));
 
-                    //setview
-                    setViewForOwnEdge(newDir);
+                        //make new directory
+                        String newDir = ownEdgeCurrentDir + item.subSequence(1, item.length()) + "/";
+
+                        //setview
+                        setViewForOwnEdge(newDir);
+
+                    }
+                }else if(currentMode.equals(NEIGHBOREDGEDIR)){
+
+                    //check if the neighborEdgeCurrentDir = SELECTEDGEMASTER.
+                    //that means user toggled into the neighborEdgeDir and
+                    //about to choose an edge master.
+                    if(neighborEdgeCurrentDir.equals(SELECTEDGEMASTER)){
+
+                        //the item is a guid of an edge master
+                        //assign currentBrowsingNeighbor into this master guid
+                        currentBrowsingNeighbor = item;
+
+                        //show / directory for this particular master
+                        //fetch dir object for this particular master
+                        JSONObject particularMasterDirsObject = lsUtils.parseParticularMasterDirectoryFromFromAllNeighborEdgeDirStr(currentBrowsingNeighbor, allNeighborEdgeDirsCache);
+
+                        try {
+                            System.out.println(particularMasterDirsObject.toString(4));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                        //fetch directory information for this neighbor
+
+                    }else{
+
+                        //the item contains
+                    }
 
                 }
             }
@@ -295,27 +332,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    //takes a list of neighbor-master guids and sets them for view
-    public void viewNeighborMasters(List<String> neighborMasters){
-
-        //set currentView
-        ownEdgeCurrentDir = NEIGHBOREDGEDIR;
-
-        //set current directory
-        ownEdgeCurrentDir = "";
+    //takes a list of items and sets them for view
+    public void setItemsOnListView(List<String> list){
 
         //initialize and set array adapter
-        this.arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, neighborMasters);
+        this.arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, list);
         listView.setAdapter(arrayAdapter);
-
-        //set textview
-        textView.setText("Select an edge directory");
-
 
     }
 
+    //takes a list of items and show in the
+
     //takes a directory string, fetch directory and sets view.
     public void setViewForOwnEdge(String directory){
+
+        System.out.println("inside where we are");
 
         //first set current directory
         ownEdgeCurrentDir = directory;
@@ -337,10 +368,8 @@ public class MainActivity extends AppCompatActivity {
             listView.setAdapter(arrayAdapter);
 
 
-
         }else{
             Toast.makeText(this, "Could not fetch root directory.", Toast.LENGTH_SHORT).show();
-            textView.setText(currentMode);
         }
     }
 
@@ -352,20 +381,33 @@ public class MainActivity extends AppCompatActivity {
             //check currentMode
             if (currentMode.equals(OWNEDGEDIR)) {
 
-                //do ls and fetch all neighbor masters guids
-                String neighborLSstr = ls.ls("/", "lsRequestForNeighborEdge");
+                //do ls to fetch entire neighbor information
+                String allNeighborLSstr = ls.ls("/", "lsRequestForAllDirectoryiesOfAllNeighborEdges");
 
                 //check reply
-                if (neighborLSstr != null) {
+                if (allNeighborLSstr != null) {
+
+
+                    //save it into local cache
+                    allNeighborEdgeDirsCache = allNeighborLSstr;
 
                     //get list of all masters
-                    List<String> neighborMasters = lsUtils.getListOfMastersFromNeighborEdgeDirStr(neighborLSstr);
+                    List<String> neighborMasters = lsUtils.getListOfMastersFromAllNeighborEdgeDirStr(allNeighborEdgeDirsCache);
 
                     //check if list is null or empty
                     if(neighborMasters!=null && neighborMasters.size()!=0){
 
+                        //set currentView
+                        currentMode = NEIGHBOREDGEDIR;
+
+                        //set neighbor current directory
+                        this.neighborEdgeCurrentDir = SELECTEDGEMASTER;
+
                         //set all neighbor masters for view and select
-                        viewNeighborMasters(neighborMasters);
+                        setItemsOnListView(neighborMasters);
+
+                        //set textview
+                        textView.setText(SELECTEDGEMASTER);
 
                         //disable mkdir, put, back buttons
                         mkdirButton.setEnabled(false);
@@ -373,6 +415,8 @@ public class MainActivity extends AppCompatActivity {
 
                         //change currentMode
                         currentMode = NEIGHBOREDGEDIR;
+
+
                     }else if(neighborMasters.size()==0){
                         Toast.makeText(this, "No neighbor directory available.", Toast.LENGTH_SHORT).show();
                     }
@@ -391,6 +435,7 @@ public class MainActivity extends AppCompatActivity {
 
                 //change currentMode
                 currentMode = OWNEDGEDIR;
+
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -424,7 +469,7 @@ public class MainActivity extends AppCompatActivity {
                 this.arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, arrayList);
                 listView.setAdapter(arrayAdapter);
 
-                //set current direcotory to newDir
+                //set current directory to newDir
                 ownEdgeCurrentDir = newDir;
                 textView.setText(OWNEDGEDIR + ": " + ownEdgeCurrentDir);
 

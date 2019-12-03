@@ -1,5 +1,7 @@
 package edu.tamu.lenss.MDFS.Commands.ls;
 
+import com.google.gson.JsonObject;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -73,8 +75,9 @@ public class lsUtils {
 
 
     //helper function to parse neighborEdgeDir.
-    //takes an unmodified ls reply from edgekeeper, and parses out only the
-    //neighborEdgeDir portion, and returns as one string for visual purpose only.
+    //takes an unmodified ls reply from edgekeeper for lsRequestForNeighborEdge, or lsRequestForBothOwnAndNeighborEdge
+    // and parses out only the neighborEdgeDir portion,
+    // and returns as one string for visual purpose only.
     private static String toStringNeighborEdgeDir(String lsResult) {
 
         String result = "";
@@ -127,8 +130,9 @@ public class lsUtils {
     }
 
     //helper function for parsing ownEdgeDir
-    //takes an unmodified ls reply from edgekeeper, and parses out only the
-    //ownEdgeDir portion, and returns as one string for visual purpose only.
+    //takes an unmodified ls reply from edgekeeper for lsRequestForOwnEdge, or lsRequestForBothOwnAndNeighborEdge
+    // and parses out only the ownEdgeDir portion,
+    // and returns as one string for visual purpose only.
     private static String toStringOwnEdgeDir(String lsResult){
 
         String result = "";
@@ -163,7 +167,7 @@ public class lsUtils {
         return result;
     }
 
-    //takes unmodified ls result from EdgeKeeper for neighborEdgeDir,
+    //takes unmodified ls result from EdgeKeeper for lsRequestForNeighborEdge,
     // and returns a list of masters.
     //list can be empty.
     public static List<String> getListOfMastersFromNeighborEdgeDirStr(String lsResult){
@@ -203,9 +207,10 @@ public class lsUtils {
         return neighborMasters;
     }
 
-    //takes a ls result in json format,
-    //that contains own edge dir info,
+    //takes a ls result from edgekeeper for lsRequestForOwnEdge
     //and returns all tokens as a list.
+    //lsReplyForOwnEdge is used for doign ls for a
+    //particular directory for own edge directory.
     public static List<String> jsonToList(String lsResult){
 
         //check for null
@@ -253,6 +258,135 @@ public class lsUtils {
             e.printStackTrace();
             return new ArrayList<>();
         }
+    }
+
+    //takes a ls results from edgekeeper for lsRequestForAllDirectoryiesOfAllNeighborEdges,
+    //and return a list of neighbor masters.
+    //returns empty list if no masters available.
+    public static List<String> getListOfMastersFromAllNeighborEdgeDirStr(String lsResult){
+
+        //make a list
+        List<String> masters = new ArrayList<>();
+
+        try{
+
+           //convert string into json
+            JSONObject allneighDirsObj = new JSONObject(lsResult);
+
+            //check null
+            if(allneighDirsObj!=null){
+
+                //check success or error
+                if(allneighDirsObj.getString(RequestTranslator.resultField).equals(RequestTranslator.successMessage)){
+
+                    //get reply type
+                    String replyType =  allneighDirsObj.getString(LScommand.lsReplyType);
+
+                    //get DirsStr
+                    String DirsStr =  allneighDirsObj.getString(replyType);
+
+                    //get DirsObj
+                    JSONObject DirsObj = new JSONObject(DirsStr);
+
+                    //check success tag
+                    if(DirsObj.getString(RequestTranslator.resultField).equals(RequestTranslator.successMessage)) {
+
+                        //remove success tag
+                        DirsObj.remove(RequestTranslator.resultField);
+
+                        //get all keys, aka masterguids
+                        Iterator<String> masterguids = DirsObj.keys();
+
+                        //for each master guid
+                        while (masterguids.hasNext()) {
+
+                            //get each master guid
+                            String master = masterguids.next();
+
+                            //add into list
+                            masters.add(master);
+
+                        }
+                    }
+
+                }
+
+            }
+
+
+
+        }catch (JSONException e){
+            e.printStackTrace();
+        }
+
+        return masters;
+    }
+
+    //takes ls result for lsRequestForAllDirectoryiesOfAllNeighborEdges,
+    //a master GUID and returns a JSONObject for directory structure for
+    //this particular master.
+    //note: the return JUSONObject contains directory strings as kets,
+    //and for each keys, there is another json that contains
+    // two jsons, those are FILES and FOLDERS json inside it.
+    //returns JSONObject or null.
+    public static JSONObject parseParticularMasterDirectoryFromFromAllNeighborEdgeDirStr(String master, String lsResult){
+        try{
+
+            //convert string into json
+            JSONObject allneighDirsObj = new JSONObject(lsResult);
+
+            //check null
+            if(allneighDirsObj!=null){
+
+                //check success or error
+                if(allneighDirsObj.getString(RequestTranslator.resultField).equals(RequestTranslator.successMessage)){
+
+                    //get reply type
+                    String replyType =  allneighDirsObj.getString(LScommand.lsReplyType);
+
+                    //get DirsStr
+                    String DirsStr =  allneighDirsObj.getString(replyType);
+
+                    //get DirsObj
+                    JSONObject DirsObj = new JSONObject(DirsStr);
+
+                    //check success tag
+                    if(DirsObj.getString(RequestTranslator.resultField).equals(RequestTranslator.successMessage)) {
+
+                        //remove success tag
+                        DirsObj.remove(RequestTranslator.resultField);
+
+                        //get particular directory for particular master
+                        String particularMasterDirsStr = DirsObj.getString(master);
+
+                        //check null
+                        if(particularMasterDirsStr!=null){
+
+                            //convert string into json
+                            JSONObject particularMasterDirsObj = new JSONObject(particularMasterDirsStr);
+
+                            //check null
+                            if(particularMasterDirsObj!=null){
+
+                                //at this point particularMasterDirsObj contains all keys as directory string,
+                                //and for each key, there are FILES and FOLDERS json in it.
+                                return  particularMasterDirsObj;
+
+                            }
+                        }
+                    }
+
+                }
+
+            }
+
+
+
+        }catch (JSONException e){
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
 
