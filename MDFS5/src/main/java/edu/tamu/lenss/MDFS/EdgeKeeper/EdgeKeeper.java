@@ -1,5 +1,7 @@
 package edu.tamu.lenss.MDFS.EdgeKeeper;
 
+import android.widget.Toast;
+
 import org.apache.log4j.Level;
 
 import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
@@ -10,6 +12,7 @@ public class EdgeKeeper {
     public static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(EdgeKeeper.class);
 
     public static String ownGUID;
+    public static String ownName;
 
     public EdgeKeeper(){
 
@@ -23,7 +26,8 @@ public class EdgeKeeper {
     //note: must make sure this function starts after EdgeKeeper server is running
     private void obtainOwnGUID() {
         ownGUID = EKClient.getOwnGuid();
-        if(ownGUID==null){
+        ownName = EKClient.getOwnAccountName();
+        if(ownGUID==null | ownName==null){
             logger.log(Level.ERROR, "EdgeKeeper Error! could not init local EdgeKeeper");
             throw new NullPointerException("EdgeKeeper initialization error...Maybe local EdgeKeeper server is not running or not connected.");
 

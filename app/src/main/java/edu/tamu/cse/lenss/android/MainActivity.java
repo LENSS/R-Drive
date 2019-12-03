@@ -1,8 +1,10 @@
 package edu.tamu.cse.lenss.android;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -27,12 +29,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import edu.tamu.cse.lenss.CLI.RequestHandler;
+import edu.tamu.cse.lenss.CLI.CLIRequestHandler;
 import edu.tamu.lenss.MDFS.Commands.ls.ls;
+import edu.tamu.lenss.MDFS.Commands.ls.lsUtils;
 import edu.tamu.lenss.MDFS.Constants;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 
@@ -46,26 +47,44 @@ import static java.lang.Thread.sleep;
 public class MainActivity extends AppCompatActivity {
 
 
+
     //global variables
+    public static Activity activity;
+    public static Context context;
     TextView textView;
     ListView listView;
     Button backButton;
     Button refreshButton;
     Button mkdirButton;
     Button putButton;
+    Button toggleView;
     ArrayAdapter arrayAdapter;
-    private static String currentView = "";
+
+    //current browsing directory for own edge
+    private static String ownEdgeCurrentDir = "";
+
+    //current browsing direcotory for neighbor edge
+    private static String neighborEdgeCurrentDir = "";
+    private static String currentNeighbor = "";
+
+    //view mode whether its ownEdgeDir or neighborEdgeDir view.
+    private static final String OWNEDGEDIR = "OWNEDGEDIR";
+    private static final String NEIGHBOREDGEDIR = "NEIGHBOREDGEDIR";
+    private static String currentMode = OWNEDGEDIR; //start with own edge dir
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        activity = this;
+        context = this;
 
         this.backButton = (Button) findViewById(R.id.backButton);
         this.refreshButton = (Button) findViewById(R.id.refreshButton);
         this.mkdirButton = (Button) findViewById(R.id.mkdirButton);
         this.putButton = (Button) findViewById(R.id.putButton);
+        this.toggleView = (Button) findViewById(R.id.toggleView);
         this.textView = (TextView) findViewById(R.id.textview);
         this.listView = (ListView)  findViewById(R.id.listview);
         this.listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -76,15 +95,16 @@ public class MainActivity extends AppCompatActivity {
 
                 //check its a directory or file
                 if(item.charAt(0)=='/'){
+
                     //item is a directory
                     //tokenize current directory
-                    String[] tokens = IOUtilities.delEmptyStr(currentView.split("/"));
+                    String[] tokens = IOUtilities.delEmptyStr(ownEdgeCurrentDir.split("/"));
 
                     //make new directory
-                    String newDir = currentView +item.subSequence(1, item.length()) + "/";
+                    String newDir = ownEdgeCurrentDir +item.subSequence(1, item.length()) + "/";
 
                     //setview
-                    setView(newDir);
+                    setViewForOwnEdge(newDir);
 
                 }
             }
@@ -95,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
 
         //check permission for this app
         checkPermissions();
-        setView("/");
+        setViewForOwnEdge("/");
     }
 
     @Override
@@ -120,18 +140,18 @@ public class MainActivity extends AppCompatActivity {
             if (item.getItemId() == R.id.open) {
 
                 //just fetch directory ans set view
-                setView(currentView + value.substring(1, value.length()) + "/");
+                setViewForOwnEdge(ownEdgeCurrentDir + value.substring(1, value.length()) + "/");
 
             } else if (item.getItemId() == R.id.delete) {
 
                 //delete the directory and refresh
-                String ret = Foo("mdfs -rm " + currentView + value.substring(1, value.length()) + "/");
+                String ret = Foo("mdfs -rm " + ownEdgeCurrentDir + value.substring(1, value.length()) + "/");
 
                 //check reply
                 if(ret!=null){
                     Toast.makeText(this, ret, Toast.LENGTH_SHORT).show();
                     try { Thread.sleep(500); } catch (InterruptedException e) { e.printStackTrace(); }
-                    setView(currentView);
+                    setViewForOwnEdge(ownEdgeCurrentDir);
                 }else{
                     Toast.makeText(this, "Could not delete directory, " + ret , Toast.LENGTH_SHORT).show();
                 }
@@ -141,19 +161,19 @@ public class MainActivity extends AppCompatActivity {
             if(item.getItemId() == R.id.open){
 
                 //make mdfs get request
-                String ret = Foo("mdfs -get " + currentView + value + " /storage/emulated/0/decrypted/");
+                String ret = Foo("mdfs -get " + ownEdgeCurrentDir + value + " /storage/emulated/0/decrypted/");
                 Toast.makeText(this, ret, Toast.LENGTH_SHORT).show();
 
             }else if(item.getItemId() == R.id.delete){
 
                 //delete the file and refresh
-                String ret = Foo("mdfs -rm " + currentView + value);
+                String ret = Foo("mdfs -rm " + ownEdgeCurrentDir + value);
 
                 //check reply
                 if(ret!=null){
                     Toast.makeText(this, ret, Toast.LENGTH_SHORT).show();
                     try { Thread.sleep(500); } catch (InterruptedException e) { e.printStackTrace(); }
-                    setView(currentView);
+                    setViewForOwnEdge(ownEdgeCurrentDir);
                 }else{
                     Toast.makeText(this, "Could not delete file " + value + ", " + ret , Toast.LENGTH_SHORT).show();
                 }
@@ -264,7 +284,8 @@ public class MainActivity extends AppCompatActivity {
 
     //takes mdfs command and execute it
     public static String Foo(String command) {
-        String reply = RequestHandler.processRequestCpp(Constants.NON_CLI_CLIENT, command);
+
+        String reply = CLIRequestHandler.processRequestCpp(Constants.NON_CLI_CLIENT, command);
 
         if(reply!=null){
             return reply;
@@ -274,23 +295,42 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    //takes a list of neighbor-master guids and sets them for view
+    public void viewNeighborMasters(List<String> neighborMasters){
+
+        //set currentView
+        ownEdgeCurrentDir = NEIGHBOREDGEDIR;
+
+        //set current directory
+        ownEdgeCurrentDir = "";
+
+        //initialize and set array adapter
+        this.arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, neighborMasters);
+        listView.setAdapter(arrayAdapter);
+
+        //set textview
+        textView.setText("Select an edge directory");
+
+
+    }
+
     //takes a directory string, fetch directory and sets view.
-    public void setView(String directory){
+    public void setViewForOwnEdge(String directory){
 
         //first set current directory
-        currentView = directory;
+        ownEdgeCurrentDir = directory;
 
         //first get reply for ls command for / directory
-        String reply = Foo("mdfs -ls " + directory);
+        String reply = ls.ls(directory, "lsRequestForOwnEdge");
 
         //check if reply is correct
         if(reply!=null){
 
-            //set current directory
-            textView.setText("Directory: " + currentView);
+            //set textview
+            textView.setText(OWNEDGEDIR +": " + ownEdgeCurrentDir);
 
             //create List and populate with ls info
-            List<String> arrayList = ls.jsonToList(reply);
+            List<String> arrayList = lsUtils.jsonToList(reply);
 
             //initialize and set array adapter
             this.arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, arrayList);
@@ -300,19 +340,72 @@ public class MainActivity extends AppCompatActivity {
 
         }else{
             Toast.makeText(this, "Could not fetch root directory.", Toast.LENGTH_SHORT).show();
-            textView.setText(currentView);
+            textView.setText(currentMode);
+        }
+    }
+
+    //currentMode view clicked
+    public void toggleViewClicked(View view){
+
+        try {
+
+            //check currentMode
+            if (currentMode.equals(OWNEDGEDIR)) {
+
+                //do ls and fetch all neighbor masters guids
+                String neighborLSstr = ls.ls("/", "lsRequestForNeighborEdge");
+
+                //check reply
+                if (neighborLSstr != null) {
+
+                    //get list of all masters
+                    List<String> neighborMasters = lsUtils.getListOfMastersFromNeighborEdgeDirStr(neighborLSstr);
+
+                    //check if list is null or empty
+                    if(neighborMasters!=null && neighborMasters.size()!=0){
+
+                        //set all neighbor masters for view and select
+                        viewNeighborMasters(neighborMasters);
+
+                        //disable mkdir, put, back buttons
+                        mkdirButton.setEnabled(false);
+                        putButton.setEnabled(false);
+
+                        //change currentMode
+                        currentMode = NEIGHBOREDGEDIR;
+                    }else if(neighborMasters.size()==0){
+                        Toast.makeText(this, "No neighbor directory available.", Toast.LENGTH_SHORT).show();
+                    }
+
+                } else {
+                    Toast.makeText(this, "Could not fetch neighbor edge direcotry from EdgeKeeper.", Toast.LENGTH_SHORT).show();
+                }
+            }else if(currentMode.equals(NEIGHBOREDGEDIR)){
+
+                //enable mkdir, put, back buttons
+                mkdirButton.setEnabled(true);
+                putButton.setEnabled(true);
+
+                //setView for own directory
+                setViewForOwnEdge(ownEdgeCurrentDir);
+
+                //change currentMode
+                currentMode = OWNEDGEDIR;
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            Toast.makeText(this, "Exception happened while fetching or setting neighbor edge directory. ", Toast.LENGTH_SHORT).show();
         }
     }
 
 
-
     //back button pressed
     public void backButtonClicked(View view) {
-        if(currentView.equals("/")){
+        if(ownEdgeCurrentDir.equals("/")){
             Toast.makeText(this, "Cannot go back beyond / directory", Toast.LENGTH_SHORT).show();
         }else{
             //first tokenize current directory
-            String[] tokens = IOUtilities.delEmptyStr(currentView.split("/"));
+            String[] tokens = IOUtilities.delEmptyStr(ownEdgeCurrentDir.split("/"));
 
             //then take only tokens.length -1 numbers of tokens
             String newDir = "/";
@@ -325,15 +418,15 @@ public class MainActivity extends AppCompatActivity {
             if(reply!=null){
 
                 //create arrayList and populate
-                List<String> arrayList = ls.jsonToList(reply);
+                List<String> arrayList = lsUtils.jsonToList(reply);
 
                 //initialize and set array adapter
                 this.arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, arrayList);
                 listView.setAdapter(arrayAdapter);
 
                 //set current direcotory to newDir
-                currentView = newDir;
-                textView.setText("Directory: " + currentView);
+                ownEdgeCurrentDir = newDir;
+                textView.setText(OWNEDGEDIR + ": " + ownEdgeCurrentDir);
 
             }else{
                 Toast.makeText(this, "Could not fetch directory", Toast.LENGTH_SHORT).show();
@@ -344,7 +437,7 @@ public class MainActivity extends AppCompatActivity {
 
     //refresh button pressed
     public void refreshButtonClicked(View view){
-        setView(currentView);
+        setViewForOwnEdge(ownEdgeCurrentDir);
     }
 
     //mkdir button pressed
@@ -398,12 +491,12 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     //execute command
-                    String ret = Foo("mdfs -mkdir " + currentView+value);
+                    String ret = Foo("mdfs -mkdir " + ownEdgeCurrentDir +value);
 
                     //check ret
                     if(ret!=null){
                         Toast.makeText(getApplicationContext(), ret, Toast.LENGTH_SHORT).show();
-                        setView(currentView);
+                        setViewForOwnEdge(ownEdgeCurrentDir);
                     }else{
                         Toast.makeText(getApplicationContext(), "Could not get reply from EdgeKeeper.", Toast.LENGTH_SHORT).show();
                     }
@@ -505,12 +598,12 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     //execute command
-                    String ret = Foo("mdfs -put " + localfilepath + " " + currentView + value);
+                    String ret = Foo("mdfs -put " + localfilepath + " " + ownEdgeCurrentDir + value);
 
                     //check
                     if (ret != null) {
                         Toast.makeText(getApplicationContext(), ret, Toast.LENGTH_SHORT).show();
-                        setView(currentView);
+                        setViewForOwnEdge(ownEdgeCurrentDir);
                     } else {
                         Toast.makeText(getApplicationContext(), "Could not get reply from EdgeKeeper.", Toast.LENGTH_SHORT).show();
                     }

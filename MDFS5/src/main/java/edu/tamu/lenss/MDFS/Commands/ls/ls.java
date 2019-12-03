@@ -19,14 +19,14 @@ public class ls {
     //logger
     public static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(ls.class);
 
-    public static String ls(String mdfsDir){
+    public static String ls(String mdfsDir, String lsRequestType){
 
         //log
         logger.log(Level.ALL, "Starting to handle -ls command.");
 
         try {
             //send ls request
-            JSONObject repJSON = EKClient.ls(mdfsDir);
+            JSONObject repJSON = EKClient.ls(mdfsDir, lsRequestType);
 
             //check reply
             if (repJSON != null) {
@@ -67,176 +67,5 @@ public class ls {
             return null;
         }
     }
-
-    //takes a ls result in json format,
-    //that contains both edge and neighbor dir info,
-    //and returns as plain format.
-    public static String jsonToPlainString(String lsResult){
-
-        //check for null
-        if(lsResult==null){
-            return "-ls command failed.";
-        }
-
-        //convert json string into obj
-        try {
-            JSONObject lsResObj = new JSONObject(lsResult);
-
-            //check success or error json
-            if(lsResObj.get(RequestTranslator.resultField).equals(RequestTranslator.successMessage)){
-
-                //make result string
-                String result = "";
-
-                //get ownEdgeDir obj and check if its valid.
-                //ownEdgeDir contains ls result for own edge.
-                //reminder: this ls result is for one particular directory.
-                JSONObject ownEdgeDir = new JSONObject(lsResObj.getString(LScommand.LSRESULTFOROWNEDGE));
-                if(ownEdgeDir.getString(RequestTranslator.resultField).equals(RequestTranslator.successMessage)){
-
-                    //get FILES from ownEdgeDir
-                    JSONObject FILES = new JSONObject(ownEdgeDir.getString(LScommand.FILES));
-                    int fileCount = Integer.parseInt(FILES.getString(LScommand.COUNT));
-                    for(int i=0; i< fileCount; i++){ result = result + FILES.getString(Integer.toString(i)) + "   ";}
-
-                    //get FOLDERS from ownEdgeDir
-                    JSONObject FOLDERS = new JSONObject(ownEdgeDir.getString(LScommand.FOLDERS));
-                    int folderCount = Integer.parseInt(FOLDERS.getString(LScommand.COUNT));
-                    for(int i=0; i< folderCount; i++){ result = result + File.separator+  FOLDERS.getString(Integer.toString(i)) + "   ";}
-
-                }
-
-                //get neighborsEdgeDirs and check if its valid
-                JSONObject neighborsEdgeDirs = new JSONObject(lsResObj.getString(LScommand.LSRESULTFORNEIGHBOREDGE));
-                if(neighborsEdgeDirs.getString(RequestTranslator.resultField).equals(RequestTranslator.successMessage)){
-
-                   //remove success tag
-                    neighborsEdgeDirs.remove(RequestTranslator.resultField);
-
-                    //get all keys, aka masterguids
-                    Iterator<String> masterguids = neighborsEdgeDirs.keys();
-
-                    //for each master guid
-                    while (masterguids.hasNext()) {
-
-                        //get each master guid
-                        String master = masterguids.next();
-
-                        //get ls result for this master.
-                        //reminder: this ls result is for one particular directory.
-                        JSONObject otherEdgeDir = new JSONObject(neighborsEdgeDirs.getString(master));
-
-                        //get FILES from otherEdgeDir
-                        JSONObject FILES = new JSONObject(otherEdgeDir.getString(LScommand.FILES));
-                        int fileCount = Integer.parseInt(FILES.getString(LScommand.COUNT));
-                        for(int i=0; i< fileCount; i++){ result = result + FILES.getString(Integer.toString(i)) + "(" + master + ")" + "   ";}
-
-                        //get FOLDERS from otherEdgeDir
-                        JSONObject FOLDERS = new JSONObject(otherEdgeDir.getString(LScommand.FOLDERS));
-                        int folderCount = Integer.parseInt(FOLDERS.getString(LScommand.COUNT));
-                        for(int i=0; i< folderCount; i++){ result = result + File.separator+  FOLDERS.getString(Integer.toString(i)) + "(" + master + ")"  + "   ";}
-
-                    }
-
-                }
-
-                return result;
-
-            }else{
-
-                return lsResObj.getString(RequestTranslator.errorMessage);
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return "Could not process -ls request.";
-        }
-
-    }
-
-    //takes a ls result in json format,
-    //that contains both edge and neighbor dir info,
-    //and returns all tokens as a list.
-    public static List<String> jsonToList(String lsResult){
-
-        //check for null
-        if(lsResult==null){
-            return new ArrayList<>();
-        }
-
-        //convert json string into obj
-        try {
-            JSONObject lsResObj = new JSONObject(lsResult);
-
-            //check success or error json
-            if(lsResObj.get(RequestTranslator.resultField).equals(RequestTranslator.successMessage)){
-
-                //make result list
-                List<String> result = new ArrayList<>();
-
-                //get ownEdgeDir obj and check if its valid.
-                //ownEdgeDir contains ls result for own edge.
-                //reminder: this ls result is for one particular directory.
-                JSONObject ownEdgeDir = new JSONObject(lsResObj.getString(LScommand.LSRESULTFOROWNEDGE));
-                if(ownEdgeDir.getString(RequestTranslator.resultField).equals(RequestTranslator.successMessage)){
-
-                    //get FILES from ownEdgeDir
-                    JSONObject FILES = new JSONObject(ownEdgeDir.getString(LScommand.FILES));
-                    int fileCount = Integer.parseInt(FILES.getString(LScommand.COUNT));
-                    for(int i=0; i< fileCount; i++){ result.add(FILES.getString(Integer.toString(i)));}
-
-                    //get FOLDERS from ownEdgeDir
-                    JSONObject FOLDERS = new JSONObject(ownEdgeDir.getString(LScommand.FOLDERS));
-                    int folderCount = Integer.parseInt(FOLDERS.getString(LScommand.COUNT));
-                    for(int i=0; i< folderCount; i++){ result.add(File.separator+  FOLDERS.getString(Integer.toString(i)));}
-
-                }
-
-                //get neighborsEdgeDirs and check if its valid
-                JSONObject neighborsEdgeDirs = new JSONObject(lsResObj.getString(LScommand.LSRESULTFORNEIGHBOREDGE));
-                if(neighborsEdgeDirs.getString(RequestTranslator.resultField).equals(RequestTranslator.successMessage)){
-
-                    //remove success tag
-                    neighborsEdgeDirs.remove(RequestTranslator.resultField);
-
-                    //get all keys, aka masterguids
-                    Iterator<String> masterguids = neighborsEdgeDirs.keys();
-
-                    //for each master guid
-                    while (masterguids.hasNext()) {
-
-                        //get each master guid
-                        String master = masterguids.next();
-
-                        //get ls result for this master.
-                        //reminder: this ls result is for one particular directory.
-                        JSONObject otherEdgeDir = new JSONObject(neighborsEdgeDirs.getString(master));
-
-                        //get FILES from otherEdgeDir
-                        JSONObject FILES = new JSONObject(otherEdgeDir.getString(LScommand.FILES));
-                        int fileCount = Integer.parseInt(FILES.getString(LScommand.COUNT));
-                        for(int i=0; i< fileCount; i++){ result.add(FILES.getString(Integer.toString(i)) + "(" + master + ")");}
-
-                        //get FOLDERS from otherEdgeDir
-                        JSONObject FOLDERS = new JSONObject(otherEdgeDir.getString(LScommand.FOLDERS));
-                        int folderCount = Integer.parseInt(FOLDERS.getString(LScommand.COUNT));
-                        for(int i=0; i< folderCount; i++){ result.add(File.separator+  FOLDERS.getString(Integer.toString(i)) + "(" + master + ")");}
-
-                    }
-
-                }
-
-                return result;
-
-            }else{
-
-                return new ArrayList<>();
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
-    }
-
-
 
 }

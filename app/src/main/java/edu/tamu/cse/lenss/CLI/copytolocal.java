@@ -15,7 +15,7 @@ public class copytolocal {
 
     public static boolean readyToSend = false;
 
-    public static  void copytolocal(String clientID, String[] cmd){
+    public static void copytolocal(String clientID, String[] cmd){
 
 
         //sout

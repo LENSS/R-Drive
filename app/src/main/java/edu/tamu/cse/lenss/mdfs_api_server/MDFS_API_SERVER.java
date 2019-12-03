@@ -7,9 +7,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
 
-import edu.tamu.cse.lenss.CLI.RequestHandler;
 import edu.tamu.cse.lenss.android.MainActivity;
 
 public class MDFS_API_SERVER extends Thread {
