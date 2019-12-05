@@ -24,12 +24,12 @@ public class Restarter extends BroadcastReceiver
     {
 
 
-        Intent intent = new Intent(context,MDFSService.class);
+ /*       Intent intent = new Intent(context,MDFSService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent);
         } else {
             context.startService(intent);
         }
-
+*/
     }
 }
