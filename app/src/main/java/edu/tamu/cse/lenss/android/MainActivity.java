@@ -41,6 +41,7 @@ import edu.tamu.cse.lenss.CLI.CLIRequestHandler;
 import edu.tamu.lenss.MDFS.Commands.ls.ls;
 import edu.tamu.lenss.MDFS.Commands.ls.lsUtils;
 import edu.tamu.lenss.MDFS.Constants;
+import edu.tamu.lenss.MDFS.MissingLInk.MissingLink;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 
 import static java.lang.Thread.sleep;
@@ -87,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         activity = this;
         context = this;
+        MissingLink.context = this;
 
         this.backButton = (Button) findViewById(R.id.backButton);
         this.refreshButton = (Button) findViewById(R.id.refreshButton);
