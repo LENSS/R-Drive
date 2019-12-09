@@ -146,7 +146,7 @@ public class PeerFetcher extends Thread {
     }
 
 
-    //takes a list of GUIDs and returns a list of GUIDs
+    //takes a list of Names and returns a list of GUIDs
     //list can be empty.
     public static List<String> namesToGUIDsConversion(List<String> names){
 
@@ -170,6 +170,30 @@ public class PeerFetcher extends Thread {
 
         return guidList;
     }
+
+
+    //take one name and converts in into guid
+    //can return null.
+    public static String NameToGUIDConversion(String Name){
+
+        //getAll from SP
+        SharedPreferences pref =  MissingLink.context.getSharedPreferences(MDFS_PEERS_SHARED_PREF, MODE_PRIVATE);
+        Map<String, ?> allEntries = pref.getAll();
+
+        //loop
+        for (Map.Entry<String, ?> entry : allEntries.entrySet()) {
+            String guid = entry.getKey();
+            String name = entry.getValue().toString();
+
+            //check if name matches
+            if(name.equals(Name)){
+                return guid;
+            }
+        }
+
+        return null;
+    }
+
 
     @Override
     public void interrupt(){

@@ -261,9 +261,9 @@ public class lsUtils {
     }
 
     //takes a ls results from edgekeeper for lsRequestForAllDirectoryiesOfAllNeighborEdges,
-    //and return a list of neighbor masters.
+    //and return a list of neighbor masters guids.
     //returns empty list if no masters available.
-    public static List<String> getListOfMastersFromAllNeighborEdgeDirStr(String lsResult){
+    public static List<String> getListOfMastersGUIDsFromAllNeighborEdgeDirStr(String lsResult){
 
         //make a list
         List<String> masters = new ArrayList<>();
@@ -329,7 +329,7 @@ public class lsUtils {
     //and for each keys, there is another json that contains
     // two jsons, those are FILES and FOLDERS json inside it.
     //returns JSONObject or null.
-    public static JSONObject parseParticularMasterDirectoryFromFromAllNeighborEdgeDirStr(String master, String lsResult){
+    public static JSONObject parseParticularMasterDirectoryFromAllNeighborEdgeDirStr(String master, String lsResult){
         try{
 
             //convert string into json

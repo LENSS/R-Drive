@@ -33,7 +33,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.security.Guard;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +41,7 @@ import edu.tamu.lenss.MDFS.Commands.ls.ls;
 import edu.tamu.lenss.MDFS.Commands.ls.lsUtils;
 import edu.tamu.lenss.MDFS.Constants;
 import edu.tamu.lenss.MDFS.MissingLInk.MissingLink;
+import edu.tamu.lenss.MDFS.PeerFetcher.PeerFetcher;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 
 import static java.lang.Thread.sleep;
@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
 
     //current browsing direcotory for neighbor edge
     private static String neighborEdgeCurrentDir = "";
-    private static String currentBrowsingNeighbor = "";
+    private static String currentBrowsingNeighborGUID = "";
 
     //view mode whether its ownEdgeDir or neighborEdgeDir view.
     private static final String OWNEDGEDIR = "OWNEDGEDIR";
@@ -135,86 +135,91 @@ public class MainActivity extends AppCompatActivity {
 
                         //show / directory for this particular master
                         //fetch dir object for this particular master
-                        JSONObject particularMasterDirsObject = lsUtils.parseParticularMasterDirectoryFromFromAllNeighborEdgeDirStr(item, allNeighborEdgeDirsCache);
+                        //item = masterName
+                        //first convert name into guid
+                        String guid = PeerFetcher.NameToGUIDConversion(item);
+                        if(guid!=null) {
+                            JSONObject particularMasterDirsObject = lsUtils.parseParticularMasterDirectoryFromAllNeighborEdgeDirStr(guid, allNeighborEdgeDirsCache);
 
-                        //check null
-                        if(particularMasterDirsObject!=null){
+                            //check null
+                            if (particularMasterDirsObject != null) {
 
-                            try {
-                                //get the directory string for root
-                                //note, at this point we need root dir to view.
-                                String dirStr = particularMasterDirsObject.getString("/");
+                                try {
+                                    //get the directory string for root
+                                    //note, at this point we need root dir to view.
+                                    String dirStr = particularMasterDirsObject.getString("/");
 
-                                //check null
-                                if(dirStr!=null) {
+                                    //check null
+                                    if (dirStr != null) {
 
-                                    //convert dirStr string into dirObj
-                                    JSONObject dirObj = new JSONObject(dirStr);
+                                        //convert dirStr string into dirObj
+                                        JSONObject dirObj = new JSONObject(dirStr);
 
-                                    //get the FOLDERS string
-                                    //note: there must be a FOLDERS object,
-                                    //even there might be no folders.
-                                    JSONObject FOLDERS = new JSONObject(dirObj.getString("FOLDERS"));
+                                        //get the FOLDERS string
+                                        //note: there must be a FOLDERS object,
+                                        //even there might be no folders.
+                                        JSONObject FOLDERS = new JSONObject(dirObj.getString("FOLDERS"));
 
-                                    //get folders count in FOLDERS object
-                                    int count = Integer.parseInt(FOLDERS.getString("COUNT"));
+                                        //get folders count in FOLDERS object
+                                        int count = Integer.parseInt(FOLDERS.getString("COUNT"));
 
-                                     //get each folder names and populate lists
-                                    for(int i=0; i< count; i++){
+                                        //get each folder names and populate lists
+                                        for (int i = 0; i < count; i++) {
 
-                                        String folderName = "/" + FOLDERS.getString(Integer.toString(i));
-                                        tokens.add(folderName);
+                                            String folderName = "/" + FOLDERS.getString(Integer.toString(i));
+                                            tokens.add(folderName);
+                                        }
+
+                                        //get the FILES string
+                                        //note: there must be a FILES object,
+                                        //even there might be no folders.
+                                        JSONObject FILES = new JSONObject(dirObj.getString("FILES"));
+
+                                        //get files count in FILES object
+                                        count = Integer.parseInt(FILES.getString("COUNT"));
+
+                                        //get each file names and populate lists
+                                        for (int i = 0; i < count; i++) {
+                                            String fileName = FILES.getString(Integer.toString(i));
+                                            tokens.add(fileName);
+                                        }
+
+                                        //the item is a guid of an edge master
+                                        //assign currentBrowsingNeighborGUID into this master guid
+                                        currentBrowsingNeighborGUID = guid;
+
+                                        //change neighborEdgeCurrentDir = root
+                                        neighborEdgeCurrentDir = "/";
+
+                                        //change textView
+                                        textView.setText(item + ": " + neighborEdgeCurrentDir);
+
+                                        //change listView
+                                        setItemsOnListView(tokens);
+
+
                                     }
 
-                                    //get the FILES string
-                                    //note: there must be a FILES object,
-                                    //even there might be no folders.
-                                    JSONObject FILES = new JSONObject(dirObj.getString("FILES"));
-
-                                    //get files count in FILES object
-                                    count = Integer.parseInt(FILES.getString("COUNT"));
-
-                                    //get each file names and populate lists
-                                    for(int i=0; i< count; i++){
-                                        String fileName = FILES.getString(Integer.toString(i));
-                                        tokens.add(fileName);
-                                    }
-
-                                    //the item is a guid of an edge master
-                                    //assign currentBrowsingNeighbor into this master guid
-                                    currentBrowsingNeighbor = item;
-
-                                    //change neighborEdgeCurrentDir = root
-                                    neighborEdgeCurrentDir = "/";
-
-                                    //change textView
-                                    textView.setText(formatGUID(currentBrowsingNeighbor) + ": " + neighborEdgeCurrentDir);
-
-                                    //change listView
-                                    setItemsOnListView(tokens);
-
-
-
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
                                 }
-
-                            } catch (JSONException e) {
-                                e.printStackTrace();
+                            }else{
+                                Toast.makeText(MainActivity.context, "Could not convert name to GUID, try again later.", Toast.LENGTH_SHORT).show();
                             }
-
-
                         }
 
 
                     }else{
 
-                        //check its a directory or file
+                        //check its a directory or file,
+                        //inside currentBrowsingNeighborGUID's directory
                         if (item.charAt(0) == '/') {
 
                             //the item is a dir string for any particular master.
                             //note: we dont fetch neighbor directory from edgekeeper now,
                             //we use from cache.
                             //fetch dir object for this particular master
-                            JSONObject particularMasterDirsObject = lsUtils.parseParticularMasterDirectoryFromFromAllNeighborEdgeDirStr(currentBrowsingNeighbor, allNeighborEdgeDirsCache);
+                            JSONObject particularMasterDirsObject = lsUtils.parseParticularMasterDirectoryFromAllNeighborEdgeDirStr(currentBrowsingNeighborGUID, allNeighborEdgeDirsCache);
 
                             //check null
                             if (particularMasterDirsObject != null) {
@@ -266,11 +271,13 @@ public class MainActivity extends AppCompatActivity {
                                         neighborEdgeCurrentDir = item;
 
                                         //change textView
-                                        textView.setText(formatGUID(currentBrowsingNeighbor) + ": " + neighborEdgeCurrentDir);
+                                        textView.setText(formatGUID(currentBrowsingNeighborGUID) + ": " + neighborEdgeCurrentDir);
 
                                         //change listView
                                         setItemsOnListView(tokens);
 
+                                    }else{
+                                        //Toast.makeText(this, "Requested directory no longer exists in Neighbors edge, please Toggle view and come back.", Toast.LENGTH_SHORT).show();
                                     }
 
                                 } catch (JSONException e) {
@@ -529,11 +536,15 @@ public class MainActivity extends AppCompatActivity {
                     //save it into local cache
                     allNeighborEdgeDirsCache = allNeighborLSstr;
 
-                    //get list of all masters
-                    List<String> neighborMasters = lsUtils.getListOfMastersFromAllNeighborEdgeDirStr(allNeighborEdgeDirsCache);
+                    //get list of all masters guidss
+                    List<String> neighborMastersGUIDs = lsUtils.getListOfMastersGUIDsFromAllNeighborEdgeDirStr(allNeighborEdgeDirsCache);
 
                     //check if list is null or empty
-                    if(neighborMasters!=null && neighborMasters.size()!=0){
+                    if(neighborMastersGUIDs!=null && neighborMastersGUIDs.size()!=0){
+
+                        //convert GUIDs into Names
+                        List<String> neighborMastersNames = new ArrayList<>();
+                        for(int i=0; i< neighborMastersGUIDs.size(); i++){neighborMastersNames.add(PeerFetcher.GUIDtoNameConversion(neighborMastersGUIDs.get(i))); }
 
                         //set currentView
                         currentMode = NEIGHBOREDGEDIR;
@@ -542,7 +553,7 @@ public class MainActivity extends AppCompatActivity {
                         neighborEdgeCurrentDir = SELECTEDGEMASTER;
 
                         //set all neighbor masters for view and select
-                        setItemsOnListView(neighborMasters);
+                        setItemsOnListView(neighborMastersNames);
 
                         //set textview
                         textView.setText(SELECTEDGEMASTER);
@@ -551,7 +562,7 @@ public class MainActivity extends AppCompatActivity {
                         mkdirButton.setEnabled(false);
                         putButton.setEnabled(false);
 
-                    }else if(neighborMasters.size()==0){
+                    }else if(neighborMastersGUIDs.size()==0){
                         Toast.makeText(this, "No neighbor directory available.", Toast.LENGTH_SHORT).show();
                     }
 
@@ -634,10 +645,14 @@ public class MainActivity extends AppCompatActivity {
                 if(neighborEdgeCurrentDir.equals("/")){
 
                     //get list of all masters
-                    List<String> neighborMasters = lsUtils.getListOfMastersFromAllNeighborEdgeDirStr(allNeighborEdgeDirsCache);
+                    List<String> neighborMastersGUIDs = lsUtils.getListOfMastersGUIDsFromAllNeighborEdgeDirStr(allNeighborEdgeDirsCache);
 
                     //check if list is null or empty
-                    if(neighborMasters!=null && neighborMasters.size()!=0){
+                    if(neighborMastersGUIDs!=null && neighborMastersGUIDs.size()!=0){
+
+                        //convert guids into names
+                        List<String> neighborMastersNames = new ArrayList<>();
+                        for(int i=0; i< neighborMastersGUIDs.size(); i++){neighborMastersNames.add(PeerFetcher.GUIDtoNameConversion(neighborMastersGUIDs.get(i)));}
 
                         //set currentView
                         currentMode = NEIGHBOREDGEDIR;
@@ -646,7 +661,7 @@ public class MainActivity extends AppCompatActivity {
                         this.neighborEdgeCurrentDir = SELECTEDGEMASTER;
 
                         //set all neighbor masters for view and select
-                        setItemsOnListView(neighborMasters);
+                        setItemsOnListView(neighborMastersNames);
 
                         //set textview
                         textView.setText(SELECTEDGEMASTER);
@@ -675,7 +690,7 @@ public class MainActivity extends AppCompatActivity {
                     //note: we dont fetch neighbor directory from edgekeeper now,
                     //we use from cache.
                     //fetch dir object for this particular master
-                    JSONObject particularMasterDirsObject = lsUtils.parseParticularMasterDirectoryFromFromAllNeighborEdgeDirStr(currentBrowsingNeighbor, allNeighborEdgeDirsCache);
+                    JSONObject particularMasterDirsObject = lsUtils.parseParticularMasterDirectoryFromAllNeighborEdgeDirStr(currentBrowsingNeighborGUID, allNeighborEdgeDirsCache);
 
                     //check null
                     if (particularMasterDirsObject != null) {
@@ -733,7 +748,7 @@ public class MainActivity extends AppCompatActivity {
                                 neighborEdgeCurrentDir = newDir;
 
                                 //change textView
-                                textView.setText(formatGUID(currentBrowsingNeighbor) + ": " + neighborEdgeCurrentDir);
+                                textView.setText(formatGUID(currentBrowsingNeighborGUID) + ": " + neighborEdgeCurrentDir);
 
                                 //change listView
                                 setItemsOnListView(Tokens);
@@ -742,10 +757,10 @@ public class MainActivity extends AppCompatActivity {
                         }else{
 
                             //after fetching neighborEdgeDir, it turns out that -
-                            //neighborEdgeCurrentDir for currentBrowsingNeighbor no longer exists.
+                            //neighborEdgeCurrentDir for currentBrowsingNeighborGUID no longer exists.
                             //maybe that master has deleted his directory.
                             //so we show toast.
-                            Toast.makeText(this, "Current directory no longer exist in Neighbors edge, please Toggle view and come back.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, "Requested directory no longer exists in Neighbors edge, please Toggle view and come back.", Toast.LENGTH_SHORT).show();
                         }
                     }
 
@@ -774,11 +789,15 @@ public class MainActivity extends AppCompatActivity {
 
             if(neighborEdgeCurrentDir.equals(SELECTEDGEMASTER)){
 
-                //get list of all masters
-                List<String> neighborMasters = lsUtils.getListOfMastersFromAllNeighborEdgeDirStr(allNeighborEdgeDirsCache);
+                //get list of all masters guids
+                List<String> neighborMastersGUIDs = lsUtils.getListOfMastersGUIDsFromAllNeighborEdgeDirStr(allNeighborEdgeDirsCache);
 
                 //check if list is null or empty
-                if(neighborMasters!=null && neighborMasters.size()!=0){
+                if(neighborMastersGUIDs!=null && neighborMastersGUIDs.size()!=0){
+
+                    //convert guids into names
+                    List<String> neighborMastersNames = new ArrayList<>();
+                    for(int i=0; i< neighborMastersGUIDs.size();i++){neighborMastersNames.add(PeerFetcher.GUIDtoNameConversion(neighborMastersGUIDs.get(i))); }
 
                     //set currentView
                     currentMode = NEIGHBOREDGEDIR;
@@ -787,7 +806,7 @@ public class MainActivity extends AppCompatActivity {
                     neighborEdgeCurrentDir = SELECTEDGEMASTER;
 
                     //set all neighbor masters for view and select
-                    setItemsOnListView(neighborMasters);
+                    setItemsOnListView(neighborMastersNames);
 
                     //set textview
                     textView.setText(SELECTEDGEMASTER);
@@ -803,7 +822,7 @@ public class MainActivity extends AppCompatActivity {
             }else{
 
                 //fetch dir object for this particular master
-                JSONObject particularMasterDirsObject = lsUtils.parseParticularMasterDirectoryFromFromAllNeighborEdgeDirStr(currentBrowsingNeighbor, allNeighborEdgeDirsCache);
+                JSONObject particularMasterDirsObject = lsUtils.parseParticularMasterDirectoryFromAllNeighborEdgeDirStr(currentBrowsingNeighborGUID, allNeighborEdgeDirsCache);
 
                 //check null
                 if (particularMasterDirsObject != null) {
@@ -858,12 +877,12 @@ public class MainActivity extends AppCompatActivity {
                             }
 
                             //change textView
-                            textView.setText(formatGUID(currentBrowsingNeighbor) + ": " + neighborEdgeCurrentDir);
+                            textView.setText(formatGUID(currentBrowsingNeighborGUID) + ": " + neighborEdgeCurrentDir);
 
                             //change listView
                             setItemsOnListView(Tokens);
 
-                            System.out.println("Directory " + neighborEdgeCurrentDir + " for master " + currentBrowsingNeighbor + " refreshed.");
+                            System.out.println("Directory " + neighborEdgeCurrentDir + " for master " + currentBrowsingNeighborGUID + " refreshed.");
 
                         }catch (JSONException e){
                             e.printStackTrace();
@@ -871,10 +890,10 @@ public class MainActivity extends AppCompatActivity {
                     }else{
 
                         //after fetching neighborEdgeDir, it turns out that -
-                        //neighborEdgeCurrentDir for currentBrowsingNeighbor no longer exists.
+                        //neighborEdgeCurrentDir for currentBrowsingNeighborGUID no longer exists.
                         //maybe that master has deleted his directory.
                         //so we show toast.
-                        Toast.makeText(this, "Current directory no longer exist in Neighbors edge, please Toggle view and come back.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Requested directory no longer exists in Neighbors edge, please Toggle view and come back.", Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -1064,7 +1083,8 @@ public class MainActivity extends AppCompatActivity {
 
     //takes a GUID and returns a smaller version only for view purpose
     public static String formatGUID(String GUID){
-        return GUID.substring(0,5) + "-" + GUID.substring(GUID.length()-5);
+        return PeerFetcher.GUIDtoNameConversion(GUID);
+
     }
 
 }
