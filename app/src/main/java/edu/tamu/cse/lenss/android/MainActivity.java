@@ -276,8 +276,6 @@ public class MainActivity extends AppCompatActivity {
                                         //change listView
                                         setItemsOnListView(tokens);
 
-                                    }else{
-                                        //Toast.makeText(this, "Requested directory no longer exists in Neighbors edge, please Toggle view and come back.", Toast.LENGTH_SHORT).show();
                                     }
 
                                 } catch (JSONException e) {
@@ -311,56 +309,102 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onContextItemSelected(MenuItem item){
 
+        //get the item that was hold-clicked
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
         String value = ((TextView) info.targetView).getText().toString();
 
-        //check if value is a directory or file
-        if(value.charAt(0)=='/') {
+        //check if its OWNEDGEDIR OR NEIGHBOREDGEDIR
+        if(currentMode.equals(OWNEDGEDIR)) {
 
-            //value is a directory
-            if (item.getItemId() == R.id.open) {
+            //check if value is a directory or file
+            if (value.charAt(0) == '/') {
 
-                //just fetch directory ans set view
-                setViewForOwnEdge(ownEdgeCurrentDir + value.substring(1, value.length()) + "/");
+                //value is a directory
+                if (item.getItemId() == R.id.open) {
 
-            } else if (item.getItemId() == R.id.delete) {
+                    //just fetch directory ans set view
+                    setViewForOwnEdge(ownEdgeCurrentDir + value.substring(1, value.length()) + "/");
 
-                //delete the directory and refresh
-                String ret = Foo("mdfs -rm " + ownEdgeCurrentDir + value.substring(1, value.length()) + "/");
+                } else if (item.getItemId() == R.id.delete) {
 
-                //check reply
-                if(ret!=null){
+                    //delete the directory and refresh
+                    String ret = Foo("mdfs -rm " + ownEdgeCurrentDir + value.substring(1, value.length()) + "/");
+
+                    //check reply
+                    if (ret != null) {
+                        Toast.makeText(this, ret, Toast.LENGTH_SHORT).show();
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        setViewForOwnEdge(ownEdgeCurrentDir);
+                    } else {
+                        Toast.makeText(this, "Could not delete directory, " + ret, Toast.LENGTH_SHORT).show();
+                    }
+                }
+            } else {
+                //value is a file
+                if (item.getItemId() == R.id.open) {
+
+                    //make mdfs get request
+                    String ret = Foo("mdfs -get " + ownEdgeCurrentDir + value + " /storage/emulated/0/decrypted/");
                     Toast.makeText(this, ret, Toast.LENGTH_SHORT).show();
-                    try { Thread.sleep(500); } catch (InterruptedException e) { e.printStackTrace(); }
-                    setViewForOwnEdge(ownEdgeCurrentDir);
-                }else{
-                    Toast.makeText(this, "Could not delete directory, " + ret , Toast.LENGTH_SHORT).show();
+
+                } else if (item.getItemId() == R.id.delete) {
+
+                    //delete the file and refresh
+                    String ret = Foo("mdfs -rm " + ownEdgeCurrentDir + value);
+
+                    //check reply
+                    if (ret != null) {
+                        Toast.makeText(this, ret, Toast.LENGTH_SHORT).show();
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        setViewForOwnEdge(ownEdgeCurrentDir);
+                    } else {
+                        Toast.makeText(this, "Could not delete file " + value + ", " + ret, Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+            }
+            return true;
+        }else if(currentMode.equals(NEIGHBOREDGEDIR)){
+
+            //check if neighborEdgeCurrentDir = SELECTEDGEMASTER
+            if(neighborEdgeCurrentDir.equals(SELECTEDGEMASTER)){
+                //user selected any of the masters name
+                if (item.getItemId() == R.id.open) {
+                    Toast.makeText(this, "Tap on neighbor name to open directory.", Toast.LENGTH_SHORT).show();
+
+                }else if(item.getItemId() == R.id.delete){
+                    //user wants to delete a master
+                    Toast.makeText(this, "Cannot delete a neighbor.", Toast.LENGTH_SHORT).show();
+                }
+
+            }else{
+                //user chose a directory string
+                if (item.getItemId() == R.id.open) {
+                    //check if its a directory or file
+                    if(value.charAt(0)=='/') {
+                        //its a directory
+                        Toast.makeText(this, "Tap on neighbor directory to open.", Toast.LENGTH_SHORT).show();
+                    }else{
+                        //its a file, so we need to retrieve it
+                        //TODO:
+                        Toast.makeText(this, "Filename: " + value + " | Directory: " + neighborEdgeCurrentDir + " | master: " + currentBrowsingNeighborGUID, Toast.LENGTH_SHORT).show();
+                    }
+                }else if(item.getItemId() == R.id.delete){
+                    //user wants to delete a master
+                    Toast.makeText(this, "Cannot change a neighbor directory.", Toast.LENGTH_SHORT).show();
                 }
             }
-        }else{
-            //value is a file
-            if(item.getItemId() == R.id.open){
-
-                //make mdfs get request
-                String ret = Foo("mdfs -get " + ownEdgeCurrentDir + value + " /storage/emulated/0/decrypted/");
-                Toast.makeText(this, ret, Toast.LENGTH_SHORT).show();
-
-            }else if(item.getItemId() == R.id.delete){
-
-                //delete the file and refresh
-                String ret = Foo("mdfs -rm " + ownEdgeCurrentDir + value);
-
-                //check reply
-                if(ret!=null){
-                    Toast.makeText(this, ret, Toast.LENGTH_SHORT).show();
-                    try { Thread.sleep(500); } catch (InterruptedException e) { e.printStackTrace(); }
-                    setViewForOwnEdge(ownEdgeCurrentDir);
-                }else{
-                    Toast.makeText(this, "Could not delete file " + value + ", " + ret , Toast.LENGTH_SHORT).show();
-                }
-            }
-
         }
+
+        //dummy return
         return true;
     }
 
