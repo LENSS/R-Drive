@@ -50,8 +50,9 @@ public class get {
 
 
     //fetches file metadata from EdgeKeeper.
+    //checks whether the file metadata is valid or nah.
     //returns FileMetadata object or null.
-    private static MDFSMetadata fetchFileMetadataFromEdgeKeeper(String mdfsDirWithFilename) {
+    public static MDFSMetadata fetchFileMetadataFromEdgeKeeper(String mdfsDirWithFilename) {
 
         try {
             //request to get file metadata
@@ -77,6 +78,7 @@ public class get {
                         return null;
                     }
                 } else {
+                    //no need to add logger here, client will handle that.
                     return null;
                 }
             } else {
@@ -89,6 +91,15 @@ public class get {
         }catch(Exception e){
             return null;
         }
+
+    }
+
+    //TODO:
+    //this function is used,
+    //for sedning a file fetch request from neighbor edge.
+    public static void getNG(String filename, String filePathMDFS, String neighborMasterGUID){
+        //first check if the file had already been retrieved.
+                //check the SP we use for book keeping
 
     }
 

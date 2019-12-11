@@ -18,7 +18,8 @@ public class Constants {
 	public static final String MDFS_LOG_PATH = Environment.getExternalStorageDirectory() + "/distressnet/MDFS/mdfs_log.log";
 	public static final String ANDROID_DIR_ROOT = "MDFS";
 	public static final String ANDROID_DIR_CACHE = ANDROID_DIR_ROOT + File.separator + "cache";
-    public static String ANDROID_DIR_DECRYPTED = "";
+	public static final String DEFAULT_DECRYPTION_FOLDER_NAME = "decrypted";
+	public static String ANDROID_DIR_DECRYPTED = "";
 
     //encoding parameters
 	public static final double K_N_RATIO = 0.5;

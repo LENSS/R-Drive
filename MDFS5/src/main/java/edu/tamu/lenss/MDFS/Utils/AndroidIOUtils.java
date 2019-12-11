@@ -7,7 +7,12 @@ public class AndroidIOUtils {
 
 
 	//Create a File handler to the specified path on SD Card
-	public static File getExternalFile(String path) { return new File(Environment.getExternalStorageDirectory(), path); }  //Isagor0!
+	public static File getExternalFile(String path) {
+
+		File f = new File(Environment.getExternalStorageDirectory(), path); //Isagor0!
+		return f;
+	}
+
 
 
 

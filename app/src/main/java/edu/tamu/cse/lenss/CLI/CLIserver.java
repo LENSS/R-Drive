@@ -20,7 +20,7 @@ public class CLIserver extends Thread {
     }
 
     //The purpose of the server is to accept new connection and let
-    //the Request Handler deal with the service request in another thread.
+    //the RequestFromOneClientToAnother Handler deal with the service request in another thread.
     public void run() {
         try {
             serverSocket = new ServerSocket(JAVA_PORT);

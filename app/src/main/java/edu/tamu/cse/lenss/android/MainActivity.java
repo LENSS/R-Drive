@@ -348,7 +348,7 @@ public class MainActivity extends AppCompatActivity {
                 if (item.getItemId() == R.id.open) {
 
                     //make mdfs get request
-                    String ret = Foo("mdfs -get " + ownEdgeCurrentDir + value + " /storage/emulated/0/decrypted/");
+                    String ret = Foo("mdfs -get " + ownEdgeCurrentDir + value + " /storage/emulated/0/" + Constants.DEFAULT_DECRYPTION_FOLDER_NAME + "/");
                     Toast.makeText(this, ret, Toast.LENGTH_SHORT).show();
 
                 } else if (item.getItemId() == R.id.delete) {

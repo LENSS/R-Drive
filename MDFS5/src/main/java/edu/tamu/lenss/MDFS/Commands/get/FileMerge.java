@@ -28,6 +28,7 @@ import edu.tamu.lenss.MDFS.Utils.Pair;
 
 //this class is called by RsockReceiveForFileRetrieval.java class.
 //this class is run in a thread to merge a file after enough fragments are available for each block.
+//the passed mdfsrsockblock must have to be a ReplyFromOneClientToAnother type.
 public class FileMerge implements Runnable{
 
 
@@ -76,6 +77,13 @@ public class FileMerge implements Runnable{
             mergeMultipleBlocksSmart();
         }
 
+        if(!mdfsrsockblock.sameEdge){
+            //TODO:
+            //the file we merged is from a diff edge.
+            //we need to keep record of this that we have a file from diff edge.
+
+        }
+
     }
 
 
@@ -102,7 +110,7 @@ public class FileMerge implements Runnable{
                 @Override
                 public boolean accept(File f) {
 
-                    //filter
+                    //filter ony the fragments
                     return ( f.isFile() && f.getName().contains(mdfsrsockblock.fileName + "__" + blockIdx + "__frag__") );
                 }
             });
@@ -120,7 +128,7 @@ public class FileMerge implements Runnable{
     }
 
     //this function gets all fragments of a file from disk,
-    //and writes the block as a file with "__blk__" tag
+    //and writes the block as a file with "__blk__" tag.
     private void decodeBlockFile(List<FragmentInfo> blockFragments, int blockIdx){
 
 
@@ -168,7 +176,8 @@ public class FileMerge implements Runnable{
 
     //This function merges multiple blocks into a file and writes the file into disk.
     //this function loads all the blockFiles(with "__blk__" tag one by one and appends them into a file.
-    private void mergeMultipleBlocks() {
+    //this fucntion first loads all the bytes of all blocks into a map and then merges them (DUMB).
+    private void mergeMultipleBlocksDumb() {
 
         //check if the request has already been resolved
         if(!getUtils.resolvedRequests.contains(mdfsrsockblock.blockRetrieveReqUUID)) {
@@ -256,6 +265,7 @@ public class FileMerge implements Runnable{
 
     //This function merges multiple blocks into a file and writes the file into disk.
     //this function loads all the blockFiles(with "__blk__" tag one by one and appends them into a file.
+    //this function takes each block one after another and appends into the file (SMART).
     private void mergeMultipleBlocksSmart() {
 
         //check if the request has already been resolved

@@ -5,16 +5,14 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.UUID;
 
+import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
+import edu.tamu.lenss.MDFS.Commands.get.get;
+import edu.tamu.lenss.MDFS.Constants;
 import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeper;
 import edu.tamu.lenss.MDFS.Commands.get.FileMerge;
 import edu.tamu.lenss.MDFS.Commands.get.MDFSFileRetrieverViaRsock;
@@ -24,6 +22,7 @@ import edu.tamu.lenss.MDFS.Model.MDFSRsockBlockForFileRetrieve;
 import edu.tamu.lenss.MDFS.RSock.RSockConstants;
 import edu.tamu.lenss.MDFS.Utils.AndroidIOUtils;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
+import edu.tamu.lenss.MDFS.Utils.MDFSDirectory;
 import example.*;
 
 import static java.lang.Thread.sleep;
@@ -98,62 +97,15 @@ public class RsockReceiveForFileRetrieval implements Runnable {
 
                     //if the other party is asking for a fragment.
                     //then, we send the fragment if we have it.
-                    if (type == MDFSRsockBlockForFileRetrieve.Type.Request) {
+                    if (type == MDFSRsockBlockForFileRetrieve.Type.RequestFromOneClientToAnother) {
 
-                        logger.log(Level.ALL, "fraggg received fragment request from node " + mdfsrsockblock.srcGUID + " for fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName);
-
-
-                        //get the file fragment from my disk
-                        tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(mdfsrsockblock.fileName, mdfsrsockblock.fileId, mdfsrsockblock.blockIdx, mdfsrsockblock.fragmentIndex));
-
-                        //if fragment was fetched
-                        if (tmp0.length() > 0) {
-
-                            //convert file tmp0 into byteArray
-                            byteArray = new byte[(int) tmp0.length()];
-                            try {
-                                FileInputStream fileInputStream = new FileInputStream(tmp0);
-                                fileInputStream.read(byteArray);
-                            } catch (FileNotFoundException e) {
-                                System.out.println("File Not Found.");
-                                e.printStackTrace();
-                            } catch (IOException e1) {
-                                System.out.println("Error Reading The File.");
-                                e1.printStackTrace();
-                            }
-
-                            //now, change mdfsrsockblock into a Reply object
-                            mdfsrsockblock.flipIntoReply(byteArray);
-
-                            //convert mdfsrsockblock object into bytearray and do send
-                            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                            ObjectOutputStream ooos = null;
-                            try {
-                                ooos = new ObjectOutputStream(bos);
-                                ooos.writeObject(mdfsrsockblock);
-                                ooos.flush();
-                                byte[] data = bos.toByteArray();
-
-                                //send the object over rsock and expect no reply
-                                String uuid = UUID.randomUUID().toString().substring(0, 12);
-                                RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing", "nothing", mdfsrsockblock.destGUID, 500, "hdrRecv", receivedFile.getReplyEndpoint(), "noReply");
-
-                                //log
-                                logger.log(Level.ALL, "fraggg resolved fragment request from node " + mdfsrsockblock.destGUID + " for fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName);
-
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }else{
-
-                            //log
-                            logger.log(Level.DEBUG, "fraggg Could not serve fragment request from node " + mdfsrsockblock.srcGUID + " for fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName);
-                        }
+                        //its a request for fetching a particular file fragment.
+                        getUtils.justDoit(mdfsrsockblock, receivedFile.getReplyEndpoint());
                     }
 
                     //if other party sent a fragment that I asked for sometimes before.
                     //then process it.
-                    else if(type == MDFSRsockBlockForFileRetrieve.Type.Reply){
+                    else if(type == MDFSRsockBlockForFileRetrieve.Type.ReplyFromOneClientToAnother){
 
                         //check if the received file is not null
                         if(mdfsrsockblock.fileFrag!=null){
@@ -166,9 +118,8 @@ public class RsockReceiveForFileRetrieval implements Runnable {
 
                                 //create file directory
                                 if(fileDIr.mkdirs()){
-                                    System.out.println("created file directory as it didnt exist");
+                                    System.out.println("created file directory coz it didnt exist");
                                 }else{
-                                    System.out.println("couldnt create file directory");
 
                                     //log
                                     logger.log(Level.DEBUG, "Could not create file directory for storing fragment for file " + mdfsrsockblock.fileName);
@@ -240,6 +191,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
 
                                 //check if k is <= than 0
                                 if(k<=0){
+
                                     //enough fragments for this block is available,
                                     //then we try to check if enough fragments for all blocks are available
                                     missingBlocksAndFrags = new int[mdfsrsockblock.totalNumOfBlocks][mdfsrsockblock.n2];
@@ -270,6 +222,86 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                             }
 
                         }
+                    }else if(type == MDFSRsockBlockForFileRetrieve.Type.RequestFromOneClientInOneAEdgeToMasterOfAnotherEdge){
+                        //This request means This guy is currently the master of this edge.
+                        //This guy needs to ask one of its client node to send fragments to the requesting client from another edge.
+                        //first fetch the file metadata exists in this.
+                        //then check if file creator is me. if me, send the fragments immediately, if not, make RequestFromMasterToClientInSameEdge packet.
+
+                        //log
+                        logger.log(Level.ALL, "This node received a file retrierval request from GUID " + mdfsrsockblock.srcGUID +" of another edge for " + mdfsrsockblock.filePathMDFS+ mdfsrsockblock.fileName + "file");
+
+
+                        //first retrieve the metadata from edgeKeeper
+                        MDFSMetadata metadata = get.fetchFileMetadataFromEdgeKeeper(mdfsrsockblock.filePathMDFS + mdfsrsockblock.fileName);
+
+                        //check for null
+                        if(metadata!=null){
+
+                            //logger
+                            logger.log(Level.ALL, "Command:get | log: Fetched file metadata for filaname " + metadata.getFileName() + " of fileID "  + metadata.getFileID());
+
+                            //check I am the original creator of this file
+                            if(metadata.getFileCreatorGUID().equals(EdgeKeeper.ownGUID)){
+
+                                //I am the original creator of this file,
+                                //that means, I should have all the fragments,
+                                //no need to send request for fragments to other nodes.
+                                //check by filename__fileID if I have the file fragments in MDFS directory in disk.
+                                File f = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(mdfsrsockblock.fileName, mdfsrsockblock.fileId)); //Isagor0!
+
+                                //check
+                                if(f!=null && f.exists() && f.isDirectory()){
+
+                                    //file folder exists
+                                    for(int i=0; i< metadata.getBlockCount(); i++) {
+                                        for(int j =0; j<metadata.getn2(); j++) {
+                                            //create dummy MDFSRsockBlockForFileRetrieve of type == RequestFromOneClientToAnother,
+                                            // and send request to own self.
+                                            //source = the GUID of file requester
+                                            //destination = ownGUID
+                                            MDFSRsockBlockForFileRetrieve mdfsrsockblock1 = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.RequestFromOneClientToAnother, (byte)metadata.getn2(), (byte)metadata.getk2(), mdfsrsockblock.srcGUID, EdgeKeeper.ownName, mdfsrsockblock.fileName, mdfsrsockblock.fileId, (byte)metadata.getBlockCount(), (byte)i, (byte)j, "/storage/emulated/0/" + Constants.DEFAULT_DECRYPTION_FOLDER_NAME + "/", null, false);
+
+                                            //get each fragment of each block and send
+                                            getUtils.justDoit(mdfsrsockblock1, receivedFile.getReplyEndpoint());
+
+                                        }
+                                    }
+                                }else{
+                                    logger.log(Level.DEBUG, "Could not serve fragment request from node " + mdfsrsockblock.srcGUID + " for fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName + "due to file directory no longer exists in storage.");
+                                }
+
+                            }else{
+
+                                //I am not the original creator of this file.
+                                //need to send request to each nodes who has the file fragments
+                                //send the fragment requests to the fileCreatorGUID.
+                                for(int i=0; i< metadata.getBlockCount(); i++) {
+                                    for(int j =0; j<metadata.getn2(); j++) {
+                                        //create dummy MDFSRsockBlockForFileRetrieve of type == RequestFromOneClientToAnother,
+                                        // and send request to the fileCreatorGUID.
+                                        //source = the GUID of file requester
+                                        //destination = original fileCreator
+                                        MDFSRsockBlockForFileRetrieve mdfsrsockblock1 = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.RequestFromOneClientToAnother, (byte)metadata.getn2(), (byte)metadata.getk2(), mdfsrsockblock.srcGUID, metadata.getFileCreatorGUID(), mdfsrsockblock.fileName, mdfsrsockblock.fileId, (byte)metadata.getBlockCount(), (byte)i, (byte)j, "/storage/emulated/0/" + Constants.DEFAULT_DECRYPTION_FOLDER_NAME + "/", null, false);
+
+                                        //get each fragment of each block and send
+                                        getUtils.justDoit(mdfsrsockblock1, receivedFile.getReplyEndpoint());
+
+                                    }
+                                }
+
+                            }
+
+                        }else{
+
+                            //log
+                            logger.log(Level.ERROR, "Could not fetch file metadata from local EdgeKeeper for filename " + mdfsrsockblock.fileName);
+
+
+                        }
+                    }else{
+                        //this request is not implemented
+                        logger.log(Level.DEBUG, "MDFS received an unknown file retrieval request.");
                     }
                 }
             }

@@ -57,13 +57,14 @@ public class MDFSFileRetrieverViaRsock {
         if(succeeded) {
 
             //print before normalize
-            getUtils.print2DArray(missingBlocksAndFrags, "print before normalize");
+           // getUtils.print2DArray(missingBlocksAndFrags, "print before normalize");
 
             //check if this node has already K frags for each block
             if (getUtils.checkEnoughFragsAvailable(missingBlocksAndFrags, fileInfo.getK2())) {
 
                 //merge the file in a new thread
-                MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.Reply, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, "dummyDEstGUID", fileInfo.getFileName(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), (byte)0, (byte)0, localDir, null);
+                //make a MDFSRsockBlockForFileRetrieve of type= ReplyFromOneClientToAnother
+                MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.ReplyFromOneClientToAnother, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, "dummyDestGUID", fileInfo.getFileName(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), (byte)0, (byte)0, localDir, null, true);
                 new FileMerge(mdfsrsockblock).run();
 
                 //log
@@ -104,7 +105,7 @@ public class MDFSFileRetrieverViaRsock {
                 }
 
                 //print after normalize
-                getUtils.print2DArray(missingBlocksAndFrags, "print after normalize");
+                //getUtils.print2DArray(missingBlocksAndFrags, "print after normalize");
 
                 //choose best nodes for each block, based on metadata.
                 //this list contains each entry as block_frag_guid manner.
@@ -165,7 +166,7 @@ public class MDFSFileRetrieverViaRsock {
         byte fragmentIndex = (byte) Integer.parseInt(tokens[2]);
 
         //make an object of MDFSRsockBlockRetrieval with request tag
-        MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.Request, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, destGUID, fileInfo.getFileName(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), blockIdx, fragmentIndex, localDir, null);
+        MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.RequestFromOneClientToAnother, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, destGUID, fileInfo.getFileName(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), blockIdx, fragmentIndex, localDir, null, true);
 
         //get byteArray from object and size of the MDFSRsockBlockRetreival obj
         byte[] data = null;

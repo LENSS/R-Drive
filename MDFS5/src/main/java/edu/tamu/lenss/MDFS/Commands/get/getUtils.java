@@ -1,12 +1,23 @@
 package edu.tamu.lenss.MDFS.Commands.get;
 
+import org.apache.log4j.Level;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import edu.tamu.lenss.MDFS.Model.MDFSFileInfo;
+import edu.tamu.lenss.MDFS.Model.MDFSRsockBlockForFileRetrieve;
+import edu.tamu.lenss.MDFS.RSock.RSockConstants;
+import edu.tamu.lenss.MDFS.RSock.network.RsockReceiveForFileRetrieval;
 import edu.tamu.lenss.MDFS.Utils.AndroidIOUtils;
 
 
@@ -136,6 +147,65 @@ public class getUtils {
         System.out.println();
         System.out.println();
         System.out.println();
+    }
+
+    //takes a MDFSRsockBlockForFileRetrieve and serves a RequestFromOneClientToAnother request.
+    //this function fetched the particular fragment of particular block of a file, and sends it back to the sourceGUID.
+    //if the file directory, blockDirectory, or fragment doesnt exist, then nothing is sent.
+    public static void justDoit(MDFSRsockBlockForFileRetrieve mdfsrsockblock, String replyEndpoint){
+
+        RsockReceiveForFileRetrieval.logger.log(Level.ALL, "received fragment request from node " + mdfsrsockblock.srcGUID + " for fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName);
+
+        //get the file fragment from my disk
+        //if the file directory doesnt exist, tmp0 size will be 0.
+        File tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(mdfsrsockblock.fileName, mdfsrsockblock.fileId, mdfsrsockblock.blockIdx, mdfsrsockblock.fragmentIndex));
+
+        //if fragment was fetched
+        if (tmp0!=null && tmp0.exists() && tmp0.isFile() && tmp0.length() > 0) {
+
+            //convert file tmp0 into byteArray
+            byte[] byteArray = new byte[(int) tmp0.length()];
+            try {
+                FileInputStream fileInputStream = new FileInputStream(tmp0);
+                fileInputStream.read(byteArray);
+            } catch (FileNotFoundException e) {
+                System.out.println("File Not Found.");
+                e.printStackTrace();
+            } catch (IOException e1) {
+                System.out.println("Error Reading The File.");
+                e1.printStackTrace();
+            }
+
+            //now, change mdfsrsockblock into a ReplyFromOneClientToAnother object
+            mdfsrsockblock.flipIntoReply(byteArray);
+
+            //convert mdfsrsockblock object into bytearray and do send
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream ooos = null;
+            try {
+                ooos = new ObjectOutputStream(bos);
+                ooos.writeObject(mdfsrsockblock);
+                ooos.flush();
+                byte[] data = bos.toByteArray();
+
+                //send the object over rsock and expect no reply
+                if(RSockConstants.RSOCK) {
+
+                    String uuid = UUID.randomUUID().toString().substring(0, 12);
+                    RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing", "nothing", mdfsrsockblock.destGUID, 0, "hdrRecv", replyEndpoint, "noReply");
+                }
+
+                //log
+                RsockReceiveForFileRetrieval.logger.log(Level.ALL, "resolved fragment request from node " + mdfsrsockblock.destGUID + " for fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }else{
+
+            //log
+            RsockReceiveForFileRetrieval.logger.log(Level.DEBUG, "Could not serve fragment request from node " + mdfsrsockblock.srcGUID + " for fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName + " due to file directory no longer exists in storage.");
+        }
     }
 
 
