@@ -11,9 +11,10 @@ public class MDFSRsockBlockForFileRetrieve implements Serializable {
 
     //enum
     public enum Type{
-        RequestFromOneClientToAnother,
-        ReplyFromOneClientToAnother,
-        RequestFromOneClientInOneAEdgeToMasterOfAnotherEdge
+        RequestFromOneClientToAnotherForOneFragment,
+        ReplyFromOneClientToAnotherForOneFragment,
+        RequestFromOneClientInOneAEdgeToMasterOfAnotherEdgeForWholeFile,
+        RequestFromMasterToClientInSameEdgeForWholeFile
     }
 
     //public variables
@@ -36,8 +37,8 @@ public class MDFSRsockBlockForFileRetrieve implements Serializable {
     //default private constructor
     private MDFSRsockBlockForFileRetrieve(){}
 
-    //public constructor used for RequestFromOneClientToAnother, ReplyFromOneClientToAnother
-    public MDFSRsockBlockForFileRetrieve(String uuid, Type type, byte n2, byte k2, String srcGUID, String destGUID, String fileName, String fileId, byte totalNumOfBlocks , byte blockIdx, byte fragmentIndex, String locDir, byte[] fileFrag, boolean sameedge){
+
+    public MDFSRsockBlockForFileRetrieve(String uuid, Type type, byte n2, byte k2, String srcGUID, String destGUID, String fileName, String filePathMDFS, String fileId, byte totalNumOfBlocks , byte blockIdx, byte fragmentIndex, String locDir, byte[] fileFrag, boolean sameedge){
         this.blockRetrieveReqUUID = uuid;
         this.type = type;
         this.n2 = n2;
@@ -45,6 +46,7 @@ public class MDFSRsockBlockForFileRetrieve implements Serializable {
         this.srcGUID = srcGUID;  //this node
         this.destGUID = destGUID;  //other node
         this.fileName = fileName;
+        this.filePathMDFS = filePathMDFS;
         this.fileId = fileId;
         this.totalNumOfBlocks = totalNumOfBlocks;
         this.blockIdx = blockIdx;
@@ -54,20 +56,13 @@ public class MDFSRsockBlockForFileRetrieve implements Serializable {
         this.sameEdge = sameedge;
     }
 
-    //public contructor used for sending RequestFromOneClientInOneAEdgeToMasterOfAnotherEdge
-    public MDFSRsockBlockForFileRetrieve(String filename, String filePathMDFS, String sourceGUID){
-        this.fileName = filename;
-        this.filePathMDFS = filePathMDFS;
-        this.srcGUID = sourceGUID;
-    }
-
-    //flips RequestFromOneClientToAnother object into a ReplyFromOneClientToAnother object
+    //flips RequestFromOneClientToAnotherForOneFragment object into a ReplyFromOneClientToAnotherForOneFragment object
     public void flipIntoReply(byte[] fileFrag){
 
-        if(type==Type.RequestFromOneClientToAnother && !flipped){
+        if(type==Type.RequestFromOneClientToAnotherForOneFragment && !flipped){
 
             //first,change the Type variable
-            type = Type.ReplyFromOneClientToAnother;
+            type = Type.ReplyFromOneClientToAnotherForOneFragment;
 
             //second, flip src and dest guids
             String temp = new String(srcGUID);

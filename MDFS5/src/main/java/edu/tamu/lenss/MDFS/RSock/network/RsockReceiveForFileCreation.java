@@ -15,8 +15,8 @@ import edu.tamu.lenss.MDFS.RSock.RSockConstants;
 import edu.tamu.lenss.MDFS.Model.MDFSFileInfo;
 import edu.tamu.lenss.MDFS.Utils.AndroidIOUtils;
 import edu.tamu.lenss.MDFS.Model.MDFSRsockBlockForFileCreate;
-import example.Interface;
-import example.ReceivedFile;
+import RsockJavaLibrary.example.Interface;
+import RsockJavaLibrary.example.ReceivedFile;
 
 
 

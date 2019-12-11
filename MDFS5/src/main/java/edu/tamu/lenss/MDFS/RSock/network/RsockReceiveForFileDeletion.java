@@ -8,8 +8,8 @@ import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeper;
 import edu.tamu.lenss.MDFS.RSock.RSockConstants;
 import edu.tamu.lenss.MDFS.Handler.ServiceHelper;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
-import example.Interface;
-import example.ReceivedFile;
+import RsockJavaLibrary.example.Interface;
+import RsockJavaLibrary.example.ReceivedFile;
 
 //this class is used for receiving packets that contains file information
 // to delete from a  device completely.

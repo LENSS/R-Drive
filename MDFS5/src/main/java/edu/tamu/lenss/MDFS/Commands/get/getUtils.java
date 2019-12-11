@@ -149,8 +149,9 @@ public class getUtils {
         System.out.println();
     }
 
-    //takes a MDFSRsockBlockForFileRetrieve and serves a RequestFromOneClientToAnother request.
+    //takes a MDFSRsockBlockForFileRetrieve and serves a RequestFromOneClientToAnotherForOneFragment request.
     //this function fetched the particular fragment of particular block of a file, and sends it back to the sourceGUID.
+    //the functions flips the source and destination.
     //if the file directory, blockDirectory, or fragment doesnt exist, then nothing is sent.
     public static void justDoit(MDFSRsockBlockForFileRetrieve mdfsrsockblock, String replyEndpoint){
 
@@ -176,7 +177,7 @@ public class getUtils {
                 e1.printStackTrace();
             }
 
-            //now, change mdfsrsockblock into a ReplyFromOneClientToAnother object
+            //now, change mdfsrsockblock into a ReplyFromOneClientToAnotherForOneFragment object
             mdfsrsockblock.flipIntoReply(byteArray);
 
             //convert mdfsrsockblock object into bytearray and do send

@@ -16,7 +16,7 @@ import edu.tamu.lenss.MDFS.RSock.RSockConstants;
 import edu.tamu.lenss.MDFS.Model.MDFSFileInfo;
 import edu.tamu.lenss.MDFS.Model.MDFSRsockBlockForFileRetrieve;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
-import rsock.Topology;
+import RsockJavaLibrary.rsock.Topology;
 
 
 public class MDFSFileRetrieverViaRsock {
@@ -63,8 +63,8 @@ public class MDFSFileRetrieverViaRsock {
             if (getUtils.checkEnoughFragsAvailable(missingBlocksAndFrags, fileInfo.getK2())) {
 
                 //merge the file in a new thread
-                //make a MDFSRsockBlockForFileRetrieve of type= ReplyFromOneClientToAnother
-                MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.ReplyFromOneClientToAnother, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, "dummyDestGUID", fileInfo.getFileName(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), (byte)0, (byte)0, localDir, null, true);
+                //make a MDFSRsockBlockForFileRetrieve of type= ReplyFromOneClientToAnotherForOneFragment
+                MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.ReplyFromOneClientToAnotherForOneFragment, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, "dummyDestGUID", fileInfo.getFileName(), metadata.getFilePathMDFS(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), (byte)0, (byte)0, localDir, null, true);
                 new FileMerge(mdfsrsockblock).run();
 
                 //log
@@ -166,7 +166,7 @@ public class MDFSFileRetrieverViaRsock {
         byte fragmentIndex = (byte) Integer.parseInt(tokens[2]);
 
         //make an object of MDFSRsockBlockRetrieval with request tag
-        MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.RequestFromOneClientToAnother, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, destGUID, fileInfo.getFileName(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), blockIdx, fragmentIndex, localDir, null, true);
+        MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.RequestFromOneClientToAnotherForOneFragment, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, destGUID, fileInfo.getFileName(), fileInfo.getFilePathMDFS(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), blockIdx, fragmentIndex, localDir, null, true);
 
         //get byteArray from object and size of the MDFSRsockBlockRetreival obj
         byte[] data = null;

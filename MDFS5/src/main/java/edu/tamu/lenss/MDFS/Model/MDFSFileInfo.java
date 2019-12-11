@@ -16,6 +16,7 @@ public class MDFSFileInfo implements Serializable {
 	private long fileSize;   //entire file size
 	private byte k2, n2;
 	private byte numberOfBlocks;
+	private String filePathMDFS;
 	
 	
 	public byte getNumberOfBlocks() {
@@ -27,9 +28,10 @@ public class MDFSFileInfo implements Serializable {
 	}
 
 	//filename fileid
-	public MDFSFileInfo(String fileName, String fileID){
+	public MDFSFileInfo(String fileName, String fileID, String filePathMDFS){
 		this.fileName = fileName;
 		this.fileID = fileID;
+		this.filePathMDFS = filePathMDFS;
 	}
 
 	public String getFileID() {
@@ -128,5 +130,13 @@ public class MDFSFileInfo implements Serializable {
 	//returns: /MDFS/test1.jpg__0123/test1.jpg__0/test1.jpg__0__frag__0
 	public static String getFragmentPath(String fileName, String fileID, byte blockIdx, byte fragIdx){
 		return MDFSFileInfo.getBlockDirPath(fileName, fileID, blockIdx)     + File.separator + MDFSFileInfo.getFragName(fileName, blockIdx, fragIdx);
+	}
+
+	public String getFilePathMDFS() {
+		return filePathMDFS;
+	}
+
+	public void setFilePathMDFS(String filePathMDFS) {
+		this.filePathMDFS = filePathMDFS;
 	}
 }

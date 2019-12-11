@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.tamu.cse.lenss.CLI.CLIRequestHandler;
+import edu.tamu.lenss.MDFS.Commands.get.get;
 import edu.tamu.lenss.MDFS.Commands.ls.ls;
 import edu.tamu.lenss.MDFS.Commands.ls.lsUtils;
 import edu.tamu.lenss.MDFS.Constants;
@@ -394,8 +395,9 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(this, "Tap on neighbor directory to open.", Toast.LENGTH_SHORT).show();
                     }else{
                         //its a file, so we need to retrieve it
-                        //TODO:
-                        Toast.makeText(this, "Filename: " + value + " | Directory: " + neighborEdgeCurrentDir + " | master: " + currentBrowsingNeighborGUID, Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(this, "Filename: " + value + " | Directory: " + neighborEdgeCurrentDir + " | master: " + currentBrowsingNeighborGUID, Toast.LENGTH_SHORT).show();
+                        get.getFileFromNeighbor(value, neighborEdgeCurrentDir, currentBrowsingNeighborGUID);
+
                     }
                 }else if(item.getItemId() == R.id.delete){
                     //user wants to delete a master
@@ -534,8 +536,6 @@ public class MainActivity extends AppCompatActivity {
 
     //takes a directory string, fetch directory and sets view for ownEdgeDir.
     public void setViewForOwnEdge(String directory){
-
-        System.out.println("inside where we are");
 
         //first set current directory
         ownEdgeCurrentDir = directory;

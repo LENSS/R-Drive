@@ -2,8 +2,8 @@ package edu.tamu.lenss.MDFS.RSock.network;
 
 import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeper;
 import edu.tamu.lenss.MDFS.RSock.RSockConstants;
-import example.Interface;
-import example.ReceivedFile;
+import RsockJavaLibrary.example.Interface;
+import RsockJavaLibrary.example.ReceivedFile;
 
 
 //this class is used solely totest rsock capability.

@@ -26,7 +26,7 @@ import edu.tamu.lenss.MDFS.RSock.RSockConstants;
 import edu.tamu.lenss.MDFS.Model.MDFSFileInfo;
 import edu.tamu.lenss.MDFS.Utils.AndroidIOUtils;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
-import rsock.Topology;
+import RsockJavaLibrary.rsock.Topology;
 
 import static java.lang.Thread.sleep;
 
@@ -70,7 +70,7 @@ public class MDFSFileCreatorViaRsockNG{
         this.encodingRatio = encodingRatio;
         this.blockCount = (int)Math.ceil((double)file.length()/maxBlockSize);
         this.maxBlockSize = maxBlockSize;
-        this.fileInfo = new MDFSFileInfo(file.getName(), fileID);
+        this.fileInfo = new MDFSFileInfo(file.getName(), fileID, filePathMDFS);
         this.fileInfo.setFileSize(file.length());
         this.fileInfo.setNumberOfBlocks((byte)blockCount);
         this.encryptKey = key;

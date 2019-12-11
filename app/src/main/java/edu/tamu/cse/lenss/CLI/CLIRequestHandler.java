@@ -186,7 +186,7 @@ public class CLIRequestHandler implements Runnable {
                                         return reply;
                                     }
                                 } else {
-                                    String reply = "Directory/file does not exist.";
+                                    String reply = "Directory/file "+ filepathLocal + filename +" does not exist.";
                                     clientSockets.sendAndClose(clientID, reply);
                                     return reply;
                                 }

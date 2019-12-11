@@ -28,7 +28,7 @@ import edu.tamu.lenss.MDFS.Utils.Pair;
 
 //this class is called by RsockReceiveForFileRetrieval.java class.
 //this class is run in a thread to merge a file after enough fragments are available for each block.
-//the passed mdfsrsockblock must have to be a ReplyFromOneClientToAnother type.
+//the passed mdfsrsockblock must have to be a ReplyFromOneClientToAnotherForOneFragment type.
 public class FileMerge implements Runnable{
 
 
@@ -80,7 +80,8 @@ public class FileMerge implements Runnable{
         if(!mdfsrsockblock.sameEdge){
             //TODO:
             //the file we merged is from a diff edge.
-            //we need to keep record of this that we have a file from diff edge.
+            //we need to keep record of this in SP that we have a file from diff edge.
+            //so next time we dont fetch this file again.
 
         }
 
