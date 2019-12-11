@@ -8,6 +8,9 @@ import android.os.Vibrator;
 import android.text.SpannableString;
 import android.text.style.RelativeSizeSpan;
 import android.util.TypedValue;
+
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -32,6 +35,9 @@ import edu.tamu.lenss.MDFS.MissingLInk.MissingLink;
 import static android.content.Context.MODE_PRIVATE;
 
 public class Utils {
+
+    //logger
+    public static Logger logger = org.apache.log4j.Logger.getLogger(Utils.class);
 
     //get all keys of a shared pref
     //returns null.
@@ -64,15 +70,20 @@ public class Utils {
         }
     }
 
-    //get data from a shared pref
+    //get value from a shared pref using a key
     public static String SharedPreferences_get(String prefName, String key){
 
+        String defValue = "DEFAULT VALUE";
         try {
             //init pref
             SharedPreferences SP = MissingLink.context.getSharedPreferences(prefName, MODE_PRIVATE);
 
             SharedPreferences.Editor editor = SP.edit();
-            String data = SP.getString(key, "No name defined");
+            String data = SP.getString(key, defValue);
+
+            if(data.equals(defValue)){
+                logger.log(Level.DEBUG, "Failed to fetch value from android shared preference, returning default value.");
+            }
             return data;
         }catch (Exception e){
             e.printStackTrace();

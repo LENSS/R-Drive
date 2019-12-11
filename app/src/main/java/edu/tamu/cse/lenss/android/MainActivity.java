@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         activity = this;
         context = this;
-        MissingLink.context = this;
+        MissingLink.context = getApplicationContext();
 
         this.backButton = (Button) findViewById(R.id.backButton);
         this.refreshButton = (Button) findViewById(R.id.refreshButton);
