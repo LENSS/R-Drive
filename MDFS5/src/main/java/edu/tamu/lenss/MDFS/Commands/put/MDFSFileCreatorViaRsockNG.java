@@ -117,14 +117,14 @@ public class MDFSFileCreatorViaRsockNG{
                         } else {
 
                             //log
-                            logger.log(Level.DEBUG, "Failed to push all file data in rsock...reason: " + sendRet);
+                            logger.log(Level.DEBUG, "Failed to push data of file "+ file.getName() +" rsock...reason: " + sendRet);
 
                             return sendRet;
                         }
                     } else {
-                        logger.log(Level.DEBUG, "Failed to push all file data in rsock...reason: " + "File to block partition failed.");
-                        MDFSFileCreatorViaRsockNG.logger.log(Level.ALL, "\n");
+                        logger.log(Level.DEBUG, "Failed to push file data for file "+ file.getName() +" in rsock...reason: " + "File to block partition failed.");
 
+                        MDFSFileCreatorViaRsockNG.logger.log(Level.ALL, "\n");
                         return "File to block partition failed.";
                     }
                 } else {

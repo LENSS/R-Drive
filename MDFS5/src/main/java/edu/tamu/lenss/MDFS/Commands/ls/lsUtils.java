@@ -12,6 +12,7 @@ import java.util.List;
 
 import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.command.LScommand;
 import edu.tamu.cse.lenss.edgeKeeper.server.RequestTranslator;
+import edu.tamu.lenss.MDFS.PeerFetcher.PeerFetcher;
 
 public class lsUtils {
 
@@ -111,14 +112,14 @@ public class lsUtils {
                     JSONObject FILES = new JSONObject(otherEdgeDir.getString(LScommand.FILES));
                     int fileCount = Integer.parseInt(FILES.getString(LScommand.COUNT));
                     for (int i = 0; i < fileCount; i++) {
-                        result = result + FILES.getString(Integer.toString(i)) + "(" + master + ")" + "   ";
+                        result = result + FILES.getString(Integer.toString(i)) + "(" + PeerFetcher.GUIDtoNameConversion(master) + ")" + "   ";
                     }
 
                     //get FOLDERS from otherEdgeDir
                     JSONObject FOLDERS = new JSONObject(otherEdgeDir.getString(LScommand.FOLDERS));
                     int folderCount = Integer.parseInt(FOLDERS.getString(LScommand.COUNT));
                     for (int i = 0; i < folderCount; i++) {
-                        result = result + File.separator + FOLDERS.getString(Integer.toString(i)) + "(" + master + ")" + "   ";
+                        result = result + File.separator + FOLDERS.getString(Integer.toString(i)) + "(" + PeerFetcher.GUIDtoNameConversion(master) + ")" + "   ";
                     }
 
                 }

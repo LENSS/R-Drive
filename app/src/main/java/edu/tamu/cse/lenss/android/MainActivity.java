@@ -539,8 +539,6 @@ public class MainActivity extends AppCompatActivity {
     //takes a directory string, fetch directory and sets view for ownEdgeDir.
     public void setViewForOwnEdge(String directory){
 
-        System.out.println("inside where we are");
-
         //first set current directory
         ownEdgeCurrentDir = directory;
 
@@ -553,7 +551,7 @@ public class MainActivity extends AppCompatActivity {
             //set textview
             textView.setText(OWNEDGEDIR +": " + ownEdgeCurrentDir);
 
-            //create List and populate with ls info
+            //create List and populate with ls infols
             List<String> arrayList = lsUtils.jsonToList(reply);
 
             //initialize and set array adapter
