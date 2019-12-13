@@ -7,13 +7,14 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACTION_OPEN_DOCUMENT" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
 
 
 
@@ -44,22 +45,8 @@
         <service
             android:name="edu.tamu.cse.lenss.android.MDFSService"
             android:enabled="true"
-            android:directBootAware="true"
-            android:stopWithTask="false">
+            android:stopWithTask="true">
         </service>
-
-        <receiver android:name="edu.tamu.cse.lenss.android.Autostart">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
-
-        <receiver
-            android:name="edu.tamu.cse.lenss.android.Restarter">
-            <intent-filter>
-                <action android:name="edu.tamu.cse.lenss.android.restartservice" />
-            </intent-filter>
-        </receiver>
 
         <activity
             android:name="edu.tamu.cse.lenss.Notifications.NotificationActivity"

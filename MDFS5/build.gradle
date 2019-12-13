@@ -1,0 +1,68 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 26
+
+    defaultConfig {
+        targetSdkVersion 26
+        buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
+        multiDexEnabled  true
+        minSdkVersion 23
+
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+    packageBuildConfig(false)
+
+/*
+    externalNativeBuild {
+        cmake {
+            path 'src/main/jni/CMakeLists.txt'
+        }
+    }
+*/
+
+    compileOptions {
+        incremental true
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    productFlavors {
+    }
+
+}
+
+dependencies {
+    api 'com.google.guava:guava:18.0'
+    api 'com.android.support:multidex:1.0.2'
+    api files('libs/aspectjrt-1.7.3.jar')
+    api files('libs/commons-math3-3.0.jar')
+    api files('libs/isoparser-1.0.6.jar')
+    api files('libs/org.sat4j.core.jar')
+    api files('libs/org.sat4j.pb.jar')
+    api files('libs/secretshare-v1.1.jar')
+    api files('libs/uncommons-maths-1.2.2.jar')
+    api 'com.android.support:appcompat-v7:26.1.0'
+    //for topology fetch
+    implementation 'org.jgrapht:jgrapht-core:1.3.0'
+    //rsock java api
+    implementation files('libs/API.jar')
+    //logging.
+    implementation 'org.slf4j:slf4j-android:1.6.1-RC1'
+    //jackson
+    implementation files('libs/jackson-annotations-2.9.4.jar')
+    implementation files('libs/jackson-core-2.9.4.jar')
+    implementation files('libs/jackson-databind-2.9.4.jar')
+    //edgeKeeper
+    implementation files('libs/EdgeKeeper-client.jar')
+    implementation files('libs/gson-2.8.5.jar')
+    implementation files('libs/json-20180813.jar')
+    implementation files('libs/log4j-1.2.17.jar')
+}
+
+

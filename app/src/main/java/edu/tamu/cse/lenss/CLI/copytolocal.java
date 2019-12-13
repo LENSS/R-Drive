@@ -2,6 +2,7 @@ package edu.tamu.cse.lenss.CLI;
 
 import android.os.Environment;
 
+import org.sat4j.pb.tools.INegator;
 
 import java.io.File;
 import java.io.FileInputStream;

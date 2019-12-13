@@ -13,16 +13,17 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import edu.tamu.cse.lenss.MDFS5.Commands.copyfromlocal.copyfromlocal;
-import edu.tamu.cse.lenss.MDFS5.Commands.get.get;
-import edu.tamu.cse.lenss.MDFS5.Commands.help.help;
-import edu.tamu.cse.lenss.MDFS5.Commands.ls.ls;
-import edu.tamu.cse.lenss.MDFS5.Commands.ls.lsUtils;
-import edu.tamu.cse.lenss.MDFS5.Commands.mkdir.mkdir;
-import edu.tamu.cse.lenss.MDFS5.Commands.put.put;
-import edu.tamu.cse.lenss.MDFS5.Commands.rm.rm;
-import edu.tamu.cse.lenss.MDFS5.RSock.testRsock;
-import edu.tamu.cse.lenss.MDFS5.Utils.IOUtilities;
+import edu.tamu.lenss.MDFS.Commands.ls.lsUtils;
+import edu.tamu.lenss.MDFS.Constants;
+import edu.tamu.lenss.MDFS.RSock.testRsock;
+import edu.tamu.lenss.MDFS.Commands.copyfromlocal.copyfromlocal;
+import edu.tamu.lenss.MDFS.Commands.get.get;
+import edu.tamu.lenss.MDFS.Commands.help.help;
+import edu.tamu.lenss.MDFS.Commands.ls.ls;
+import edu.tamu.lenss.MDFS.Commands.mkdir.mkdir;
+import edu.tamu.lenss.MDFS.Commands.put.put;
+import edu.tamu.lenss.MDFS.Commands.rm.rm;
+import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 
 
 //
@@ -185,7 +186,7 @@ public class CLIRequestHandler implements Runnable {
                                         return reply;
                                     }
                                 } else {
-                                    String reply = "Directory/file "+ filepathLocal + filename +" does not exist.";
+                                    String reply = "Directory/file does not exist.";
                                     clientSockets.sendAndClose(clientID, reply);
                                     return reply;
                                 }

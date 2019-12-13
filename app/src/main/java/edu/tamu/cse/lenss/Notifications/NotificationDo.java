@@ -48,7 +48,7 @@ public class NotificationDo extends BroadcastReceiver {
                .setContentTitle("File Retrieved!")
                .setTicker("New Message Alert!")
                .setAutoCancel(true)
-               .setSmallIcon(R.drawable.ic_launcher_foreground)
+               .setSmallIcon(R.drawable.bg_default)
                .setVibrate(pattern)
                .setWhen(System.currentTimeMillis()).build();
 

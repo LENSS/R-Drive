@@ -1,8 +1,10 @@
 package edu.tamu.cse.lenss.android;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -35,12 +37,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.tamu.cse.lenss.CLI.CLIRequestHandler;
-import edu.tamu.cse.lenss.MDFS5.Commands.get.get;
-import edu.tamu.cse.lenss.MDFS5.Commands.ls.ls;
-import edu.tamu.cse.lenss.MDFS5.Commands.ls.lsUtils;
-import edu.tamu.cse.lenss.MDFS5.Constants;
-import edu.tamu.cse.lenss.MDFS5.Handler.runGNSandRsock;
-import edu.tamu.cse.lenss.MDFS5.Utils.IOUtilities;
+import edu.tamu.lenss.MDFS.Commands.get.get;
+import edu.tamu.lenss.MDFS.Commands.ls.ls;
+import edu.tamu.lenss.MDFS.Commands.ls.lsUtils;
+import edu.tamu.lenss.MDFS.Constants;
+import edu.tamu.lenss.MDFS.MissingLInk.MissingLink;
+import edu.tamu.lenss.MDFS.PeerFetcher.PeerFetcher;
+import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 
 import static java.lang.Thread.sleep;
 
@@ -52,10 +55,10 @@ import static java.lang.Thread.sleep;
 public class MainActivity extends AppCompatActivity {
 
 
-    private runGNSandRsock rungnsandrsock;
-    private PeerFetcher PF;
 
     //global variables
+    public static Activity activity;
+    public static Context context;
     TextView textView;
     ListView listView;
     Button backButton;
@@ -73,8 +76,8 @@ public class MainActivity extends AppCompatActivity {
     private static String currentBrowsingNeighborGUID = "";
 
     //view mode whether its ownEdgeDir or neighborEdgeDir view.
-    private static final String OWNEDGEDIR = "OWNEDGEDIR";
-    private static final String NEIGHBOREDGEDIR = "NEIGHBOREDGEDIR";
+    private static final String OWNEDGEDIR = "OWN EDGE DIR";
+    private static final String NEIGHBOREDGEDIR = "NEIGHBOR EDGE DIR";
     public static final String SELECTEDGEMASTER = "Select an edge directory";
     private static String allNeighborEdgeDirsCache = "";
     private static String currentMode = OWNEDGEDIR; //start with own edge dir
@@ -84,14 +87,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-
-        //starts GNS(edgekeeper), and then rsock
-        this.rungnsandrsock = new runGNSandRsock();
-
-        //start peer fetch thread
-        PF = new PeerFetcher(getApplicationContext());
-        PF.start();
+        activity = this;
+        context = this;
+        MissingLink.context = this;
 
         this.backButton = (Button) findViewById(R.id.backButton);
         this.refreshButton = (Button) findViewById(R.id.refreshButton);
@@ -140,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
                         //fetch dir object for this particular master
                         //item = masterName
                         //first convert name into guid
-                        String guid = PF.NameToGUIDConversion(item);
+                        String guid = PeerFetcher.NameToGUIDConversion(item);
                         if(guid!=null) {
                             JSONObject particularMasterDirsObject = lsUtils.parseParticularMasterDirectoryFromAllNeighborEdgeDirStr(guid, allNeighborEdgeDirsCache);
 
@@ -207,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
                                     e.printStackTrace();
                                 }
                             }else{
-                                Toast.makeText(getApplicationContext(), "Could not convert name to GUID, try again later.", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MainActivity.context, "Could not convert name to GUID, try again later.", Toast.LENGTH_SHORT).show();
                             }
                         }
 
@@ -279,6 +277,8 @@ public class MainActivity extends AppCompatActivity {
                                         //change listView
                                         setItemsOnListView(tokens);
 
+                                    }else{
+                                        //Toast.makeText(this, "Requested directory no longer exists in Neighbors edge, please Toggle view and come back.", Toast.LENGTH_SHORT).show();
                                     }
 
                                 } catch (JSONException e) {
@@ -397,6 +397,7 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(this, "Tap on neighbor directory to open.", Toast.LENGTH_SHORT).show();
                     }else{
                         //its a file, so we need to retrieve it
+                        //MAGA
                         //Toast.makeText(this, "Filename: " + value + " | Directory: " + neighborEdgeCurrentDir + " | master: " + currentBrowsingNeighborGUID, Toast.LENGTH_SHORT).show();
                         get.getFileFromNeighbor(value, neighborEdgeCurrentDir, currentBrowsingNeighborGUID);
 
@@ -412,7 +413,6 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
@@ -425,7 +425,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Stop the service
         this.stopService(new Intent(this, MDFSService.class));
-        PF.interrupt();
+
 
         /*
         //this block of code restarts the service once again after the app is closed
@@ -539,6 +539,8 @@ public class MainActivity extends AppCompatActivity {
     //takes a directory string, fetch directory and sets view for ownEdgeDir.
     public void setViewForOwnEdge(String directory){
 
+        System.out.println("inside where we are");
+
         //first set current directory
         ownEdgeCurrentDir = directory;
 
@@ -548,7 +550,7 @@ public class MainActivity extends AppCompatActivity {
         //check if reply is correct
         if(reply!=null){
 
-            //set textView
+            //set textview
             textView.setText(OWNEDGEDIR +": " + ownEdgeCurrentDir);
 
             //create List and populate with ls info
@@ -590,7 +592,7 @@ public class MainActivity extends AppCompatActivity {
 
                         //convert GUIDs into Names
                         List<String> neighborMastersNames = new ArrayList<>();
-                        for(int i=0; i< neighborMastersGUIDs.size(); i++){neighborMastersNames.add(PF.GUIDtoNameConversion(neighborMastersGUIDs.get(i))); }
+                        for(int i=0; i< neighborMastersGUIDs.size(); i++){neighborMastersNames.add(PeerFetcher.GUIDtoNameConversion(neighborMastersGUIDs.get(i))); }
 
                         //set currentView
                         currentMode = NEIGHBOREDGEDIR;
@@ -698,7 +700,7 @@ public class MainActivity extends AppCompatActivity {
 
                         //convert guids into names
                         List<String> neighborMastersNames = new ArrayList<>();
-                        for(int i=0; i< neighborMastersGUIDs.size(); i++){neighborMastersNames.add(PF.GUIDtoNameConversion(neighborMastersGUIDs.get(i)));}
+                        for(int i=0; i< neighborMastersGUIDs.size(); i++){neighborMastersNames.add(PeerFetcher.GUIDtoNameConversion(neighborMastersGUIDs.get(i)));}
 
                         //set currentView
                         currentMode = NEIGHBOREDGEDIR;
@@ -843,7 +845,7 @@ public class MainActivity extends AppCompatActivity {
 
                     //convert guids into names
                     List<String> neighborMastersNames = new ArrayList<>();
-                    for(int i=0; i< neighborMastersGUIDs.size();i++){neighborMastersNames.add(PF.GUIDtoNameConversion(neighborMastersGUIDs.get(i))); }
+                    for(int i=0; i< neighborMastersGUIDs.size();i++){neighborMastersNames.add(PeerFetcher.GUIDtoNameConversion(neighborMastersGUIDs.get(i))); }
 
                     //set currentView
                     currentMode = NEIGHBOREDGEDIR;
@@ -879,7 +881,7 @@ public class MainActivity extends AppCompatActivity {
                     String dirStr = null;
                     try {
 
-                         dirStr = particularMasterDirsObject.getString(neighborEdgeCurrentDir);
+                        dirStr = particularMasterDirsObject.getString(neighborEdgeCurrentDir);
 
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -1127,9 +1129,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
     //takes a GUID and returns a smaller version only for view purpose
-    public String formatGUID(String GUID){
-        return PF.GUIDtoNameConversion(GUID);
+    public static String formatGUID(String GUID){
+        return PeerFetcher.GUIDtoNameConversion(GUID);
 
     }
 
