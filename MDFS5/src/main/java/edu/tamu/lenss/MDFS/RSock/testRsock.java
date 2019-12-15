@@ -9,7 +9,7 @@ public class testRsock {
     public static String testrsock(){
 
         //check if testRsock is enabled
-        if(!Constants.testRsock){
+        if(!RSockConstants.testRsock){
 
             //return
             return "testRsock is turned off in Constants file.";
@@ -17,16 +17,16 @@ public class testRsock {
         }else {
 
             //destination
-            String remoteAddr = "05EE5FDB77AC19C7FBE5F92DD493B039BB4CD869";
+            String remoteAddr = "6DD294182D3889446CA5F440986A41E1176A846F";
 
             //print
-            System.out.println("inside test.java file");
+            System.out.println("inside testRsock.java file");
 
             //test
             test(remoteAddr);
 
             //return
-            return "Rsock test packets sent!";
+            return " testRsock Rsock test packets sent!";
         }
 
     }
@@ -112,17 +112,17 @@ public class testRsock {
             //-------------------------------------------------------------------
 
 
-            //12899
-            String data_12899 = "";
-            for (int i = 0; i < 12899; i++) {
-                data_12899 = data_12899 + "Z";
+            //128099
+            String data_128099 = "";
+            for (int i = 0; i < 128099; i++) {
+                data_128099 = data_128099 + "Z";
             }
 
             //send 12899
             RSockConstants.intrfc_test.send(
                     UUID.randomUUID().toString().substring(0, 12),
-                    data_12899.getBytes(),
-                    data_12899.length(),
+                    data_128099.getBytes(),
+                    data_128099.length(),
                     "nothing",
                     "nothing",
                     remoteAddr,
@@ -131,7 +131,7 @@ public class testRsock {
                     RSockConstants.rsockTestEndpoint,
                     RSockConstants.rsockTestEndpoint);
 
-            System.out.println("testRsock sent data of " + data_12899.length());
+            System.out.println("testRsock sent data of " + data_128099.length());
 
 
             //-------------------------------------------------------------------

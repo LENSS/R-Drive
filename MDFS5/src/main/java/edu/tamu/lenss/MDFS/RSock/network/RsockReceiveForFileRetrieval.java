@@ -267,7 +267,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                                             // and send request to own self.
                                             //source = file requester from diff edge
                                             //destination = ownGUID
-                                            MDFSRsockBlockForFileRetrieve mdfsrsockblock1 = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.RequestFromOneClientToAnotherForOneFragment, (byte)metadata.getn2(), (byte)metadata.getk2(), mdfsrsockblock.srcGUID, EdgeKeeper.ownName, mdfsrsockblock.fileName, metadata.getFilePathMDFS(),metadata.getFileID(), (byte)metadata.getBlockCount(), (byte)i, (byte)j, mdfsrsockblock.localDir, null, false);
+                                            MDFSRsockBlockForFileRetrieve mdfsrsockblock1 = new MDFSRsockBlockForFileRetrieve(mdfsrsockblock.blockRetrieveReqUUID, MDFSRsockBlockForFileRetrieve.Type.RequestFromOneClientToAnotherForOneFragment, (byte)metadata.getn2(), (byte)metadata.getk2(), mdfsrsockblock.srcGUID, EdgeKeeper.ownName, mdfsrsockblock.fileName, metadata.getFilePathMDFS(),metadata.getFileID(), (byte)metadata.getBlockCount(), (byte)i, (byte)j, mdfsrsockblock.localDir, null, false);
 
                                             //get each fragment of each block and send
                                             getUtils.justDoit(mdfsrsockblock1, receivedFile.getReplyEndpoint());
@@ -276,6 +276,8 @@ public class RsockReceiveForFileRetrieval implements Runnable {
 
                                         }
                                     }
+                                    logger.log(Level.ALL, "CASE #1:master sent all file fragments for file "+ mdfsrsockblock.filePathMDFS + mdfsrsockblock.fileName +" to a neighbor edge.");
+
                                 }else{
                                     logger.log(Level.DEBUG, "Could not serve fragment request from node " + mdfsrsockblock.srcGUID  + " for filename " + mdfsrsockblock.fileName + "due to file directory no longer exists in storage.");
                                 }
@@ -287,7 +289,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                                 //send the fragment requests to the fileCreatorGUID.
                                 //source: file requester from diff edge
                                 //destination: file creator.
-                                MDFSRsockBlockForFileRetrieve mdfsrsockblock1 = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.RequestFromMasterToClientInSameEdgeForWholeFile, (byte)metadata.getn2(), (byte)metadata.getk2(), mdfsrsockblock.srcGUID, metadata.getFileCreatorGUID(), mdfsrsockblock.fileName, mdfsrsockblock.filePathMDFS, metadata.getFileID(), (byte) metadata.getBlockCount(), (byte)-1, (byte)-1, mdfsrsockblock.localDir, null, false);
+                                MDFSRsockBlockForFileRetrieve mdfsrsockblock1 = new MDFSRsockBlockForFileRetrieve(mdfsrsockblock.blockRetrieveReqUUID, MDFSRsockBlockForFileRetrieve.Type.RequestFromMasterToClientInSameEdgeForWholeFile, (byte)metadata.getn2(), (byte)metadata.getk2(), mdfsrsockblock.srcGUID, metadata.getFileCreatorGUID(), mdfsrsockblock.fileName, mdfsrsockblock.filePathMDFS, metadata.getFileID(), (byte) metadata.getBlockCount(), (byte)-1, (byte)-1, mdfsrsockblock.localDir, null, false);
 
                                 //get byteArray from object
                                 byte[] data = null;
@@ -347,7 +349,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                                 //create dummy MDFSRsockBlockForFileRetrieve of type == RequestFromOneClientToAnotherForOneFragment,
                                 //source = file requester from diff edge
                                 //destination = original fileCreator aka myself.
-                                MDFSRsockBlockForFileRetrieve mdfsrsockblock1 = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.RequestFromOneClientToAnotherForOneFragment, (byte)mdfsrsockblock.n2, (byte)mdfsrsockblock.k2, mdfsrsockblock.srcGUID, EdgeKeeper.ownGUID, mdfsrsockblock.fileName, mdfsrsockblock.filePathMDFS, mdfsrsockblock.fileId, (byte)mdfsrsockblock.totalNumOfBlocks, (byte)i, (byte)j, mdfsrsockblock.localDir, null, false);
+                                MDFSRsockBlockForFileRetrieve mdfsrsockblock1 = new MDFSRsockBlockForFileRetrieve(mdfsrsockblock.blockRetrieveReqUUID, MDFSRsockBlockForFileRetrieve.Type.RequestFromOneClientToAnotherForOneFragment, (byte)mdfsrsockblock.n2, (byte)mdfsrsockblock.k2, mdfsrsockblock.srcGUID, EdgeKeeper.ownGUID, mdfsrsockblock.fileName, mdfsrsockblock.filePathMDFS, mdfsrsockblock.fileId, (byte)mdfsrsockblock.totalNumOfBlocks, (byte)i, (byte)j, mdfsrsockblock.localDir, null, false);
 
                                 //get each fragment of each block and send
                                 getUtils.justDoit(mdfsrsockblock1, receivedFile.getReplyEndpoint());

@@ -197,7 +197,7 @@ public class getUtils {
                 }
 
                 //log
-                RsockReceiveForFileRetrieval.logger.log(Level.ALL, "resolved fragment request from node " + mdfsrsockblock.destGUID + " for fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName);
+                RsockReceiveForFileRetrieval.logger.log(Level.ALL, "CASE #1: resolved fragment request from node " + mdfsrsockblock.destGUID + " for fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName);
 
             } catch (IOException e) {
                 e.printStackTrace();

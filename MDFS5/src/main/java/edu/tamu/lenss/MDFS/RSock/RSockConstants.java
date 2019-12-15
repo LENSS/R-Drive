@@ -32,4 +32,6 @@ public class RSockConstants {
     public static final String fileRetrieveEndpoint = "RsockFR";
     public static final String fileDeleteEndpoint = "RsockDL";
     public static final String rsockTestEndpoint = "default";
+
+    public static boolean testRsock = false;
 }

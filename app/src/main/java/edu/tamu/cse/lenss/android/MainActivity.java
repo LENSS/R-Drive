@@ -305,7 +305,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreateContextMenu(menu, v, menuInfo);
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_main, menu);
-        menu.setHeaderTitle("Select Action");
+        //menu.setHeaderTitle("Select Action");
     }
 
 
