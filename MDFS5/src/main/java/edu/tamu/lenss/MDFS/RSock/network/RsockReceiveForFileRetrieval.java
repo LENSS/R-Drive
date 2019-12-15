@@ -213,8 +213,12 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                                         //check if this node has already K frags for each block
                                         if (getUtils.checkEnoughFragsAvailable(missingBlocksAndFrags, mdfsrsockblock.k2)) {
 
+                                            logger.log(Level.ALL, "RRFFR File " + mdfsrsockblock.fileName + "has enough fragments yet.");
+
                                             //merge the file in a new thread
                                             new Thread(new FileMerge(mdfsrsockblock)).run();
+                                        }else{
+                                            logger.log(Level.ALL, "RRFFR File " + mdfsrsockblock.fileName + "doesnt have enough fragments yet.");
                                         }
                                     }else{
                                         MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "Merge failed for filename: " + mdfsrsockblock.fileName);
