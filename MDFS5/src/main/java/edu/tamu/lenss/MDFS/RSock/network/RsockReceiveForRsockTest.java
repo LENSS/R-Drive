@@ -2,8 +2,8 @@ package edu.tamu.lenss.MDFS.RSock.network;
 
 import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeper;
 import edu.tamu.lenss.MDFS.RSock.RSockConstants;
-import example.Interface;
-import example.ReceivedFile;
+import RsockCommLibrary.Interface;
+import RsockCommLibrary.ReceivedFile;
 
 
 //this class is used solely totest rsock capability.
@@ -19,7 +19,7 @@ public class RsockReceiveForRsockTest implements Runnable{
 
         //if rsock client library object is null, init it once.
         if(RSockConstants.intrfc_test==null) {
-            RSockConstants.intrfc_test = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_test_appid, 999, false);
+            RSockConstants.intrfc_test = new Interface(EdgeKeeper.ownGUID, RSockConstants.intrfc_test_appid, 999);
         }
 
         //variables
@@ -30,22 +30,21 @@ public class RsockReceiveForRsockTest implements Runnable{
 
             //blocking on receiving through rsock at a particular endpoint
             try {
-                rcvdfile = RSockConstants.intrfc_test.receive(100, RSockConstants.rsockTestEndpoint); }
+                rcvdfile = RSockConstants.intrfc_test.receive(); }
             catch (InterruptedException e) {
-                e.printStackTrace();
+                //rsock api threw exception.
+                //meaning, Rsock api closed down.
+                //need to come out of this thread
+                isTerminated = true;
             }
 
             if(rcvdfile!=null) {
                 System.out.println("testRsock received string of size: " + new String(rcvdfile.getFileArray()).length());
+            }else{
+                System.out.println("testRsock received null.");
             }
 
         }
-
-        //execution only comes here when the above while loop is broken.
-        //above while loop is only broken when mdfs is closing.
-        //came out of while loop, now close the rsock client library object.
-        RSockConstants.intrfc_test.close();
-        RSockConstants.intrfc_test = null;
     }
 
     public static void stop(){

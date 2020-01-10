@@ -217,18 +217,18 @@ import java.util.regex.Pattern;
 	}
 
 	//read file bytes from start index upto end index
-	public static void fileToByte(File source, int startIndex, int endIndex, byte[] destination, int offset){
+	public static void fileToByte(File source, long startIndex, long endIndex, byte[] destination, int offset){
 		try{
 			RandomAccessFile randF = new RandomAccessFile(source, "r");
 			randF.seek(startIndex);
-			randF.read(destination, offset, (endIndex-startIndex));
+			randF.read(destination, offset, (int)(endIndex-startIndex));
 			randF.close();
 
-		}catch (Exception e) {}
+		}catch (Exception e) {e.printStackTrace();}
 	}
 
 	//Appends file bytes into file from start index upto end
-	public static void byteToFile(byte[] source, int offset, int length, File destination, int startIndex){
+	public static void byteToFile(byte[] source, int offset, int length, File destination, long startIndex){
 		try{
 			destination.setWritable(true);
 			RandomAccessFile randF = new RandomAccessFile(destination, "rw");
@@ -236,7 +236,7 @@ import java.util.regex.Pattern;
 			randF.write(source, offset, length);
 			randF.close();
 
-		}catch (Exception e) {}
+		}catch (Exception e) {e.printStackTrace();}
 	}
 
 	

@@ -8,15 +8,15 @@ import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeper;
 import edu.tamu.lenss.MDFS.RSock.RSockConstants;
 import edu.tamu.lenss.MDFS.Handler.ServiceHelper;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
-import example.Interface;
-import example.ReceivedFile;
+import RsockCommLibrary.Interface;
+import RsockCommLibrary.ReceivedFile;
 
 //this class is used for receiving packets that contains file information
 // to delete from a  device completely.
 public class RsockReceiveForFileDeletion implements Runnable{
 
     //logger
-    public static Logger logger = Logger.getLogger(RsockReceiveForFileDeletion.class);
+    static Logger logger = Logger.getLogger(RsockReceiveForFileDeletion.class);
 
 
     private static boolean isTerminated = false;
@@ -29,7 +29,7 @@ public class RsockReceiveForFileDeletion implements Runnable{
 
         //if rsock client library object is null, init it once.
         if(RSockConstants.intrfc_deletion==null) {
-            RSockConstants.intrfc_deletion = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_deletion_appid, 3600, false);
+            RSockConstants.intrfc_deletion = new Interface(EdgeKeeper.ownGUID, RSockConstants.intrfc_deletion_appid, 3600);
         }
 
         //variables
@@ -39,49 +39,50 @@ public class RsockReceiveForFileDeletion implements Runnable{
         String fileName;
         String fileID;
 
-        //while loop
-        while(!isTerminated){
 
-            //blocking on receiving through rsock at a particular endpoint
-            try {
-                rcvdfile = RSockConstants.intrfc_deletion.receive(100, RSockConstants.fileDeleteEndpoint); }
-            catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        if(RSockConstants.RSOCK) {
 
-            if(rcvdfile!=null) {
+            //while loop
+            while (!isTerminated) {
 
-                System.out.println("new incoming rsock for file deletion");
-
-                //get file information and parse
-                fileInformation = new String(rcvdfile.getFileArray());
-                tokens = fileInformation.split(RSockConstants.deletion_tag);
-                tokens = IOUtilities.delEmptyStr(tokens);
-                fileName = tokens[0];
-                fileID = tokens[1];
-
-                //log
-                logger.log(Level.ALL, "Received file deletion request for file " + fileName);
-
-                //trigger delete on this device
+                //blocking on receiving through rsock at a particular endpoint
                 try {
-                    ServiceHelper.getInstance().getDirectory().deleteFile(fileID, fileName);
+                    rcvdfile = RSockConstants.intrfc_deletion.receive();
+                } catch (InterruptedException e) {
+                    //rsock api closing
+                    isTerminated = true;
+                }
+
+                if (rcvdfile != null) {
+
+                    System.out.println("new incoming rsock for file deletion");
+
+                    //get file information and parse
+                    fileInformation = new String(rcvdfile.getFileArray());
+                    tokens = fileInformation.split(RSockConstants.deletion_tag);
+                    tokens = IOUtilities.delEmptyStr(tokens);
+                    fileName = tokens[0];
+                    fileID = tokens[1];
 
                     //log
-                    logger.log(Level.ALL, "File " + fileName + " has been deleted from disk.");
-                }catch(Exception e){
-                    e.printStackTrace();
+                    logger.log(Level.ALL, "Received file deletion request for file " + fileName);
+
+                    //trigger delete on this device
+                    try {
+                        ServiceHelper.getInstance().getDirectory().deleteFile(fileID, fileName);
+
+                        //log
+                        logger.log(Level.ALL, "File " + fileName + " has been deleted from disk.");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }else{
+                    //log
+                    logger.log(Level.DEBUG, "Rsock api returned null.");
                 }
+
             }
-
         }
-
-        //execution only comes here when the above while loop is broken.
-        //above while loop is only broken when mdfs is closing.
-        //came out of while loop, now close the rsock client library object.
-
-        RSockConstants.intrfc_deletion.close();
-        RSockConstants.intrfc_deletion = null;
 
 
     }

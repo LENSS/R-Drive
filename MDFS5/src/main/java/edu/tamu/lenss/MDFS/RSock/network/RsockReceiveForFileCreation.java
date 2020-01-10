@@ -15,8 +15,8 @@ import edu.tamu.lenss.MDFS.RSock.RSockConstants;
 import edu.tamu.lenss.MDFS.Model.MDFSFileInfo;
 import edu.tamu.lenss.MDFS.Utils.AndroidIOUtils;
 import edu.tamu.lenss.MDFS.Model.MDFSRsockBlockForFileCreate;
-import example.Interface;
-import example.ReceivedFile;
+import RsockCommLibrary.Interface;
+import RsockCommLibrary.ReceivedFile;
 
 
 
@@ -42,60 +42,62 @@ public class RsockReceiveForFileCreation implements Runnable{
 
     @Override
     public void run() {
+
         if(RSockConstants.intrfc_creation==null) {
-            RSockConstants.intrfc_creation = Interface.getInstance(EdgeKeeper.ownGUID, RSockConstants.intrfc_creation_appid, 3600, true);
+            RSockConstants.intrfc_creation = new Interface(EdgeKeeper.ownGUID, RSockConstants.intrfc_creation_appid, 3600);
         }
-        System.out.println("Rsock receiver thread is running...");
+
         ReceivedFile rcvdfile = null;
-        while(!isTerminated){
-            try {
-                //blocking on receiving through rsock at a particular endpoint
+        if(RSockConstants.RSOCK) {
+
+            while (!isTerminated) {
                 try {
-                    rcvdfile = RSockConstants.intrfc_creation.receive(100, RSockConstants.fileCreateEndpoint); }
-                catch (InterruptedException e) {e.printStackTrace(); }
+                    //blocking on receiving through rsock at a particular endpoint
+                    try {
+                        rcvdfile = RSockConstants.intrfc_creation.receive();
+                    } catch (InterruptedException e) {
+                        //rsock api closing
+                        isTerminated = true;
+                    }
 
-                //check for null
-                if(rcvdfile!=null) {
+                    //check for null
+                    if (rcvdfile != null) {
 
-                    System.out.println("new incoming rsock for file creation");
+                        System.out.println("new incoming rsock for file creation");
 
-                    //convert byteArray into MDFSRsockBlockCreator object
-                    ByteArrayInputStream bis = new ByteArrayInputStream(rcvdfile.getFileArray());
-                    ObjectInputStream ois = new ObjectInputStream(bis);
-                    MDFSRsockBlockForFileCreate mdfsrsockblock = (MDFSRsockBlockForFileCreate) ois.readObject();
-                    bis.close();
-                    ois.close();
+                        //convert byteArray into MDFSRsockBlockCreator object
+                        ByteArrayInputStream bis = new ByteArrayInputStream(rcvdfile.getFileArray());
+                        ObjectInputStream ois = new ObjectInputStream(bis);
+                        MDFSRsockBlockForFileCreate mdfsrsockblock = (MDFSRsockBlockForFileCreate) ois.readObject();
+                        bis.close();
+                        ois.close();
 
-                    //convert MDFSRsockBlockCreator obj into FragmentTransferInfo (header), File (fileFrag) etc.
-                    String fileName = (String) mdfsrsockblock.fileName;
-                    String filePathMDFS= (String) mdfsrsockblock.filePathMDFS;
-                    byte[] byteArray = (byte[]) mdfsrsockblock.fileFrag;
-                    String fileID = (String) mdfsrsockblock.fileID;
-                    long filesize = (long) mdfsrsockblock.entireFileSize;
-                    byte n2 =  (byte) mdfsrsockblock.n2;
-                    byte k2 =  (byte) mdfsrsockblock.k2;
-                    byte blockIdx = (byte) mdfsrsockblock.blockIdx;
-                    byte fragmentIdx = (byte) mdfsrsockblock.fragmentIdx;
-                    String fileCreatorGUID = (String) mdfsrsockblock.fileCreatorGUID;
-                    String uniquereqid = (String) mdfsrsockblock.uniqueReqID;
-                    boolean isGlobal = (boolean) mdfsrsockblock.isGlobal;
+                        //convert MDFSRsockBlockCreator obj into FragmentTransferInfo (header), File (fileFrag) etc.
+                        String fileName = (String) mdfsrsockblock.fileName;
+                        String filePathMDFS = (String) mdfsrsockblock.filePathMDFS;
+                        byte[] byteArray = (byte[]) mdfsrsockblock.fileFrag;
+                        String fileID = (String) mdfsrsockblock.fileID;
+                        long filesize = (long) mdfsrsockblock.entireFileSize;
+                        byte n2 = (byte) mdfsrsockblock.n2;
+                        byte k2 = (byte) mdfsrsockblock.k2;
+                        byte blockIdx = (byte) mdfsrsockblock.blockIdx;
+                        byte fragmentIdx = (byte) mdfsrsockblock.fragmentIdx;
+                        String fileCreatorGUID = (String) mdfsrsockblock.fileCreatorGUID;
+                        String uniquereqid = (String) mdfsrsockblock.uniqueReqID;
+                        boolean isGlobal = (boolean) mdfsrsockblock.isGlobal;
 
-                    //now save the fileFrag
-                    saveTheFileFragAndUpdateMetadataToEdgeKeeper(fileName, filePathMDFS, byteArray, fileID, filesize, n2, k2, blockIdx, fragmentIdx, fileCreatorGUID, uniquereqid, isGlobal);
-                    logger.log(Level.DEBUG, "fragment# " + fragmentIdx + " of block# " + blockIdx + " of filename " + fileName + " received from rsock.");
+                        //now save the fileFrag
+                        saveTheFileFragAndUpdateMetadataToEdgeKeeper(fileName, filePathMDFS, byteArray, fileID, filesize, n2, k2, blockIdx, fragmentIdx, fileCreatorGUID, uniquereqid, isGlobal);
+                        logger.log(Level.DEBUG, "fragment# " + fragmentIdx + " of block# " + blockIdx + " of filename " + fileName + " received from rsock.");
+                    }
+
+                } catch (IOException | ClassNotFoundException e) {
+
+                    logger.log(Level.FATAL, "Exception in constructing fragment ", e);
                 }
-
-            } catch (IOException | ClassNotFoundException e) {
-
-                logger.log(Level.FATAL, "Exception in constructing fragment ", e);
             }
-        }
 
-        //execution only comes here when the above while loop is broken.
-        //above while loop is only broken when mdfs is closing.
-        //came out of while loop, now close the rsock client library object.
-        RSockConstants.intrfc_creation.close();
-        RSockConstants.intrfc_creation = null;
+        }
 
     }
 
@@ -103,7 +105,6 @@ public class RsockReceiveForFileCreation implements Runnable{
     private void saveTheFileFragAndUpdateMetadataToEdgeKeeper(String fileName, String filePathMDFS, byte[] byteArray, String fileID , long filesize, byte n2, byte k2, byte blockIdx, byte fragmentIdx, String fileCreatorGUID, String uniquereqid, boolean isGlobal) {
         //create file
         File tmp0 = null;
-
 
             tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileName, fileID, blockIdx));
 

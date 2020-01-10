@@ -60,11 +60,11 @@ public class FileMerge implements Runnable{
 
             }else{
 
-                //for some block, fragments couldnt be fetched form disk.
+                //for some block, fragments couldnt be fetched from disk.
                 //maybe it is due to a delete request for this file.
 
                 //log and return
-                MDFSFileRetrieverViaRsock.logger.log(Level.ERROR,"File " + mdfsrsockblock.fileName + " merge failed because for block#  " + i + " could not fetch any fragments from disk. ");
+                MDFSFileRetrieverViaRsock.logger.log(Level.ERROR,"File " + mdfsrsockblock.fileName + " merge failed because for block#  " + i + ", could not fetch any fragments from disk. ");
             }
 
         }
@@ -128,49 +128,52 @@ public class FileMerge implements Runnable{
         return blockFragments;
     }
 
-    //this function gets all fragments of a file from disk,
+    //this function gets all fragments of a block from disk,
     //and writes the block as a file with "__blk__" tag
     private void decodeBlockFile(List<FragmentInfo> blockFragments, int blockIdx){
 
+        try {
+            // Final Check. Make sure enough fragments are available
+            if (blockFragments.size() < mdfsrsockblock.k2) {
+                String str = blockFragments.size() + " block fragments out of " + mdfsrsockblock.totalNumOfBlocks + " are available locally.";
 
-        // Final Check. Make sure enough fragments are available
-        if (blockFragments.size() < mdfsrsockblock.k2) {
-            String s = blockFragments.size() + " block fragments are available locally.";
-
-            //log and listener
-            MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, " decryption failed for block# " + blockIdx + " of file " + mdfsrsockblock.fileName + ", insufficient fragments.");
+                //log and listener
+                MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, " decryption failed for block# " + blockIdx + " of file " + mdfsrsockblock.fileName + " due to insufficient fragments. " + str);
                 return;
-        }
+            }
 
-        //if decryptkey is null
-        if (ServiceHelper.getInstance().getEncryptKey() == null) {
-            //log and listener
-            MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, " decryption failed for Block# " +  blockIdx + " decryption failed, no decryption key found.");
-            return;
-        }
+            //if decryptkey is null
+            if (ServiceHelper.getInstance().getEncryptKey() == null) {
+                //log and listener
+                MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, " decryption failed for Block# " + blockIdx + " decryption failed, no decryption key found.");
+                return;
+            }
 
-        //if enough fragments available, decryptKey is valid, then decode and store the file
-        //tmp0 = /storage/emulated/0/MDFS/test1.jpg__0123/ (directory)
-        //tmp = /storage/emulated/0/MDFS/test1.jpg__0123/test2.jpg_0123__blk__0 (file)
-        File tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFileDirPath(mdfsrsockblock.fileName, mdfsrsockblock.fileId));
-        File tmp = IOUtilities.createNewFile(tmp0, MDFSFileInfo.getBlockName(mdfsrsockblock.fileName, (byte)blockIdx));
+            //if enough fragments available, decryptKey is valid, then decode and store the file
+            //tmp0 = /storage/emulated/0/MDFS/test1.jpg__0123/ (directory)
+            //tmp = /storage/emulated/0/MDFS/test1.jpg__0123/test2.jpg_0123__blk__0 (file)
+            File tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFileDirPath(mdfsrsockblock.fileName, mdfsrsockblock.fileId));
+            File tmp = IOUtilities.createNewFile(tmp0, MDFSFileInfo.getBlockName(mdfsrsockblock.fileName, (byte) blockIdx));
 
-        //make decoder object
-        DeCoDeR decoder = new DeCoDeR(ServiceHelper.getInstance().getEncryptKey(), mdfsrsockblock.n2, mdfsrsockblock.k2, blockFragments, tmp.getAbsolutePath());
+            //make decoder object
+            DeCoDeR decoder = new DeCoDeR(ServiceHelper.getInstance().getEncryptKey(), mdfsrsockblock.n2, mdfsrsockblock.k2, blockFragments, tmp.getAbsolutePath());
 
-        //check if decoding completed
-        //takes bunch of file fragments and writes file block with _blk__ tag
-        if (decoder.ifYouSmellWhatTheRockIsCooking()) {
+            //check if decoding completed
+            //takes bunch of file fragments and writes file block with _blk__ tag
+            if (decoder.ifYouSmellWhatTheRockIsCooking()) {
 
-            //log
-            MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Block# " + blockIdx +" Decryption Complete for filename " + mdfsrsockblock.fileName);
+                //log
+                MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Block# " + blockIdx + " Decryption Complete for filename " + mdfsrsockblock.fileName);
 
-        } else {
+            } else {
 
-            //log and listener
-            MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "Failed to merge fragments of block# " + blockIdx + " for filename " + mdfsrsockblock.fileName);
-            return;
+                //log and listener
+                MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "Failed to merge fragments of block# " + blockIdx + " for filename " + mdfsrsockblock.fileName);
+                return;
 
+            }
+        }catch (Exception e){
+            MDFSFileRetrieverViaRsock.logger.log(Level.ERROR, "Fragments merging failed and caused exception, " , e);
         }
 
     }
@@ -180,86 +183,90 @@ public class FileMerge implements Runnable{
     //this fucntion first loads all the bytes of all blocks into a map and then merges them (DUMB).
     private void mergeMultipleBlocksDumb() {
 
-        //check if the request has already been resolved
-        if(!getUtils.resolvedRequests.contains(mdfsrsockblock.blockRetrieveReqUUID)) {
+        try {
+            //check if the request has already been resolved
+            if (!getUtils.resolvedRequests.contains(mdfsrsockblock.blockRetrieveReqUUID)) {
 
-            //log
-            MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple blocks for filename " + mdfsrsockblock.fileName);
+                //log
+                MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple blocks for filename " + mdfsrsockblock.fileName);
 
-            boolean mergeResult = false;
+                boolean mergeResult = false;
 
-            //get all the block files from disk.
-            ///storage/emulated/0/MDFS/test1.jpg_0123/
-            File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(mdfsrsockblock.fileName, mdfsrsockblock.fileId));  //Isagor0!
-            File[] blockFiles = fileDir.listFiles(new FileFilter() {
-                @Override
-                public boolean accept(File file) {
-                    if (file.isFile() && file.getName().contains(mdfsrsockblock.fileName + "__blk__")) {
-                        return true;
+                //get all the block files from disk.
+                ///storage/emulated/0/MDFS/test1.jpg_0123/
+                File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(mdfsrsockblock.fileName, mdfsrsockblock.fileId));  //Isagor0!
+                File[] blockFiles = fileDir.listFiles(new FileFilter() {
+                    @Override
+                    public boolean accept(File file) {
+                        if (file.isFile() && file.getName().contains(mdfsrsockblock.fileName + "__blk__")) {
+                            return true;
+                        }
+                        return false;
                     }
-                    return false;
+                });
+
+
+                //create a map with blockName to byte[] mapping
+                Map<String, byte[]> blockMap = new HashMap<>();
+
+                //populate block
+                for (int i = 0; i < blockFiles.length; i++) {
+
+                    //get the bytes of the block files
+                    byte[] blockBytes = IOUtilities.fileToByte(blockFiles[i]);
+
+                    //get the length of bytes which are actual data (a block file = size_of_data + data)
+                    int blockLength = ByteBuffer.wrap(blockBytes).getInt();
+
+                    //allocate the blockLength amount of size in each array
+                    byte[] blockData = new byte[blockLength];
+
+                    //copy data from blockBytes[] to blockData[]
+                    System.arraycopy(blockBytes, Integer.BYTES, blockData, 0, blockLength);
+
+                    //put blockData[] into map
+                    blockMap.put(blockFiles[i].getName(), blockData);
                 }
-            });
 
 
-            //create a map with blockName to byte[] mapping
-            Map<String, byte[]> blockMap = new HashMap<>();
+                //create a new file and append bytes in it
+                File file = IOUtilities.createNewFile(getDecryptedFilePath());
+                file.setWritable(true);
 
-            //populate block
-            for (int i = 0; i < blockFiles.length; i++) {
+                for (int i = 0; i < blockMap.size(); i++) {
+                    try {
+                        FileOutputStream fos = new FileOutputStream(file, true);
+                        fos.write(blockMap.get(mdfsrsockblock.fileName + "__blk__" + i));
+                        fos.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                mergeResult = true;
 
-                //get the bytes of the block files
-                byte[] blockBytes = IOUtilities.fileToByte(blockFiles[i]);
+                if (mergeResult) {
 
-                //get the length of bytes which are actual data (a block file = size_of_data + data)
-                int blockLength = ByteBuffer.wrap(blockBytes).getInt();
-
-                //allocate the blockLength amount of size in each array
-                byte[] blockData = new byte[blockLength];
-
-                //copy data from blockBytes[] to blockData[]
-                System.arraycopy(blockBytes, Integer.BYTES, blockData, 0, blockLength);
-
-                //put blockData[] into map
-                blockMap.put(blockFiles[i].getName(), blockData);
-            }
+                    //log and listener
+                    MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple blocks success!");
+                    deleteDecryptedBlocks();
 
 
-            //create a new file and append bytes in it
-            File file = IOUtilities.createNewFile(getDecryptedFilePath());
-            file.setWritable(true);
+                    //update miscellaneousWorks list for notification
+                    Pair p = new Pair(Constants.NOTIFICATION, mdfsrsockblock.fileName);
+                    IOUtilities.miscellaneousWorks.add(p);
 
-            for (int i = 0; i < blockMap.size(); i++) {
-                try {
-                    FileOutputStream fos = new FileOutputStream(file, true);
-                    fos.write(blockMap.get(mdfsrsockblock.fileName + "__blk__" + i));
-                    fos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    //put blockRetrieveReqUUID of this get request into resolvedRequests list
+                    getUtils.resolvedRequests.add(mdfsrsockblock.blockRetrieveReqUUID);
+
+                } else {
+
+                    //log and listener
+                    MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Failed to merge multiple blocks.");
+                    return;
                 }
             }
-            mergeResult = true;
-
-            if (mergeResult) {
-
-                //log and listener
-                MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple blocks success!");
-                deleteDecryptedBlocks();
-
-
-                //update miscellaneousWorks list for notification
-                Pair p = new Pair(Constants.NOTIFICATION, mdfsrsockblock.fileName);
-                IOUtilities.miscellaneousWorks.add(p);
-
-                //put blockRetrieveReqUUID of this get request into resolvedRequests list
-                getUtils.resolvedRequests.add(mdfsrsockblock.blockRetrieveReqUUID);
-
-            } else {
-
-                //log and listener
-                MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Failed to merge multiple blocks.");
-                return;
-            }
+        }catch (Exception e){
+            MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "Exception happened when merging multiple blocks(dumb way) for file " + mdfsrsockblock.fileName ,  e);
         }
 
     }
@@ -269,79 +276,86 @@ public class FileMerge implements Runnable{
     //this function takes each block one after another and appends into the file (SMART).
     private void mergeMultipleBlocksSmart() {
 
-        //check if the request has already been resolved
-        if(!getUtils.resolvedRequests.contains(mdfsrsockblock.blockRetrieveReqUUID)) {
+        try {
+            //check if the request has already been resolved
+            if (!getUtils.resolvedRequests.contains(mdfsrsockblock.blockRetrieveReqUUID)) {
 
-            //log
-            MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple blocks for filename " + mdfsrsockblock.fileName);
+                //log
+                MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple blocks for filename " + mdfsrsockblock.fileName);
 
-            boolean mergeResult = false;
+                boolean mergeResult = false;
 
-            //get all the block files from disk.
-            ///storage/emulated/0/MDFS/test1.jpg_0123/
-            File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(mdfsrsockblock.fileName, mdfsrsockblock.fileId));  //Isagor0!
-            File[] blockFiles = fileDir.listFiles(new FileFilter() {
-                @Override
-                public boolean accept(File file) {
-                    if (file.isFile() && file.getName().contains(mdfsrsockblock.fileName + "__blk__")) {
-                        return true;
+                //get all the block files from disk.
+                ///storage/emulated/0/MDFS/test1.jpg_0123/
+                File fileDir = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(mdfsrsockblock.fileName, mdfsrsockblock.fileId));  //Isagor0!
+                File[] blockFiles = fileDir.listFiles(new FileFilter() {
+                    @Override
+                    public boolean accept(File file) {
+                        if (file.isFile() && file.getName().contains(mdfsrsockblock.fileName + "__blk__")) {
+                            return true;
+                        }
+                        return false;
                     }
-                    return false;
+                });
+
+
+                //create a new file and append bytes in it
+                File file = IOUtilities.createNewFile(getDecryptedFilePath());
+                file.setWritable(true);
+
+                //check if file was created
+                if (file == null) {
+                    MDFSFileRetrieverViaRsock.logger.log(Level.ERROR, "All blocks have been retrieved and decrypted, but, Could not create file " + mdfsrsockblock.fileName + " and hence could not write block bytes into the file.");
+                    deleteDecryptedBlocks();
+                    return;
                 }
-            });
 
+                //populate file with bytes of block
+                long startIndex = 0;
+                for (int i = 0; i < blockFiles.length; i++) {
 
-            //create a new file and append bytes in it
-            File file = IOUtilities.createNewFile(getDecryptedFilePath());
-            file.setWritable(true);
+                    //get the bytes of the block files
+                    byte[] blockBytes = IOUtilities.fileToByte(blockFiles[i]);
 
-            //check if file was created
-            if(file==null){
-                MDFSFileRetrieverViaRsock.logger.log(Level.ERROR, "All blocks have been retrieved and decrypted, but, Could not create file " + mdfsrsockblock.fileName + " and hence could not write block bytes into the file.");
-                deleteDecryptedBlocks();
-                return;
+                    //get the length of bytes which are actual data (a block file = size_of_data + data)
+                    int blockLength = ByteBuffer.wrap(blockBytes).getInt();
+
+                    //appends block bytes into file
+                    IOUtilities.byteToFile(blockBytes, Integer.BYTES, blockLength, file, startIndex);
+
+                    //increment startIndex
+                    startIndex = startIndex + (blockLength);
+
+                    //check
+                    if (i == blockFiles.length - 1) {
+                        mergeResult = true;
+                    }
+
+                }
+
+                if (mergeResult) {
+
+                    //log and listener
+                    MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple blocks success!");
+                    deleteDecryptedBlocks();
+
+                    //update miscellaneousWorks list for notification
+                    Pair p = new Pair(Constants.NOTIFICATION, mdfsrsockblock.fileName);
+                    IOUtilities.miscellaneousWorks.add(p);
+
+                    //put blockRetrieveReqUUID of this get request into resolvedRequests list
+                    getUtils.resolvedRequests.add(mdfsrsockblock.blockRetrieveReqUUID);
+
+                } else {
+
+                    //log and listener
+                    MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Failed to merge multiple blocks.");
+                    return;
+                }
             }
+        }catch (Exception e ){
+            MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "Exception happened when merging multiple blocks(smart way) for file " + mdfsrsockblock.fileName,  e);
 
-            //populate file with bytes of block
-            int startIndex = 0;
-            for (int i = 0; i < blockFiles.length; i++) {
-
-                //get the bytes of the block files
-                byte[] blockBytes = IOUtilities.fileToByte(blockFiles[i]);
-
-                //get the length of bytes which are actual data (a block file = size_of_data + data)
-                int blockLength = ByteBuffer.wrap(blockBytes).getInt();
-
-                //appends block bytes into file
-                IOUtilities.byteToFile(blockBytes, Integer.BYTES, blockLength, file, startIndex);
-
-                //increment startIndex
-                startIndex = startIndex + (blockLength);
-
-                //check
-                if(i==blockFiles.length-1){mergeResult = true;}
-
-            }
-
-            if (mergeResult) {
-
-                //log and listener
-                MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging multiple blocks success!");
-                deleteDecryptedBlocks();
-
-                //update miscellaneousWorks list for notification
-                Pair p = new Pair(Constants.NOTIFICATION, mdfsrsockblock.fileName);
-                IOUtilities.miscellaneousWorks.add(p);
-
-                //put blockRetrieveReqUUID of this get request into resolvedRequests list
-                getUtils.resolvedRequests.add(mdfsrsockblock.blockRetrieveReqUUID);
-
-            } else {
-
-                //log and listener
-                MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Failed to merge multiple blocks.");
-                return;
-            }
         }
 
     }
@@ -350,29 +364,33 @@ public class FileMerge implements Runnable{
 
     private void mergeSingleBlock(){
 
-        //check if this get request has already been resolved
-        if(!getUtils.resolvedRequests.contains(mdfsrsockblock.blockRetrieveReqUUID)) {
+        try {
+            //check if this get request has already been resolved
+            if (!getUtils.resolvedRequests.contains(mdfsrsockblock.blockRetrieveReqUUID)) {
 
-            //log
-            MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging single block.");
+                //log
+                MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "Merging single block.");
 
-            // move block to the decrypted directory and rename
-            File from = AndroidIOUtils.getExternalFile(MDFSFileInfo.
-                    getFileDirPath(mdfsrsockblock.fileName, mdfsrsockblock.fileId) + File.separator + MDFSFileInfo.getBlockName(mdfsrsockblock.fileName, (byte) 0));  //Isagor0!
-            File to = IOUtilities.createNewFile(getDecryptedFilePath());
-
-
-            //update miscellaneousWorks list for notification
-            Pair p = new Pair(Constants.NOTIFICATION, mdfsrsockblock.fileName);
-            IOUtilities.miscellaneousWorks.add(p);
+                // move block to the decrypted directory and rename
+                File from = AndroidIOUtils.getExternalFile(MDFSFileInfo.
+                        getFileDirPath(mdfsrsockblock.fileName, mdfsrsockblock.fileId) + File.separator + MDFSFileInfo.getBlockName(mdfsrsockblock.fileName, (byte) 0));  //Isagor0!
+                File to = IOUtilities.createNewFile(getDecryptedFilePath());
 
 
-            try {
-                Files.move(from, to);
-                getUtils.resolvedRequests.add(mdfsrsockblock.blockRetrieveReqUUID);
-            } catch (IOException e) {
-                e.printStackTrace();
+                //update miscellaneousWorks list for notification
+                Pair p = new Pair(Constants.NOTIFICATION, mdfsrsockblock.fileName);
+                IOUtilities.miscellaneousWorks.add(p);
+
+
+                try {
+                    Files.move(from, to);
+                    getUtils.resolvedRequests.add(mdfsrsockblock.blockRetrieveReqUUID);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
+        }catch (Exception e ){
+            MDFSFileRetrieverViaRsock.logger.log(Level.DEBUG, "Exception happened when merging single block for file " + mdfsrsockblock.fileName ,  e);
         }
 
     }

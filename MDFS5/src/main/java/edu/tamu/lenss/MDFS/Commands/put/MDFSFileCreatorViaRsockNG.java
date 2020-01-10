@@ -7,9 +7,13 @@ import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,14 +23,16 @@ import java.util.UUID;
 import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
 import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
 import edu.tamu.cse.lenss.edgeKeeper.server.RequestTranslator;
+import edu.tamu.cse.lenss.edgeKeeper.topology.TopoHandler;
+import edu.tamu.cse.lenss.edgeKeeper.utils.Base64;
 import edu.tamu.lenss.MDFS.Constants;
 import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeper;
 import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeperConstants;
+import edu.tamu.lenss.MDFS.Model.MDFSRsockBlockForFileRetrieve;
 import edu.tamu.lenss.MDFS.RSock.RSockConstants;
 import edu.tamu.lenss.MDFS.Model.MDFSFileInfo;
 import edu.tamu.lenss.MDFS.Utils.AndroidIOUtils;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
-import rsock.Topology;
 
 import static java.lang.Thread.sleep;
 
@@ -34,7 +40,7 @@ import static java.lang.Thread.sleep;
 public class MDFSFileCreatorViaRsockNG{
 
     //log
-    static Logger logger = Logger.getLogger(MDFSFileCreatorViaRsockNG.class);
+    public static Logger logger = Logger.getLogger(MDFSFileCreatorViaRsockNG.class);
 
     //variables
     private File file;                      //the actual file
@@ -178,6 +184,7 @@ public class MDFSFileCreatorViaRsockNG{
         }
     }
 
+    //this function only fetched peers for EdgeKeeper.
     private String fetchTopologyAndChooseNodesFromGNS(){
         List<String> peerGUIDsListfromGNS = null;
         //get peer guids who are running mdfs from GNS
@@ -259,9 +266,9 @@ public class MDFSFileCreatorViaRsockNG{
             ///storage/emulated/0/MDFS/test1.jpg_0123/ (directory)
             String outputDirPath = File.separator + edu.tamu.lenss.MDFS.Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(file.getName(), fileID);  //Isagor0!
 
-            int filesize = (int)file.length();
-            int startIndex = 0;
-            int endIndex = maxBlockSize;
+            long filesize = file.length();
+            long startIndex = 0;
+            long endIndex = maxBlockSize;
             byte[] blockBytes;
             for (int i = 0; i < blockCount; i++) {
 
@@ -365,89 +372,16 @@ public class MDFSFileCreatorViaRsockNG{
         }
     }
 
-    // this function basically populates chosenNodes list with GUIDs.
-    //chosenNodes list is used later for choosing n2 and k2 values.
-    private String fetchTopologyAndChooseNodes(){
-
-        //lists and sets
-        List<String> peerGUIDsListfromGNS = null;
-        Set<String> peerGUIDsSetfromOLSR = null;
-        List<String> peerGUIDsListfromOLSR = null;
-
-        //get peer guids who are running mdfs from GNS
-        try{
-            peerGUIDsListfromGNS = EKClient.getPeerGUIDs(EdgeKeeperConstants.EdgeKeeper_s, EdgeKeeperConstants.EdgeKeeper_s1);
-        }catch(Exception e ){
-            //dont need to handle this error
-        }
-
-        //get all nearby vertices from Topology.java from OLSR(rsockJavaAPI) and put it in a list
-        try {
-            peerGUIDsSetfromOLSR = Topology.getInstance(RSockConstants.intrfc_creation_appid).getVertices();
-            peerGUIDsListfromOLSR = new ArrayList<String>(peerGUIDsSetfromOLSR);
-        }catch(Exception e ){
-            //dont need to handle this error
-        }
-
-        //only cross them if both type of list are not null and size 0
-        if(peerGUIDsListfromGNS!=null && peerGUIDsListfromOLSR!=null && peerGUIDsListfromGNS.size()!=0 && peerGUIDsListfromOLSR.size()!=0) {
-
-            //print MDFS peers size
-            System.out.println("mdfs peers from GNS: " + peerGUIDsListfromGNS.size());
-            for(String guid: peerGUIDsListfromGNS){
-                System.out.println(guid + " ");
-            }
-            System.out.println();
-
-            //print OLSR peers size
-            System.out.println("mdfs peers from olsr : "  + peerGUIDsListfromOLSR.size());
-            for(String guid: peerGUIDsListfromOLSR){
-                System.out.println(guid + " ");
-            }
-            System.out.println();
-
-
-            try {
-                //cross the peerGUIDsListfromGNS and peerGUIDsListfromOLSR and get the common ones
-                List<String> commonPeerGUIDs = new ArrayList<>();
-                for (int i = 0; i < peerGUIDsListfromOLSR.size(); i++) {
-                    if (peerGUIDsListfromGNS.contains(peerGUIDsListfromOLSR.get(i))) {
-                        commonPeerGUIDs.add(peerGUIDsListfromOLSR.get(i));
-                    }
-                }
-
-                //print common ones
-                System.out.println("size of common guids: " + commonPeerGUIDs.size());
-
-                //here
-                //get the common ones
-                chosenNodes = commonPeerGUIDs;
-
-            }catch(Exception e ){
-                //dont need to handle this error
-            }
-        }
-
-
-        //log
-        logger.log(Level.ALL, "Successfully fetched neighbor nodes from olsr and MDFS nodes from EdgeKeeper");
-
-        //add myself if it is not already in it
-        if(!chosenNodes.contains(EdgeKeeper.ownGUID)){chosenNodes.add(EdgeKeeper.ownGUID);}
-
-        return "SUCCESS";
-    }
-
-
     //this function selects n2, k2 values,
     //based on the size of the chosenNodes list.
     //n2 will be chosen equal to number of nodes in the list.
     //k2 will be chosen by the below equation.
     private String chooseN2K2(){
 
-        //print
-        System.out.print("debuggg chosen nodes: " );
-        for(String node: chosenNodes){System.out.print(node + " , ");}
+        //log
+        String str = "Chosen nodes: ";
+        for(String node: chosenNodes){str = str + node + " , ";}
+        logger.log(Level.ALL, str);
 
         //set n2 , k2
         byte n2; if(chosenNodes.size() >= Constants.MAX_N_VAL){ n2 = (byte)Constants.MAX_N_VAL;} else{ n2 = (byte)chosenNodes.size();}
@@ -455,6 +389,8 @@ public class MDFSFileCreatorViaRsockNG{
         fileInfo.setFragmentsParms(n2, k2);
         this.metadata.setn2((int)n2);
         this.metadata.setk2((int)k2);
+
+        //check
         if(n2 < 1 || k2 < 1){
 
             //log
@@ -485,6 +421,7 @@ public class MDFSFileCreatorViaRsockNG{
                 metadata.addInfo(EdgeKeeper.ownGUID, i, j);
             }
         }
+
 
         //send the metadata to the local edgeKeeper
         JSONObject repJSON = EKClient.putMetadata(metadata);

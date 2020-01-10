@@ -16,7 +16,6 @@ import edu.tamu.lenss.MDFS.RSock.RSockConstants;
 import edu.tamu.lenss.MDFS.Model.MDFSFileInfo;
 import edu.tamu.lenss.MDFS.Model.MDFSRsockBlockForFileRetrieve;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
-import rsock.Topology;
 
 
 public class MDFSFileRetrieverViaRsock {
@@ -186,7 +185,7 @@ public class MDFSFileRetrieverViaRsock {
             String uuid = UUID.randomUUID().toString().substring(0, 12);
             boolean sent = false;
             if(RSockConstants.RSOCK) {
-                sent = RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing", "nothing", destGUID, 500, RSockConstants.fileRetrieveEndpoint, RSockConstants.fileRetrieveEndpoint, RSockConstants.fileRetrieveEndpoint);
+                sent = RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing", "nothing", destGUID, 500);
             }
 
             if(sent){
@@ -220,13 +219,6 @@ public class MDFSFileRetrieverViaRsock {
         //make return list
         List<String> chosenNodes = new ArrayList<>();
 
-        //get neighboring nodes from olsr
-        Set<String> peerGUIDsSetfromOLSR = null;
-        try {
-            peerGUIDsSetfromOLSR = Topology.getInstance(RSockConstants.intrfc_retrieval_appid).getVertices();
-        }catch(Exception e ){
-            //dont need to handle this error
-        }
 
         //iterate through each block.
         for(int i=0; i< blockIndicator.length; i++){
@@ -246,20 +238,7 @@ public class MDFSFileRetrieverViaRsock {
                         //common guids from olsr and fragGUIDs
                         List<String> commonGUIDs = new ArrayList<>();
 
-                        if(peerGUIDsSetfromOLSR!=null) {
-
-                            ///cross olsr GUIDs with fragGUIDs and get the common ones
-                            for (int l = 0; l < fragGUIDs.size(); l++) {
-                                if (peerGUIDsSetfromOLSR.contains(fragGUIDs.get(l))) {
-                                    commonGUIDs.add(fragGUIDs.get(l));
-                                }
-                            }
-
-                        }else{
-                            //olsr returned null or empty,
-                            //so we continue without it.
-                            commonGUIDs.addAll(fragGUIDs);
-                        }
+                        commonGUIDs.addAll(fragGUIDs);
 
                         //remove my guid from the list
                         commonGUIDs.remove(EdgeKeeper.ownGUID);

@@ -29,14 +29,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import com.tiemens.secretshare.main.cli.Main;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-import edu.tamu.cse.lenss.CLI.CLIRequestHandler;
+import edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS.Executor;
+import edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS.UIRequestHandler;
 import edu.tamu.lenss.MDFS.Commands.get.get;
 import edu.tamu.lenss.MDFS.Commands.ls.ls;
 import edu.tamu.lenss.MDFS.Commands.ls.lsUtils;
@@ -45,6 +52,7 @@ import edu.tamu.lenss.MDFS.MissingLInk.MissingLink;
 import edu.tamu.lenss.MDFS.PeerFetcher.PeerFetcher;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 
+import static edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS.ProcessOneRequest.processRequestCpp;
 import static java.lang.Thread.sleep;
 
 //import edu.tamu.cse.lenss.utils
@@ -331,46 +339,22 @@ public class MainActivity extends AppCompatActivity {
                 } else if (item.getItemId() == R.id.delete) {
 
                     //delete the directory and refresh
-                    String ret = Foo("mdfs -rm " + ownEdgeCurrentDir + value.substring(1, value.length()) + "/");
+                    Foo("mdfs -rm " + ownEdgeCurrentDir + value.substring(1, value.length()) + "/", this);
 
-                    //check reply
-                    if (ret != null) {
-                        Toast.makeText(this, ret, Toast.LENGTH_SHORT).show();
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        setViewForOwnEdge(ownEdgeCurrentDir);
-                    } else {
-                        Toast.makeText(this, "Could not delete directory, " + ret, Toast.LENGTH_SHORT).show();
-                    }
                 }
             } else {
                 //value is a file
                 if (item.getItemId() == R.id.open) {
 
                     //make mdfs get request
-                    String ret = Foo("mdfs -get " + ownEdgeCurrentDir + value + " /storage/emulated/0/" + Constants.DEFAULT_DECRYPTION_FOLDER_NAME + "/");
-                    Toast.makeText(this, ret, Toast.LENGTH_SHORT).show();
+                    Foo("mdfs -get " + ownEdgeCurrentDir + value + " /storage/emulated/0/" + Constants.DEFAULT_DECRYPTION_FOLDER_NAME + "/", this);
+
 
                 } else if (item.getItemId() == R.id.delete) {
 
                     //delete the file and refresh
-                    String ret = Foo("mdfs -rm " + ownEdgeCurrentDir + value);
+                    Foo("mdfs -rm " + ownEdgeCurrentDir + value, this);
 
-                    //check reply
-                    if (ret != null) {
-                        Toast.makeText(this, ret, Toast.LENGTH_SHORT).show();
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        setViewForOwnEdge(ownEdgeCurrentDir);
-                    } else {
-                        Toast.makeText(this, "Could not delete file " + value + ", " + ret, Toast.LENGTH_SHORT).show();
-                    }
                 }
 
             }
@@ -389,7 +373,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
             }else{
-                //user chose a directory string
+                //user choose a directory string
                 if (item.getItemId() == R.id.open) {
                     //check if its a directory or file
                     if(value.charAt(0)=='/') {
@@ -397,9 +381,8 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(this, "Tap on neighbor directory to open.", Toast.LENGTH_SHORT).show();
                     }else{
                         //its a file, so we need to retrieve it
-                        //MAGA
-                        //Toast.makeText(this, "Filename: " + value + " | Directory: " + neighborEdgeCurrentDir + " | master: " + currentBrowsingNeighborGUID, Toast.LENGTH_SHORT).show();
                         get.getFileFromNeighbor(value, neighborEdgeCurrentDir, currentBrowsingNeighborGUID);
+                        Toast.makeText(this, "-get Info: request has been placed.", Toast.LENGTH_SHORT).show();
 
                     }
                 }else if(item.getItemId() == R.id.delete){
@@ -511,11 +494,90 @@ public class MainActivity extends AppCompatActivity {
 
     //=========================================================================
 
+
+    //takes a command, executes it, and toasts the result.
+    //this function submits teh task and returns immediately,
+    //so the caller or UI is never blocked.
+    public static void Foo(String command, Context context){
+
+        class executeFutureTaskAndGetResult implements  Runnable{
+
+            //variables
+            String command;
+            Context context;
+
+            //constructor
+            public executeFutureTaskAndGetResult(String command, Context context){
+                this.command = command;
+                this.context = context;
+            }
+
+            //callable
+            Callable<String> task = () -> {
+                try {
+                    return new UIRequestHandler(command, context).run();
+                }
+                catch (Exception e) {
+                    throw new IllegalStateException("task interrupted", e);
+                }
+            };
+
+            //run function
+            @Override
+            public void run(){
+                ExecutorService executor = Executors.newSingleThreadExecutor();
+
+                Future<String> future = executor.submit(task);
+
+                try {
+                    while (!future.isDone()) {
+                        Thread.sleep(500);
+                    }
+
+                    String result = future.get();
+                    
+                    if(result!=null){
+                        MainActivity.activity.runOnUiThread(new Runnable() {
+                            public void run() {
+                                Toast.makeText(context, result, Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }else{
+                        MainActivity.activity.runOnUiThread(new Runnable() {
+                            public void run() {
+                                Toast.makeText(context, "Could not execute command, Executor returned null.", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+
+            }
+            
+        }
+
+        Executor.executor.submit(new executeFutureTaskAndGetResult(command, context));
+    }
+
     //takes mdfs command and execute it.
     //the execution happens only for ownEdgeDir
-    public static String Foo(String command) {
+    public static String Foo_for_mkdir_rm_get(String command) {
 
-        String reply = CLIRequestHandler.processRequestCpp(Constants.NON_CLI_CLIENT, command);
+        String reply = processRequestCpp(Constants.NON_CLI_CLIENT, command);
+
+        if(reply!=null){
+            return reply;
+        }else{
+            return "Returned null!";
+        }
+    }
+
+    //takes mdfs command and execute it.
+    //the execution happens only for ownEdgeDir
+    public static String Foo_for_put(String command, Context context) {
+
+        String reply = processRequestCpp(Constants.NON_CLI_CLIENT, command);
 
         if(reply!=null){
             return reply;
@@ -676,7 +738,7 @@ public class MainActivity extends AppCompatActivity {
                     textView.setText(OWNEDGEDIR + ": " + ownEdgeCurrentDir);
 
                 } else {
-                    Toast.makeText(this, "Could not fetch directory", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Could not fetch directory, EdgeKeeper returned null.", Toast.LENGTH_SHORT).show();
                 }
 
             }
@@ -831,8 +893,13 @@ public class MainActivity extends AppCompatActivity {
 
                 //save it into local cache
                 allNeighborEdgeDirsCache = allNeighborLSstr;
+            }else{
+                Toast.makeText(this, "EdgeKeeper returned null when refreshed directory.", Toast.LENGTH_SHORT).show();
             }
 
+
+            //take neighbor information from allNeighborEdgeDirsCache,
+            //regardless fetch from edgekeeper succeeded.
             if(neighborEdgeCurrentDir.equals(SELECTEDGEMASTER)){
 
                 //get list of all masters guids
@@ -998,15 +1065,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     //execute command
-                    String ret = Foo("mdfs -mkdir " + ownEdgeCurrentDir +value);
-
-                    //check ret
-                    if(ret!=null){
-                        Toast.makeText(getApplicationContext(), ret, Toast.LENGTH_SHORT).show();
-                        setViewForOwnEdge(ownEdgeCurrentDir);
-                    }else{
-                        Toast.makeText(getApplicationContext(), "Could not get reply from EdgeKeeper.", Toast.LENGTH_SHORT).show();
-                    }
+                    Foo("mdfs -mkdir " + ownEdgeCurrentDir +value, context);
 
                 }else{
                     Toast.makeText(getApplicationContext(), "Provided folder is empty.", Toast.LENGTH_SHORT).show();
@@ -1105,15 +1164,8 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     //execute command
-                    String ret = Foo("mdfs -put " + localfilepath + " " + ownEdgeCurrentDir + value);
+                    Foo("mdfs -put " + localfilepath + " " + ownEdgeCurrentDir + value, MainActivity.context);
 
-                    //check
-                    if (ret != null) {
-                        Toast.makeText(getApplicationContext(), ret, Toast.LENGTH_SHORT).show();
-                        setViewForOwnEdge(ownEdgeCurrentDir);
-                    } else {
-                        Toast.makeText(getApplicationContext(), "Could not get reply from EdgeKeeper.", Toast.LENGTH_SHORT).show();
-                    }
 
                 }else{
                     Toast.makeText(getApplicationContext(), "Provided mdfs directory is empty.", Toast.LENGTH_SHORT).show();

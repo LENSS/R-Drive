@@ -33,7 +33,6 @@ public class StartAll {
 		PF = new PeerFetcher();
 		PF.start();
 
-
 		//start health status update thread
 		//new Thread(new HealthStatusUpdate()).start();
 
@@ -53,7 +52,6 @@ public class StartAll {
 	
 	public void shutdown(){
 		PF.interrupt();
-		pool.shutdown();
 		rungnsandrsock.stopAll();
 
 		//log

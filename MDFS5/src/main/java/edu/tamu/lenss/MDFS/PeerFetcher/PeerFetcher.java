@@ -35,7 +35,7 @@ public class PeerFetcher extends Thread {
 
         while(is_running.get()) {
 
-            if(EdgeKeeper.isRunning) {
+            if(EdgeKeeper.started) {
 
                 System.out.println("Fetching peers...");
 

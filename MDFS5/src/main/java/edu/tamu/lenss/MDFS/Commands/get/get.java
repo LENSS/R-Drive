@@ -6,6 +6,8 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
 import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
@@ -19,10 +21,13 @@ import edu.tamu.lenss.MDFS.RSock.RSockConstants;
 
 public class get {
 
+    public static ExecutorService executor = Executors.newSingleThreadExecutor();
+
     //logger
     public static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(get.class);
 
     public static String get(String mdfsDirWithFilename, String localDir){
+
 
         //first retrieve the metadata from edgeKeeper
         MDFSMetadata metadata = fetchFileMetadataFromEdgeKeeper(mdfsDirWithFilename);
@@ -103,46 +108,58 @@ public class get {
     //this function is used,
     //for sending a file fetch request from neighbor edge using rsock.
     public static void getFileFromNeighbor(String filename, String filePathMDFS, String neighborMasterGUID){
+
         //TODO: first check if the file had already been retrieved.
         //check the SP we use for book keeping
 
-        //make a MDFSRsockBlockForFileRetrieve of type = RequestFromOneClientInOneAEdgeToMasterOfAnotherEdgeForWholeFile
-        //note: a lot of fields are unknown to us, so we put dummy data or null.
-        MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.RequestFromOneClientInOneAEdgeToMasterOfAnotherEdgeForWholeFile, (byte)-1, (byte)-1, EdgeKeeper.ownGUID, neighborMasterGUID, filename, filePathMDFS, "FileIDUnknown", (byte)-1, (byte)-1, (byte)-1, "/storage/emulated/0/" + Constants.DEFAULT_DECRYPTION_FOLDER_NAME + "/", null, false);
+        //class that sends fragment requests to other nodes
+        class sendREq implements Runnable{
 
-        //get byteArray from object and size of the MDFSRsockBlockRetreival obj
-        byte[] data = null;
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = null;
-            oos = new ObjectOutputStream(bos);
-            oos.writeObject(mdfsrsockblock);
-            oos.flush();
-            data = bos.toByteArray();
-        } catch (Exception e) {
-            logger.log(Level.DEBUG, "could not convert object into bytes.");
-        }
+            public sendREq(){}
 
-        //send request
-        if (data != null) {
-            String uuid = UUID.randomUUID().toString().substring(0, 12);
-            boolean sent = false;
-            if(RSockConstants.RSOCK) {
-                sent = RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing", "nothing", neighborMasterGUID, 0, RSockConstants.fileRetrieveEndpoint, RSockConstants.fileRetrieveEndpoint, RSockConstants.fileRetrieveEndpoint);
+            @Override
+            public void run(){
+                //make a MDFSRsockBlockForFileRetrieve of type = RequestFromOneClientInOneAEdgeToMasterOfAnotherEdgeForWholeFile
+                //note: a lot of fields are unknown to us, so we put dummy data or null.
+                MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.RequestFromOneClientInOneAEdgeToMasterOfAnotherEdgeForWholeFile, (byte)-1, (byte)-1, EdgeKeeper.ownGUID, neighborMasterGUID, filename, filePathMDFS, "FileIDUnknown", (byte)-1, (byte)-1, (byte)-1, "/storage/emulated/0/" + Constants.DEFAULT_DECRYPTION_FOLDER_NAME + "/", null, false);
+
+                //get byteArray from object and size of the MDFSRsockBlockRetreival obj
+                byte[] data = null;
+                try {
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ObjectOutputStream oos = null;
+                    oos = new ObjectOutputStream(bos);
+                    oos.writeObject(mdfsrsockblock);
+                    oos.flush();
+                    data = bos.toByteArray();
+                } catch (Exception e) {
+                    logger.log(Level.DEBUG, "could not convert object into bytes.");
+                }
+
+                //send request
+                if (data != null) {
+                    String uuid = UUID.randomUUID().toString().substring(0, 12);
+                    boolean sent = false;
+                    if(RSockConstants.RSOCK) {
+                        sent = RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing", "nothing", neighborMasterGUID, 0);
+                    }
+
+                    if(sent){
+                        //log
+                        logger.log(Level.ALL, "fragment request for file "  + filePathMDFS+filename + " sent to neighbor master " + neighborMasterGUID);
+
+                    }else{
+                        //log
+                        logger.log(Level.ALL, "failed to send fragment request for file "  + filePathMDFS+filename + " to neighbor master " + neighborMasterGUID);
+                    }
+                }
             }
 
-            if(sent){
-                //log
-                logger.log(Level.ALL, "fragment request for file "  + filePathMDFS+filename + " sent to neighbor master " + neighborMasterGUID);
-
-
-            }else{
-
-                //log
-                logger.log(Level.ALL, "failed to send fragment request for file "  + filePathMDFS+filename + " to neighbor master " + neighborMasterGUID);
-            }
         }
 
+        //the file doesnt exist locally,
+        //so need to send request to other nodes
+        executor.submit(new sendREq());
 
     }
 

@@ -118,7 +118,7 @@ public class MDFSBlockCreatorViaRsockNG{
 
                     //dont sent fragments to myself again
                     if (!destNode.equals(EdgeKeeper.ownGUID)){
-                        result = result && fragmentUploaderViaRsock(oneFrag, filePathMDFS, fileInfo.getFileID(), fragIndex,  destNode);
+                        result = result && fragmentSenderViaRsock(oneFrag, filePathMDFS, fileInfo.getFileID(), fragIndex,  destNode);
                     }
                 }
             }
@@ -140,7 +140,7 @@ public class MDFSBlockCreatorViaRsockNG{
     }
 
     //this function sends the fragments to each destinations
-    private boolean fragmentUploaderViaRsock(File fileFrag, String filePathMDFS, String fileID, int fragIndex, String destGUID){
+    private boolean fragmentSenderViaRsock(File fileFrag, String filePathMDFS, String fileID, int fragIndex, String destGUID){
 
         //return variable
         boolean result = false;
@@ -178,7 +178,7 @@ public class MDFSBlockCreatorViaRsockNG{
             //send the object over rsock and dont expect reply
             String uuid = UUID.randomUUID().toString().substring(0, 12);
             if(RSockConstants.RSOCK) {
-                result = RSockConstants.intrfc_creation.send(uuid, data, data.length, "nothing", "nothing", destGUID, 500, RSockConstants.fileCreateEndpoint, RSockConstants.fileCreateEndpoint, "noReply");
+                result = RSockConstants.intrfc_creation.send(uuid, data, data.length, "nothing", "nothing", destGUID, 500);
             }else{
                 result = true; //dummy true
             }
@@ -188,6 +188,7 @@ public class MDFSBlockCreatorViaRsockNG{
 
             //add block and fragment info into metadata
             metadata.addInfo(destGUID, blockIndex, fragIndex);
+
 
             return result;
         } catch (IOException e) {

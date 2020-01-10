@@ -8,7 +8,7 @@ import android.content.Intent;
 
 import java.util.Calendar;
 
-import edu.tamu.cse.lenss.CLI.CLIserver;
+import edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS.CLIserver;
 import edu.tamu.cse.lenss.Notifications.NotificationUtils;
 import edu.tamu.cse.lenss.mdfs_api_server.MDFS_API_SERVER;
 import edu.tamu.lenss.MDFS.Handler.ServiceHelper;
@@ -32,15 +32,15 @@ public class MDFSHandler extends Thread {
         startMDFS();
         startCLI();
 
-        //this.mdfs_api_server = new MDFS_API_SERVER();
-        //this.mdfs_api_server.start();
+        this.mdfs_api_server = new MDFS_API_SERVER();
+        this.mdfs_api_server.start();
     }
 
     @Override
     public void interrupt() {
         super.interrupt();
         ServiceHelper.releaseService();
-        cli.interrupt();
+        if(this.cli!=null){cli.interrupt();}
         if(this.mdfs_api_server!=null){ this.mdfs_api_server.interrupt();}
     }
 

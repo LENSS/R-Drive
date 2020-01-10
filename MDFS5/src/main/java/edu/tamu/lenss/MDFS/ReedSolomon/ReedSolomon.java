@@ -6,6 +6,10 @@
 
 package edu.tamu.lenss.MDFS.ReedSolomon;
 
+import org.apache.log4j.Level;
+
+import edu.tamu.lenss.MDFS.Commands.get.MDFSFileRetrieverViaRsock;
+
 /**
  * Reed-Solomon Coding over 8-bit values.
  */
@@ -41,6 +45,7 @@ public class ReedSolomon {
         // below. Then any subset of the rows containing the duplicate
         // rows would be singular.
         if (256 < dataShardCount + parityShardCount) {
+            MDFSFileRetrieverViaRsock.logger.log(Level.ERROR, "too many shards - max is 256.");
             throw new IllegalArgumentException("too many shards - max is 256");
         }
 

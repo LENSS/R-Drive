@@ -1,6 +1,6 @@
 package edu.tamu.lenss.MDFS.RSock;
 
-import example.Interface;
+import RsockCommLibrary.Interface;
 
 
 //this class contains constants for Rsock initialization.
@@ -8,7 +8,7 @@ public class RSockConstants {
 
 
     //enable/disable rsock from the whole project
-    public static final boolean RSOCK = true;
+    public static boolean RSOCK = true;
 
 
     //rsock api instances.
@@ -31,7 +31,6 @@ public class RSockConstants {
     public static final String fileCreateEndpoint = "RsockFC";
     public static final String fileRetrieveEndpoint = "RsockFR";
     public static final String fileDeleteEndpoint = "RsockDL";
-    public static final String rsockTestEndpoint = "default";
 
     public static boolean testRsock = false;
 }

@@ -1,17 +1,23 @@
 package edu.tamu.lenss.MDFS.ReedSolomon;
 
+import org.apache.log4j.Level;
+
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 
+import edu.tamu.lenss.MDFS.Commands.get.MDFSFileRetrieverViaRsock;
+import edu.tamu.lenss.MDFS.Commands.put.MDFSFileCreatorViaRsockNG;
 import edu.tamu.lenss.MDFS.Constants;
 import edu.tamu.lenss.MDFS.Cipher.FragmentInfo;
 import edu.tamu.lenss.MDFS.Cipher.MDFSCipher;
 import edu.tamu.lenss.MDFS.Utils.AndroidIOUtils;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 
+
+//This class takes a file and do erasure coding and breaks into n shards.
 public class EnCoDer {
     private byte[] encryptKey;
     private byte N2;
@@ -47,15 +53,20 @@ public class EnCoDer {
 
     private void javaCipher(){
 
-        //first write a temporary file in cache directory
-        tmpFile = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE + File.separator + "encrypt_" + clearFile.getName());  //Isagor0!
-        IOUtilities.createNewFile(tmpFile);
+        try {
+            //first write a temporary file in cache directory
+            tmpFile = AndroidIOUtils.getExternalFile(Constants.ANDROID_DIR_CACHE + File.separator + "encrypt_" + clearFile.getName());  //Isagor0!
+            IOUtilities.createNewFile(tmpFile);
 
 
-        MDFSCipher myCipher = MDFSCipher.getInstance();
-        if(myCipher.encrypt(clearFile.getAbsolutePath(), tmpFile.getAbsolutePath(), encryptKey)){
-            encryptedByte = IOUtilities.fileToByte(tmpFile);
-            tmpFile.delete();
+            MDFSCipher myCipher = MDFSCipher.getInstance();
+            if (myCipher.encrypt(clearFile.getAbsolutePath(), tmpFile.getAbsolutePath(), encryptKey)) {
+                encryptedByte = IOUtilities.fileToByte(tmpFile);
+                tmpFile.delete();
+            }
+        }catch (Exception e){
+            MDFSFileCreatorViaRsockNG.logger.log(Level.ERROR, "Java cipher encryption failed.");
+            encryptedByte = null;
         }
     }
 

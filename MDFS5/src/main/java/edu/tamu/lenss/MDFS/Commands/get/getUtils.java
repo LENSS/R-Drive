@@ -153,7 +153,7 @@ public class getUtils {
     //this function fetched the particular fragment of particular block of a file, and sends it back to the sourceGUID.
     //the functions flips the source and destination.
     //if the file directory, blockDirectory, or fragment doesnt exist, then nothing is sent.
-    public static void justDoit(MDFSRsockBlockForFileRetrieve mdfsrsockblock, String replyEndpoint){
+    public static void justDoit(MDFSRsockBlockForFileRetrieve mdfsrsockblock){
 
         RsockReceiveForFileRetrieval.logger.log(Level.ALL, "received fragment request from node " + mdfsrsockblock.srcGUID + " for fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName);
 
@@ -191,9 +191,8 @@ public class getUtils {
 
                 //send the object over rsock and expect no reply
                 if(RSockConstants.RSOCK) {
-
                     String uuid = UUID.randomUUID().toString().substring(0, 12);
-                    RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing", "nothing", mdfsrsockblock.destGUID, 0, "hdrRecv", replyEndpoint, "noReply");
+                    RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing", "nothing", mdfsrsockblock.destGUID,0);
                 }
 
                 //log

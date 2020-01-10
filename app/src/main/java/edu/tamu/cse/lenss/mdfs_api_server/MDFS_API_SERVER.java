@@ -59,9 +59,9 @@ public class MDFS_API_SERVER extends Thread {
 
                     //execute request command
                     String command = "mdfs -put " + req.get(LOCALFILEPATH) + " " + req.get(MDFSFILEPATH);
-                    String ret = MainActivity.Foo(command);
+                    //String ret = MainActivity.Foo_for_put(command, MainActivity.context);
 
-                    System.out.println("return from MainActivity: " + ret);
+                    MainActivity.Foo(command, MainActivity.context);
                 }
 
             } catch (JSONException e) {
@@ -76,6 +76,7 @@ public class MDFS_API_SERVER extends Thread {
     @Override
     public void interrupt(){
         isRunning = false;
+        ds.close();
         super.interrupt();
     }
 

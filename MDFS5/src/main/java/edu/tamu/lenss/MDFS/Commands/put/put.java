@@ -53,8 +53,6 @@ public class put {
                 pair.setFile(null);
                 return pair;
             }
-
-
             //check filesize is within allowed max size
             if(file.length()>= Long.MAX_VALUE || file.length()>= Constants.MAX_FILE_SIZE){
                 pair.setString("-put failed! File too large! Max allowed size " + Constants.MAX_FILE_SIZE + " bytes and filesize " + file.length() + " bytes.");
