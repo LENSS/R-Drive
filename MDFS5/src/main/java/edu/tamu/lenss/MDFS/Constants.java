@@ -13,7 +13,7 @@ public class Constants {
 
 	//file/block size and count parameters
 	public static final long MAX_FILE_SIZE = 133994489;
-	public static final int MAX_BLOCK_SIZE = 4 * (1024*1024);
+	public static final int MAX_BLOCK_SIZE = 1 * (1024*1024);
 	public static final int MAX_BLOCK_COUNT = 127;
 	public static final long DEFAULT_BLOCK_SIZE = 1* (1024* 1024);
 

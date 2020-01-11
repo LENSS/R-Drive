@@ -388,11 +388,6 @@ public class MDFSFileCreatorViaRsockNG{
         int n2; if(chosenNodes.size() >= Constants.MAX_N_VAL){ n2 = Constants.MAX_N_VAL;} else{ n2 = chosenNodes.size();}
         int k2 = (int) Math.round(n2 * encodingRatio);
 
-        //todo: test
-        n2 = 2;
-        k2 = 1;
-
-
         fileInfo.setFragmentsParms(n2, k2);
         this.metadata.setn2((int)n2);
         this.metadata.setk2((int)k2);
