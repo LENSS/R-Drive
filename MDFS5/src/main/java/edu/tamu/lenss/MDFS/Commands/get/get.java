@@ -41,8 +41,8 @@ public class get {
             //re-create MDFSFileInfo object
             MDFSFileInfo fileInfo  = new MDFSFileInfo(metadata.getFileName(), metadata.getFileID(), metadata.getFilePathMDFS());
             fileInfo.setFileSize(metadata.getFileSize());
-            fileInfo.setNumberOfBlocks((byte)metadata.getBlockCount());
-            fileInfo.setFragmentsParms((byte)metadata.getn2(),  (byte)metadata.getk2());
+            fileInfo.setNumberOfBlocks(metadata.getBlockCount());
+            fileInfo.setFragmentsParms(metadata.getn2(), metadata.getk2());
 
             //make mdfsfileretriever object
             MDFSFileRetrieverViaRsock retriever = new MDFSFileRetrieverViaRsock(fileInfo, metadata, localDir, ServiceHelper.getInstance().getEncryptKey());
@@ -121,7 +121,7 @@ public class get {
             public void run(){
                 //make a MDFSRsockBlockForFileRetrieve of type = RequestFromOneClientInOneAEdgeToMasterOfAnotherEdgeForWholeFile
                 //note: a lot of fields are unknown to us, so we put dummy data or null.
-                MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.RequestFromOneClientInOneAEdgeToMasterOfAnotherEdgeForWholeFile, (byte)-1, (byte)-1, EdgeKeeper.ownGUID, neighborMasterGUID, filename, filePathMDFS, "FileIDUnknown", (byte)-1, (byte)-1, (byte)-1, "/storage/emulated/0/" + Constants.DEFAULT_DECRYPTION_FOLDER_NAME + "/", null, false);
+                MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.RequestFromOneClientInOneAEdgeToMasterOfAnotherEdgeForWholeFile, -1, -1, EdgeKeeper.ownGUID, neighborMasterGUID, filename, filePathMDFS, "FileIDUnknown", -1, -1, -1, "/storage/emulated/0/" + Constants.DEFAULT_DECRYPTION_FOLDER_NAME + "/", null, false); //Isagor0!
 
                 //get byteArray from object and size of the MDFSRsockBlockRetreival obj
                 byte[] data = null;

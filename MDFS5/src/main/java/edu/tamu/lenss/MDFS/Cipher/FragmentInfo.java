@@ -17,11 +17,11 @@ public class FragmentInfo implements Serializable {
 	private long _filesize;   //entire block size
 	private byte[] _fragment;
 	private long _lastModifiedTS;
-	public byte _fragmentNumber;
-	private byte _kNumber;
-	private byte _nNumber;
+	public int _fragmentNumber;
+	private int _kNumber;
+	private int _nNumber;
 	
-	public FragmentInfo(String filename, byte fragmentType, long filesize, byte[] fragment, byte fragmentNumber, byte kNumber, byte nNumber, long lastModified) {
+	public FragmentInfo(String filename, byte fragmentType, long filesize, byte[] fragment, int fragmentNumber, int kNumber, int nNumber, long lastModified) {
 		super();
 		_filename = filename;
 		_fragment = fragment;
@@ -33,14 +33,14 @@ public class FragmentInfo implements Serializable {
 		_filesize = filesize;
 	}
 
-	public byte getK() {
+	public int getK() {
 		return _kNumber;
 	}
-	public byte getN() {
+	public int getN() {
 		return _nNumber;
 	}
 
-	public byte getFragmentNumber() {
+	public int getFragmentNumber() {
 		return _fragmentNumber;
 	}
 

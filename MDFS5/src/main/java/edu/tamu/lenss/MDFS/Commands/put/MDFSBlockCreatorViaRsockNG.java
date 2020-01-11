@@ -27,10 +27,10 @@ import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 
 public class MDFSBlockCreatorViaRsockNG{
 
-    private byte blockIdx;
+    private int blockIdx;
     private List<String> fileStorageGUIDs;
     private byte[] encryptKey;
-    private byte k2, n2;
+    private int k2, n2;
     private File blockFile;
     private ServiceHelper serviceHelper;
     private MDFSFileInfo fileInfo;
@@ -42,7 +42,7 @@ public class MDFSBlockCreatorViaRsockNG{
     private MDFSBlockCreatorViaRsockNG(){}
 
     //constructor
-    public MDFSBlockCreatorViaRsockNG(File file, String filePathMDFS, MDFSFileInfo info, byte blockIndex, String uniquereqid, List<String> chosenodes, byte[] key, MDFSMetadata metadata) {  //RSOCK
+    public MDFSBlockCreatorViaRsockNG(File file, String filePathMDFS, MDFSFileInfo info, int blockIndex, String uniquereqid, List<String> chosenodes, byte[] key, MDFSMetadata metadata) {  //RSOCK
         this.blockIdx = blockIndex;
         this.blockFile = file;
         this.serviceHelper = ServiceHelper.getInstance();
@@ -146,8 +146,8 @@ public class MDFSBlockCreatorViaRsockNG{
         boolean result = false;
 
         //get the block and fragment number
-        byte blockIndex = parseBlockNum(fileFrag.getName());
-        byte fragmentIndex = parseFragNum(fileFrag.getName());
+        int blockIndex = parseBlockNum(fileFrag.getName());
+        int fragmentIndex = parseFragNum(fileFrag.getName());
 
         //read the content of the filefrag into bytearray
         byte[] byteArray = new byte[(int) fileFrag.length()];
@@ -226,7 +226,7 @@ public class MDFSBlockCreatorViaRsockNG{
 
         // Store the file fragments in local SDCard
         File fragsDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileInfo.getFileName(), fileInfo.getFileID(),	blockIdx));
-        HashSet<Byte> frags = new HashSet<Byte>();
+        HashSet<Integer> frags = new HashSet<Integer>();
 
         // Write file fragments to SD Card
         for (FragmentInfo frag : fragInfos) {
@@ -246,16 +246,16 @@ public class MDFSBlockCreatorViaRsockNG{
         return blockFile.delete();
     }
 
-    private byte parseBlockNum(String fName){
+    private int parseBlockNum(String fName){
         String str = fName.substring(0, fName.lastIndexOf("__frag__"));
         str = str.substring(str.lastIndexOf("_")+1);
-        return Byte.parseByte(str.trim());
+        return Integer.parseInt(str.trim());
     }
-    private byte parseFragNum(String fName) {
-        return Byte.parseByte(fName.substring(fName.lastIndexOf("_") + 1).trim());
+    private int parseFragNum(String fName) {
+        return Integer.parseInt(fName.substring(fName.lastIndexOf("_") + 1).trim());
     }
 
-    public byte getBlockIdx(){
+    public int getBlockIdx(){
         return blockIdx;
     }
 

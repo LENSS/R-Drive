@@ -6,10 +6,14 @@ import java.io.File;
 
 public class Constants {
 
+	//checks
+	public static final boolean CHECK_MAX_FILE_SIZE_LIMIT = false;
+	public static final boolean CHECK_MAX_BLOCK_COUNT = false;
+
 
 	//file/block size and count parameters
 	public static final long MAX_FILE_SIZE = 133994489;
-	public static final int MAX_BLOCK_SIZE = 10 * (1024*1024);
+	public static final int MAX_BLOCK_SIZE = 4 * (1024*1024);
 	public static final int MAX_BLOCK_COUNT = 127;
 	public static final long DEFAULT_BLOCK_SIZE = 1* (1024* 1024);
 
@@ -19,7 +23,7 @@ public class Constants {
 	public static final String ANDROID_DIR_ROOT = "MDFS";
 	public static final String ANDROID_DIR_CACHE = ANDROID_DIR_ROOT + File.separator + "cache";
 	public static final String DEFAULT_DECRYPTION_FOLDER_NAME = "decrypted";
-    public static String ANDROID_DIR_DECRYPTED = "";
+	public static String ANDROID_DIR_DECRYPTED = "";
 
     //encoding parameters
 	public static final double K_N_RATIO = 0.5;

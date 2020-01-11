@@ -20,15 +20,15 @@ public class MDFSRsockBlockForFileRetrieve implements Serializable {
     //public variables
     public String blockRetrieveReqUUID;
     public Type type;
-    public byte n2;
-    public byte k2;
+    public int n2;
+    public int k2;
     public String srcGUID;
     public String destGUID;
     public String fileName;
     public String fileId;
-    public byte totalNumOfBlocks;
-    public byte blockIdx;
-    public byte fragmentIndex;
+    public int totalNumOfBlocks;
+    public int blockIdx;
+    public int fragmentIndex;
     public String localDir;
     public byte[] fileFrag;
     public String filePathMDFS;
@@ -38,7 +38,7 @@ public class MDFSRsockBlockForFileRetrieve implements Serializable {
     private MDFSRsockBlockForFileRetrieve(){}
 
 
-    public MDFSRsockBlockForFileRetrieve(String uuid, Type type, byte n2, byte k2, String srcGUID, String destGUID, String fileName, String filePathMDFS, String fileId, byte totalNumOfBlocks , byte blockIdx, byte fragmentIndex, String locDir, byte[] fileFrag, boolean sameedge){
+    public MDFSRsockBlockForFileRetrieve(String uuid, Type type, int n2, int k2, String srcGUID, String destGUID, String fileName, String filePathMDFS, String fileId, int totalNumOfBlocks , int blockIdx, int fragmentIndex, String locDir, byte[] fileFrag, boolean sameedge){
         this.blockRetrieveReqUUID = uuid;
         this.type = type;
         this.n2 = n2;

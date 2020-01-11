@@ -24,15 +24,15 @@ import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 public class DeCoDeR {
 
     private byte[] decryptKey;
-    private byte N2;
-    private byte K2;
+    private int N2;
+    private int K2;
     private List<FragmentInfo> fileFragments;
     private String decodedFilePath;
     private int PARITY_SHARDS;
     private byte[] encryptedByte;
     private static final int BYTES_IN_INT = 4;
 
-    public DeCoDeR(byte[] encryptKey, byte n2, byte k2, List<FragmentInfo> fileFragments, String decodedFilePath){
+    public DeCoDeR(byte[] encryptKey, int n2, int k2, List<FragmentInfo> fileFragments, String decodedFilePath){
         this.decryptKey = encryptKey;
         this.N2 = n2;
         this.K2 = k2;

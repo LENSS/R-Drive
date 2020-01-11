@@ -36,7 +36,7 @@ public class getUtils {
         try {
             //pull the directory of the block
             ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg__0/ (directory)
-            File blockDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(filename, fileID, (byte) blockNumber));
+            File blockDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(filename, fileID, blockNumber));
 
             //check if block directory exists
             if (blockDir.exists() && blockDir.isDirectory() && blockDir.getName().contains(Integer.toString(blockNumber))) {
@@ -121,15 +121,15 @@ public class getUtils {
 
 
     //get block number from a fragment name
-    private byte parseBlockNum(String fName){
+    private int parseBlockNum(String fName){
         String str = fName.substring(0, fName.lastIndexOf("__frag__"));
         str = str.substring(str.lastIndexOf("_")+1);
-        return Byte.parseByte(str.trim());
+        return Integer.parseInt(str.trim());
     }
 
     //get fragment number from a fragment name
-    private static byte parseFragNum(String fName) {
-        return Byte.parseByte(fName.substring(fName.lastIndexOf("_") + 1).trim());
+    private static int parseFragNum(String fName) {
+        return Integer.parseInt(fName.substring(fName.lastIndexOf("_") + 1).trim());
     }
 
 

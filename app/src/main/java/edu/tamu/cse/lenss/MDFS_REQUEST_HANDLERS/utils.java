@@ -8,7 +8,7 @@ public class utils {
     public static boolean checkFileExtension(String filename){
 
         //actual check
-        //if(filename.contains(".jpg")  || filename.contains(".mp4") || filename.contains(".txt") || filename.contains(".pdf") || filename.contains(".jar") || filename.contains(".tar")){
+        //if(filename.contains(".jpg")  || filename.contains(".mp4") || filename.contains(".txt") || filename.contains(".pdf") || filename.contains(".jar") || filename.contains(".tar")  || filename.contains(".iso")){
         if(filename.contains(".")){
             return true;
         }else{

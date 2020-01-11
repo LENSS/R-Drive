@@ -14,16 +14,16 @@ public class MDFSFileInfo implements Serializable {
 	private String fileID;
 	private String fileName;
 	private long fileSize;   //entire file size
-	private byte k2, n2;
-	private byte numberOfBlocks;
+	private int k2, n2;
+	private int numberOfBlocks;
 	private String filePathMDFS;
 
 
-	public byte getNumberOfBlocks() {
+	public int getNumberOfBlocks() {
 		return numberOfBlocks;
 	}
 
-	public void setNumberOfBlocks(byte numberOfBlocks) {
+	public void setNumberOfBlocks(int numberOfBlocks) {
 		this.numberOfBlocks = numberOfBlocks;
 	}
 
@@ -42,15 +42,15 @@ public class MDFSFileInfo implements Serializable {
 		return fileName;
 	}
 
-	public byte getK2() {
+	public int getK2() {
 		return k2;
 	}
 
-	public byte getN2() {
+	public int getN2() {
 		return n2;
 	}
 
-	public void setFragmentsParms( byte n2, byte k2){
+	public void setFragmentsParms( int n2, int k2){
 		this.n2 = n2;
 		this.k2 = k2;
 	}
@@ -88,12 +88,12 @@ public class MDFSFileInfo implements Serializable {
 	 * @return
 	 */
 	//returns: test1.jpg__0
-	public static String getBlockDirName(String fileName, byte blockIdx){
+	public static String getBlockDirName(String fileName, int blockIdx){
 		return fileName + "__" + blockIdx;
 	}
 
 	//returns: test1.jpg_-blk__0
-	public static String getBlockName(String fileName, byte blockIdx){
+	public static String getBlockName(String fileName, int blockIdx){
 		return fileName + "__blk__" + blockIdx;
 	}
 
@@ -105,7 +105,7 @@ public class MDFSFileInfo implements Serializable {
 	 * @return
 	 */
 	//returns: test1.jpg__0__frag__0
-	public static String getFragName(String fileName, byte blockIdx, byte fragIdx){
+	public static String getFragName(String fileName, int blockIdx, int fragIdx){
 		return fileName + "__" + blockIdx + "__frag__" + fragIdx;
 	}
 
@@ -116,7 +116,7 @@ public class MDFSFileInfo implements Serializable {
 	 * @return
 	 */
 	//returns: /MDFS/test1.jpg__0123/test1.jpg__0/
-	public static String getBlockDirPath(String fileName, String fileID, byte blockIdx){
+	public static String getBlockDirPath(String fileName, String fileID, int blockIdx){
 		return Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(fileName, fileID) + File.separator + MDFSFileInfo.getBlockDirName(fileName, blockIdx);
 	}
 
@@ -128,7 +128,7 @@ public class MDFSFileInfo implements Serializable {
 	 * @return
 	 */
 	//returns: /MDFS/test1.jpg__0123/test1.jpg__0/test1.jpg__0__frag__0
-	public static String getFragmentPath(String fileName, String fileID, byte blockIdx, byte fragIdx){
+	public static String getFragmentPath(String fileName, String fileID, int blockIdx, int fragIdx){
 		return MDFSFileInfo.getBlockDirPath(fileName, fileID, blockIdx)     + File.separator + MDFSFileInfo.getFragName(fileName, blockIdx, fragIdx);
 	}
 

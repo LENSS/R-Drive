@@ -53,37 +53,38 @@ public class put {
                 pair.setFile(null);
                 return pair;
             }
-            //check filesize is within allowed max size
-            if(file.length()>= Long.MAX_VALUE || file.length()>= Constants.MAX_FILE_SIZE){
-                pair.setString("-put failed! File too large! Max allowed size " + Constants.MAX_FILE_SIZE + " bytes and filesize " + file.length() + " bytes.");
-                pair.setFile(null);
-                return pair;
+
+            //check MAX filesize
+            if(Constants.CHECK_MAX_FILE_SIZE_LIMIT) {
+
+                if (file.length() >= Long.MAX_VALUE || file.length() >= Constants.MAX_FILE_SIZE) {
+                    pair.setString("-put failed! File too large! Max allowed size " + Constants.MAX_FILE_SIZE + " bytes and filesize " + file.length() + " bytes.");
+                    pair.setFile(null);
+                    return pair;
+                }
             }
 
-            /*//check if vm currently has filesize amount of size left
-            if(Runtime.getRuntime().freeMemory()<file.length()){
-                pair.setString("-put failed! Currently system doesnt have enough memory to load the file. current free memory " + Runtime.getRuntime().freeMemory() + " bytes.");
-                pair.setFile(null);
-                return pair;
-            }*/
+            //check MAX block count
+            if(Constants.CHECK_MAX_BLOCK_COUNT) {
 
-
-            //check block count
-            if((file.length()/Constants.MAX_BLOCK_SIZE)> Constants.MAX_BLOCK_COUNT){
-                pair.setString("-put failed! Block count exceeded. Choosing a larger block size might solve this problem.");
-                pair.setFile(null);
-                return pair;
-            }else{
-                pair.setString("SUCCESS");
-                pair.setFile(file);
+                if (((int)Math.ceil((double)file.length()/ Constants.MAX_BLOCK_SIZE) > Constants.MAX_BLOCK_COUNT)) {
+                    pair.setString("-put failed! Block count exceeded. Choosing a larger block size might solve this problem.");
+                    pair.setFile(null);
+                    return pair;
+                }
             }
+
+            //success case
+            pair.setString("SUCCESS");
+            pair.setFile(file);
+            return pair;
+
         }else{
             pair.setString("-put failed! File not found.");
             pair.setFile(null);
             return pair;
         }
 
-        return pair;
     }
 
     //takes a file, and a MDFS path and sends it

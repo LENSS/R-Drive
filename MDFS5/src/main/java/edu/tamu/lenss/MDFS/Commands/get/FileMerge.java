@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import edu.tamu.lenss.MDFS.Constants;
 import edu.tamu.lenss.MDFS.ReedSolomon.DeCoDeR;
@@ -29,7 +31,6 @@ import edu.tamu.lenss.MDFS.Utils.Pair;
 //this class is called by RsockReceiveForFileRetrieval.java class.
 //this class is run in a thread to merge a file after enough fragments are available for each block.
 public class FileMerge implements Runnable{
-
 
     MDFSRsockBlockForFileRetrieve mdfsrsockblock;
 
@@ -51,7 +52,7 @@ public class FileMerge implements Runnable{
         for(int i=0; i< mdfsrsockblock.totalNumOfBlocks; i++){
 
             //get the fragments
-            List<FragmentInfo> fragments = getStoredFragsOfABlock((byte)i);
+            List<FragmentInfo> fragments = getStoredFragsOfABlock(i);
 
             //decode and write the blockFile in disk
             if(fragments!=null) {
@@ -73,8 +74,8 @@ public class FileMerge implements Runnable{
         if(mdfsrsockblock.totalNumOfBlocks==1){
             mergeSingleBlock();
         }else{
-            //mergeMultipleBlocksSmart();
-            mergeMultipleBlocksDumb();
+            mergeMultipleBlocksSmart();
+            //mergeMultipleBlocksDumb();
         }
 
         if(!mdfsrsockblock.sameEdge){
@@ -92,7 +93,7 @@ public class FileMerge implements Runnable{
     //get stored fragments for this block in this device.
     //never returns null, always returns a list that is either empty
     // or has elements in it.
-    private List<FragmentInfo> getStoredFragsOfABlock(byte blockIdx){
+    private List<FragmentInfo> getStoredFragsOfABlock(int blockIdx){
 
 
         //create a list of fragmentInfo object to return
@@ -153,7 +154,7 @@ public class FileMerge implements Runnable{
             //tmp0 = /storage/emulated/0/MDFS/test1.jpg__0123/ (directory)
             //tmp = /storage/emulated/0/MDFS/test1.jpg__0123/test2.jpg_0123__blk__0 (file)
             File tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFileDirPath(mdfsrsockblock.fileName, mdfsrsockblock.fileId));
-            File tmp = IOUtilities.createNewFile(tmp0, MDFSFileInfo.getBlockName(mdfsrsockblock.fileName, (byte) blockIdx));
+            File tmp = IOUtilities.createNewFile(tmp0, MDFSFileInfo.getBlockName(mdfsrsockblock.fileName, blockIdx));
 
             //make decoder object
             DeCoDeR decoder = new DeCoDeR(ServiceHelper.getInstance().getEncryptKey(), mdfsrsockblock.n2, mdfsrsockblock.k2, blockFragments, tmp.getAbsolutePath());
@@ -373,7 +374,7 @@ public class FileMerge implements Runnable{
 
                 // move block to the decrypted directory and rename
                 File from = AndroidIOUtils.getExternalFile(MDFSFileInfo.
-                        getFileDirPath(mdfsrsockblock.fileName, mdfsrsockblock.fileId) + File.separator + MDFSFileInfo.getBlockName(mdfsrsockblock.fileName, (byte) 0));  //Isagor0!
+                        getFileDirPath(mdfsrsockblock.fileName, mdfsrsockblock.fileId) + File.separator + MDFSFileInfo.getBlockName(mdfsrsockblock.fileName, 0));  //Isagor0!
                 File to = IOUtilities.createNewFile(getDecryptedFilePath());
 
 

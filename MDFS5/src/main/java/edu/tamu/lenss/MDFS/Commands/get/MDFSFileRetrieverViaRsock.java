@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
 import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeper;
@@ -19,6 +21,8 @@ import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 
 
 public class MDFSFileRetrieverViaRsock {
+
+    public static ExecutorService executor = Executors.newSingleThreadExecutor();
 
     //logger
     public static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(MDFSFileRetrieverViaRsock.class);
@@ -44,6 +48,7 @@ public class MDFSFileRetrieverViaRsock {
         logger.log(Level.ALL, "Starting to retrieve file " + fileInfo.getFileName());
 
         //make a list for block_fragments I dont have
+
         int[][]missingBlocksAndFrags = new int[fileInfo.getNumberOfBlocks()][fileInfo.getN2()];
 
         //get/populate missingBlocksAndFrags array for each block
@@ -61,10 +66,10 @@ public class MDFSFileRetrieverViaRsock {
             //check if this node has already K frags for each block
             if (getUtils.checkEnoughFragsAvailable(missingBlocksAndFrags, fileInfo.getK2())) {
 
-                //merge the file in a new thread
                 //make a MDFSRsockBlockForFileRetrieve of type= ReplyFromOneClientToAnotherForOneFragment
-                MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.ReplyFromOneClientToAnotherForOneFragment, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, "dummyDestGUID", fileInfo.getFileName(), metadata.getFilePathMDFS(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), (byte)0, (byte)0, localDir, null, true);
-                new FileMerge(mdfsrsockblock).run();
+                //merge the file in a new thread
+                MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.ReplyFromOneClientToAnotherForOneFragment, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, "dummyDestGUID", fileInfo.getFileName(), metadata.getFilePathMDFS(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), 0, 0, localDir, null, true);
+                executor.submit(new FileMerge(mdfsrsockblock));
 
                 //log
                 logger.log(Level.ALL, "merged file blocks for filename "  + fileInfo.getFileName() + " without retrieval since all blocks are available");
@@ -161,8 +166,8 @@ public class MDFSFileRetrieverViaRsock {
 
         //get the variables
         String destGUID = tokens[0];
-        byte blockIdx = (byte) Integer.parseInt(tokens[1]);
-        byte fragmentIndex = (byte) Integer.parseInt(tokens[2]);
+        int blockIdx =  Integer.parseInt(tokens[1]);
+        int fragmentIndex = Integer.parseInt(tokens[2]);
 
         //make an object of MDFSRsockBlockRetrieval with request tag
         MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.RequestFromOneClientToAnotherForOneFragment, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, destGUID, fileInfo.getFileName(), fileInfo.getFilePathMDFS(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), blockIdx, fragmentIndex, localDir, null, true);

@@ -78,7 +78,7 @@ public class MDFSFileCreatorViaRsockNG{
         this.maxBlockSize = maxBlockSize;
         this.fileInfo = new MDFSFileInfo(file.getName(), fileID, filePathMDFS);
         this.fileInfo.setFileSize(file.length());
-        this.fileInfo.setNumberOfBlocks((byte)blockCount);
+        this.fileInfo.setNumberOfBlocks(blockCount);
         this.encryptKey = key;
         this.chosenNodes = new ArrayList<>();
         this.metadata = MDFSMetadata.createFileMetadata(fileCreationReqUUID, fileID, fileInfo.getFileSize(), EdgeKeeper.ownGUID, EdgeKeeper.ownGUID, filePathMDFS + "/" + fileInfo.getFileName(), Constants.metadataIsGlobal);
@@ -325,6 +325,7 @@ public class MDFSFileCreatorViaRsockNG{
         final File fileDir = AndroidIOUtils.getExternalFile(edu.tamu.lenss.MDFS.Constants.ANDROID_DIR_ROOT + File.separator + MDFSFileInfo.getFileDirName(file.getName(), fileID));   //Isagor0!
 
         //array of blocks
+        //note: the blocks in this array are in random order.
         final File[] blocks = fileDir.listFiles(new FileFilter(){
             @Override
             public boolean accept(File f) {
@@ -338,7 +339,7 @@ public class MDFSFileCreatorViaRsockNG{
         String fName;
         for(File blockF : blocks){
             fName = blockF.getName();
-            byte idx = Byte.parseByte(fName.substring((fName.lastIndexOf("_")+1)));   //idx = block number
+            int idx = Integer.parseInt(fName.substring((fName.lastIndexOf("_")+1)));   //idx = block number
 
             //add block in uploadQ
             uploadQ.add(new MDFSBlockCreatorViaRsockNG(blockF, filePathMDFS, fileInfo, idx, fileCreationReqUUID, chosenNodes, encryptKey, metadata));
@@ -384,8 +385,14 @@ public class MDFSFileCreatorViaRsockNG{
         logger.log(Level.ALL, str);
 
         //set n2 , k2
-        byte n2; if(chosenNodes.size() >= Constants.MAX_N_VAL){ n2 = (byte)Constants.MAX_N_VAL;} else{ n2 = (byte)chosenNodes.size();}
-        byte k2 = (byte) Math.round(n2 * encodingRatio);
+        int n2; if(chosenNodes.size() >= Constants.MAX_N_VAL){ n2 = Constants.MAX_N_VAL;} else{ n2 = chosenNodes.size();}
+        int k2 = (int) Math.round(n2 * encodingRatio);
+
+        //todo: test
+        n2 = 2;
+        k2 = 1;
+
+
         fileInfo.setFragmentsParms(n2, k2);
         this.metadata.setn2((int)n2);
         this.metadata.setk2((int)k2);

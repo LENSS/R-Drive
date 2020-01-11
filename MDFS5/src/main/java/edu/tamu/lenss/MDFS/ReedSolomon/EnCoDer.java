@@ -20,8 +20,8 @@ import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 //This class takes a file and do erasure coding and breaks into n shards.
 public class EnCoDer {
     private byte[] encryptKey;
-    private byte N2;
-    private byte K2;
+    private int N2;
+    private int K2;
     private File clearFile;
     private File tmpFile;
     private byte[] encryptedByte;  //contains only fileBytes
@@ -29,7 +29,7 @@ public class EnCoDer {
     private static final int BYTES_IN_INT = 4;
 
 
-    public EnCoDer(byte[] encryptKey, byte n2, byte k2, File file){
+    public EnCoDer(byte[] encryptKey, int n2, int k2, File file){
         this.encryptKey = encryptKey;
         this.N2 = n2;
         this.K2 = k2;
@@ -116,7 +116,7 @@ public class EnCoDer {
             else
                 type = FragmentInfo.CODING_TYPE;
 
-            fileFragments.add(new FragmentInfo(clearFile.getName(), type, allBytes.length, shards[i], (byte)i, K2, N2, System.currentTimeMillis()));
+            fileFragments.add(new FragmentInfo(clearFile.getName(), type, allBytes.length, shards[i], i, K2, N2, System.currentTimeMillis()));
         }
 
         return fileFragments;
