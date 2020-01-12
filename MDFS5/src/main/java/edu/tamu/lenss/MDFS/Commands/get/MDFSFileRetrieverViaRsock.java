@@ -238,7 +238,7 @@ public class MDFSFileRetrieverViaRsock {
                     if(missingBlocksAndFrags[i][j]==1){
 
                         //get the guids holding this fragment
-                        List<String> fragGUIDs = metadata.getBlock(i).getFragment(j).getAllFragmentHoldersGUID();
+                        List<String> fragGUIDs = metadata.getAllFragmentHoldersGUID(i,j);
 
                         //common guids from olsr and fragGUIDs
                         List<String> commonGUIDs = new ArrayList<>();

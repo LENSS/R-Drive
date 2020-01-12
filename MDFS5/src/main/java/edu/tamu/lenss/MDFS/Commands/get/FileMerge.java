@@ -74,8 +74,8 @@ public class FileMerge implements Runnable{
         if(mdfsrsockblock.totalNumOfBlocks==1){
             mergeSingleBlock();
         }else{
-            mergeMultipleBlocksSmart();
-            //mergeMultipleBlocksDumb();
+            //mergeMultipleBlocksSmart();
+            mergeMultipleBlocksDumb();
         }
 
         if(!mdfsrsockblock.sameEdge){

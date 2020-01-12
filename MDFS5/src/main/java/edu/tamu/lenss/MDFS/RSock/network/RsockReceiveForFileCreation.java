@@ -87,7 +87,7 @@ public class RsockReceiveForFileCreation implements Runnable{
                         boolean isGlobal = (boolean) mdfsrsockblock.isGlobal;
 
                         //now save the fileFrag
-                        saveTheFileFragAndUpdateMetadataToEdgeKeeper(fileName, filePathMDFS, byteArray, fileID, filesize, n2, k2, blockIdx, fragmentIdx, fileCreatorGUID, uniquereqid, isGlobal);
+                        saveTheFileFragment(fileName, filePathMDFS, byteArray, fileID, filesize, n2, k2, blockIdx, fragmentIdx, fileCreatorGUID, uniquereqid, isGlobal);
                         logger.log(Level.DEBUG, "fragment# " + fragmentIdx + " of block# " + blockIdx + " of filename " + fileName + " received from rsock.");
                     }
 
@@ -102,9 +102,9 @@ public class RsockReceiveForFileCreation implements Runnable{
     }
 
     //this function does two jobs one: save the filefrag locally in this device, two: submits fragment metadata to EdgeKeeper
-    private void saveTheFileFragAndUpdateMetadataToEdgeKeeper(String fileName, String filePathMDFS, byte[] byteArray, String fileID , long filesize, int n2, int k2, int blockIdx, int fragmentIdx, String fileCreatorGUID, String uniquereqid, boolean isGlobal) {
-        //create file
-        File tmp0 = null;
+    private void saveTheFileFragment(String fileName, String filePathMDFS, byte[] byteArray, String fileID , long filesize, int n2, int k2, int blockIdx, int fragmentIdx, String fileCreatorGUID, String uniquereqid, boolean isGlobal) {
+            //create file
+            File tmp0 = null;
 
             tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileName, fileID, blockIdx));
 
@@ -126,16 +126,6 @@ public class RsockReceiveForFileCreation implements Runnable{
                  //log
                  logger.log(Level.DEBUG,"Could not write fragment bytes into file for fragment# " + fragmentIdx + " of block# " + blockIdx + " of filename " + fileName + ".");
              }
-
-            //add info of the fragment I received and update to edgekeeper.
-            MDFSMetadata metadata = MDFSMetadata.createFileMetadata(uniquereqid, fileID, filesize, fileCreatorGUID, EdgeKeeper.ownGUID, filePathMDFS + "/" + fileName, isGlobal);
-            metadata.setn2(n2);
-            metadata.setk2(k2);
-            metadata.addInfo(EdgeKeeper.ownGUID, (int)blockIdx, (int)fragmentIdx);
-
-            //send metadata to local edgeKeeper
-            // JSONObject repJSON = EKClient.putMetadata(metadata);
-
 
     }
 
