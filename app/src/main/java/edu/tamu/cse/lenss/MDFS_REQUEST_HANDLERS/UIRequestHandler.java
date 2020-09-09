@@ -4,8 +4,6 @@ import android.content.Context;
 
 import edu.tamu.lenss.MDFS.Constants;
 
-import static edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS.ProcessOneRequest.processRequestCpp;
-
 //this class only takes requests from phone's UI.
 public class UIRequestHandler{
 
@@ -20,7 +18,7 @@ public class UIRequestHandler{
 
     public String run(){
 
-        String ret = processRequestCpp(Constants.NON_CLI_CLIENT, command);
+        String ret = edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS.ProcessOneRequest.processRequestCpp(Constants.NON_CLI_CLIENT, command);
         return ret;
     }
 

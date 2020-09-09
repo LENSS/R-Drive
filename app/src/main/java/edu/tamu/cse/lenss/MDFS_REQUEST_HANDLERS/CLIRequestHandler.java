@@ -7,7 +7,6 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.UUID;
 
-import static edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS.ProcessOneRequest.processRequestCpp;
 
 
 //this class only takes requests from Command Line Interface.
@@ -41,7 +40,7 @@ public class CLIRequestHandler implements Runnable {
             clientSockets.sockets.put(clientID, socket);
 
             //process req
-            processRequestCpp(clientID, command);
+            edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS.ProcessOneRequest.processRequestCpp(clientID, command);
 
         }catch (IOException e) {
             System.out.println("Problem handling client socket in RequestHandler "+ e);

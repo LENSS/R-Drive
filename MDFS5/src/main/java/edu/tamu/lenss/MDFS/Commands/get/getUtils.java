@@ -15,16 +15,15 @@ import java.util.List;
 import java.util.UUID;
 
 import edu.tamu.lenss.MDFS.Model.MDFSFileInfo;
-import edu.tamu.lenss.MDFS.Model.MDFSRsockBlockForFileRetrieve;
+import edu.tamu.lenss.MDFS.Model.MDFSFragmentForFileRetrieve;
 import edu.tamu.lenss.MDFS.RSock.RSockConstants;
-import edu.tamu.lenss.MDFS.RSock.network.RsockReceiveForFileRetrieval;
 import edu.tamu.lenss.MDFS.Utils.AndroidIOUtils;
-
+import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 
 //this class contains only static functions
 public class getUtils {
 
-    //contains uuids for all the resolved uuids
+    //contains uuids for all the resolved get requests
     static List<String> resolvedRequests = new ArrayList<>();
 
     //this function fetches missing fragment number for each block from disk.
@@ -95,7 +94,7 @@ public class getUtils {
 
     //checks if for each block, K frags are available and no fragment needs to be retrieved.
     //returns true if no blocks needs retrieval, false otherwise.
-    public static boolean checkEnoughFragsAvailable(int[][] missingBlocksAndFrags, int K2){
+    public static boolean checkEnoughFragsAvailableForWholeFile(int[][] missingBlocksAndFrags, int K2){
 
         for(int i=0; i< missingBlocksAndFrags.length; i++){
 
@@ -121,14 +120,14 @@ public class getUtils {
 
 
     //get block number from a fragment name
-    private int parseBlockNum(String fName){
+    public static int parseBlockNum(String fName){
         String str = fName.substring(0, fName.lastIndexOf("__frag__"));
         str = str.substring(str.lastIndexOf("_")+1);
         return Integer.parseInt(str.trim());
     }
 
     //get fragment number from a fragment name
-    private static int parseFragNum(String fName) {
+    public static int parseFragNum(String fName) {
         return Integer.parseInt(fName.substring(fName.lastIndexOf("_") + 1).trim());
     }
 
@@ -149,54 +148,44 @@ public class getUtils {
         System.out.println();
     }
 
-    //takes a MDFSRsockBlockForFileRetrieve and serves a RequestFromOneClientToAnotherForOneFragment request.
+    //takes a mdfsfragForFileRetrieve and serves a RequestFromOneClientToAnotherForOneFragment request.
     //this function fetched the particular fragment of particular block of a file, and sends it back to the sourceGUID.
     //the functions flips the source and destination.
     //if the file directory, blockDirectory, or fragment doesnt exist, then nothing is sent.
-    public static void justDoit(MDFSRsockBlockForFileRetrieve mdfsrsockblock){
+    public static void justDoit(MDFSFragmentForFileRetrieve mdfsfrag){
 
-        RsockReceiveForFileRetrieval.logger.log(Level.ALL, "received fragment request from node " + mdfsrsockblock.srcGUID + " for fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName);
+        get.logger.log(Level.ALL, "received fragment request from node " + mdfsfrag.srcGUID + " for fragment# " + mdfsfrag.fragmentIndex + " of block# " + mdfsfrag.blockIdx + " of filename " + mdfsfrag.fileName);
 
         //get the file fragment from my disk
         //if the file directory doesnt exist, tmp0 size will be 0.
-        File tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(mdfsrsockblock.fileName, mdfsrsockblock.fileId, mdfsrsockblock.blockIdx, mdfsrsockblock.fragmentIndex));
+        File tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(mdfsfrag.fileName, mdfsfrag.fileId, mdfsfrag.blockIdx, mdfsfrag.fragmentIndex));
 
         //if fragment was fetched
         if (tmp0!=null && tmp0.exists() && tmp0.isFile() && tmp0.length() > 0) {
 
             //convert file tmp0 into byteArray
-            byte[] byteArray = new byte[(int) tmp0.length()];
-            try {
-                FileInputStream fileInputStream = new FileInputStream(tmp0);
-                fileInputStream.read(byteArray);
-            } catch (FileNotFoundException e) {
-                System.out.println("File Not Found.");
-                e.printStackTrace();
-            } catch (IOException e1) {
-                System.out.println("Error Reading The File.");
-                e1.printStackTrace();
-            }
+            byte[] byteArray = IOUtilities.fileToByte(tmp0);
 
-            //now, change mdfsrsockblock into a ReplyFromOneClientToAnotherForOneFragment object
-            mdfsrsockblock.flipIntoReply(byteArray);
+            //now, change mdfsfrag into a ReplyFromOneClientToAnotherForOneFragment object
+            mdfsfrag.flipIntoReply(byteArray);
 
-            //convert mdfsrsockblock object into bytearray and do send
+            //convert mdfsfrag object into bytearray and do send
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutputStream ooos = null;
             try {
                 ooos = new ObjectOutputStream(bos);
-                ooos.writeObject(mdfsrsockblock);
+                ooos.writeObject(mdfsfrag);
                 ooos.flush();
                 byte[] data = bos.toByteArray();
 
                 //send the object over rsock and expect no reply
                 if(RSockConstants.RSOCK) {
                     String uuid = UUID.randomUUID().toString().substring(0, 12);
-                    RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing", "nothing", mdfsrsockblock.destGUID,0);
+                    RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing", "nothing", mdfsfrag.destGUID);
                 }
 
                 //log
-                RsockReceiveForFileRetrieval.logger.log(Level.ALL, "CASE #1: resolved fragment request from node " + mdfsrsockblock.destGUID + " for fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName);
+                get.logger.log(Level.ALL, "CASE #1: resolved fragment request from node " + mdfsfrag.destGUID + " for fragment# " + mdfsfrag.fragmentIndex + " of block# " + mdfsfrag.blockIdx + " of filename " + mdfsfrag.fileName);
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -204,10 +193,8 @@ public class getUtils {
         }else{
 
             //log
-            RsockReceiveForFileRetrieval.logger.log(Level.DEBUG, "Could not serve fragment request from node " + mdfsrsockblock.srcGUID + " for fragment# " + mdfsrsockblock.fragmentIndex + " of block# " + mdfsrsockblock.blockIdx + " of filename " + mdfsrsockblock.fileName + " due to file directory no longer exists in storage.");
+            get.logger.log(Level.DEBUG, "Could not serve fragment request from node " + mdfsfrag.srcGUID + " for fragment# " + mdfsfrag.fragmentIndex + " of block# " + mdfsfrag.blockIdx + " of filename " + mdfsfrag.fileName + " due to file directory no longer exists in storage.");
         }
     }
-
-
 
 }

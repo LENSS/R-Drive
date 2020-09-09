@@ -7,13 +7,15 @@
     tools:context=".MainActivity">
 
     <LinearLayout
+        android:id="@+id/PARENT"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="100dp"
+            android:id="@+id/CHILD1"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
             android:orientation="horizontal">
 
 
@@ -41,7 +43,7 @@
 
             <Button
                 android:id="@+id/mkdirButton"
-                android:layout_width="72dp"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_gravity="fill_horizontal"
                 android:gravity="center"
@@ -52,7 +54,7 @@
 
             <Button
                 android:id="@+id/putButton"
-                android:layout_width="wrap_content"
+                android:layout_width="fill_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="fill_horizontal"
                 android:gravity="center"
@@ -61,9 +63,18 @@
                 android:textStyle="bold"
                 android:visibility="visible" />
 
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/CHILD2"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="horizontal">
+
             <Button
                 android:id="@+id/toggleView"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="fill_horizontal"
                 android:gravity="center"

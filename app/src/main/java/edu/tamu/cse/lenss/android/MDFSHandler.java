@@ -10,7 +10,7 @@ import java.util.Calendar;
 
 import edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS.CLIserver;
 import edu.tamu.cse.lenss.Notifications.NotificationUtils;
-import edu.tamu.cse.lenss.mdfs_api_server.MDFS_API_SERVER;
+import edu.tamu.cse.lenss.mdfs_api_server.APIserver;
 import edu.tamu.lenss.MDFS.Handler.ServiceHelper;
 
 import static android.content.Context.ALARM_SERVICE;
@@ -21,18 +21,25 @@ import static android.content.Context.ALARM_SERVICE;
 public class MDFSHandler extends Thread {
 
     public CLIserver cli;
-    public MDFS_API_SERVER mdfs_api_server;
+    public APIserver mdfs_api_server;
     public Context context;
     public MDFSHandler(Context c) {this.context = c;}
 
     @Override
     public void run(){
+        start();
+    }
 
-        //note: MDFS must start before CL
+
+
+
+    public void start(){
+
+        //note: MDFS must start before CLI and API
         startMDFS();
         startCLI();
 
-        this.mdfs_api_server = new MDFS_API_SERVER();
+        this.mdfs_api_server = new APIserver();
         this.mdfs_api_server.start();
     }
 
@@ -49,7 +56,7 @@ public class MDFSHandler extends Thread {
         //init serviceHelper
         ServiceHelper.getInstance();
         try {
-            //Set encryption key
+            //Set put_encryption key
             byte[] encryptKey = new byte[32];
             int[] keyValues = {121, 108, 85, 100, -17, 52, 31, 65, -106, 82, 116, -94, -71, 50, -80, -90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
             int index = 0;

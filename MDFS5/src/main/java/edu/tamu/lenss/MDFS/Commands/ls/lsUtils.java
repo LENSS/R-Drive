@@ -10,10 +10,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MetaDataHandler;
 import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.command.LScommand;
 import edu.tamu.cse.lenss.edgeKeeper.server.RequestTranslator;
-import edu.tamu.lenss.MDFS.PeerFetcher.PeerFetcher;
 
+
+//this class is all about parsing strings.
+//this class is used for parsing LS command resumts from EdgeKeeper,
+//and parse them.
+//any GUID or NAME is this class, relates to the master of the edge(either own edge or neighbor edge)
 public class lsUtils {
 
 
@@ -101,25 +106,29 @@ public class lsUtils {
                 //for each master guid
                 while (masterguids.hasNext()) {
 
-                    //get each master guid
+                    //get one master guid
                     String master = masterguids.next();
 
                     //get ls result for this master.
                     //reminder: this ls result is for one particular directory.
                     JSONObject otherEdgeDir = new JSONObject(neighborsEdgeDirs.getString(master));
 
+
+                    //get mastername
+                    String masterName = otherEdgeDir.getString(MetaDataHandler.MASTERNAME);
+
                     //get FILES from otherEdgeDir
                     JSONObject FILES = new JSONObject(otherEdgeDir.getString(LScommand.FILES));
                     int fileCount = Integer.parseInt(FILES.getString(LScommand.COUNT));
                     for (int i = 0; i < fileCount; i++) {
-                        result = result + FILES.getString(Integer.toString(i)) + "(" + PeerFetcher.GUIDtoNameConversion(master) + ")" + "   ";
+                        result = result + FILES.getString(Integer.toString(i)) + "(" + masterName + ")" + "   ";
                     }
 
                     //get FOLDERS from otherEdgeDir
                     JSONObject FOLDERS = new JSONObject(otherEdgeDir.getString(LScommand.FOLDERS));
                     int folderCount = Integer.parseInt(FOLDERS.getString(LScommand.COUNT));
                     for (int i = 0; i < folderCount; i++) {
-                        result = result + File.separator + FOLDERS.getString(Integer.toString(i)) + "(" + PeerFetcher.GUIDtoNameConversion(master) + ")" + "   ";
+                        result = result + File.separator + FOLDERS.getString(Integer.toString(i)) + "(" + masterName + ")" + "   ";
                     }
 
                 }
@@ -210,7 +219,7 @@ public class lsUtils {
 
     //takes a ls result from edgekeeper for lsRequestForOwnEdge
     //and returns all tokens as a list.
-    //lsReplyForOwnEdge is used for doign ls for a
+    //lsReplyForOwnEdge is used for doing ls for a
     //particular directory for own edge directory.
     public static List<String> jsonToList(String lsResult){
 
@@ -263,8 +272,8 @@ public class lsUtils {
 
     //takes a ls results from edgekeeper for lsRequestForAllDirectoryiesOfAllNeighborEdges,
     //and return a list of neighbor masters guids.
-    //returns empty list if no masters available.
-    public static List<String> getListOfMastersGUIDsFromAllNeighborEdgeDirStr(String lsResult){
+    //returns empty list if no masters available().
+    public static List<String> getListOfMastersGUIDsFromAllNeighborEdgeDirStr(String allNeighborEdgeDirsCache){
 
         //make a list
         List<String> masters = new ArrayList<>();
@@ -272,7 +281,7 @@ public class lsUtils {
         try{
 
            //convert string into json
-            JSONObject allneighDirsObj = new JSONObject(lsResult);
+            JSONObject allneighDirsObj = new JSONObject(allNeighborEdgeDirsCache);
 
             //check null
             if(allneighDirsObj!=null){
@@ -314,23 +323,140 @@ public class lsUtils {
 
             }
 
-
-
         }catch (JSONException e){
             e.printStackTrace();
         }
 
+        System.out.println("2020: " + masters);
+
         return masters;
     }
 
-    //takes ls result for lsRequestForAllDirectoryiesOfAllNeighborEdges,
+    //takes a ls results from edgekeeper for lsRequestForAllDirectoryiesOfAllNeighborEdges,
+    //and return a list of neighbor masters names.
+    //returns empty list if no masters available.
+    public static List<String> getListOfMastersNAMEsFromAllNeighborEdgeDirStr(String allNeighborEdgeDirsCache){
+
+        //make a resultant list
+        List<String> mastersNAMEs = new ArrayList<>();
+
+        try{
+
+            //first get the list of all unique master's GUIDs
+            List<String> mastersGUIDs = getListOfMastersGUIDsFromAllNeighborEdgeDirStr(allNeighborEdgeDirsCache);
+
+            //check empty
+            if(mastersGUIDs!= null && mastersGUIDs.size()>0){
+
+                for(String master: mastersGUIDs){
+
+                    //fetch dir object for this particular master
+                    JSONObject particularMasterDirsObject = lsUtils.parseParticularMasterDirectoryFromAllNeighborEdgeDirStr(master, allNeighborEdgeDirsCache);
+
+                    //check null
+                    if (particularMasterDirsObject != null) {
+
+                        //get master name
+                        String masterName = particularMasterDirsObject.getString(MetaDataHandler.MASTERNAME);
+
+                        //add master name to result list
+                        mastersNAMEs.add(masterName);
+
+                    }
+                }
+            }
+
+
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return mastersNAMEs;
+    }
+
+    //takes one master name and returns its GUID
+    public static String nameToGUID(String name, String allNeighborEdgeDirsCache){
+
+        //first get all the masters GUIDs
+        List<String> mastersGUIDs = getListOfMastersGUIDsFromAllNeighborEdgeDirStr(allNeighborEdgeDirsCache);
+
+        for(String guid: mastersGUIDs){
+            String temp = guidTOname(guid, allNeighborEdgeDirsCache);
+
+            if(temp!=null && temp.equals(name)){
+                return guid;
+            }
+        }
+
+        return null;
+    }
+
+    //takes one master guid and returns its name
+    //may return null.
+    public static String guidTOname(String guid, String allNeighborEdgeDirsCache){
+
+        //fetch dir object for this particular master
+        JSONObject particularMasterDirsObject = lsUtils.parseParticularMasterDirectoryFromAllNeighborEdgeDirStr(guid, allNeighborEdgeDirsCache);
+
+        //get the name
+        try {
+            String name = particularMasterDirsObject.getString(MetaDataHandler.MASTERNAME);
+            return name;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    //takes a list of master guids and returns their names
+    //the list may be empty, if no conversion happens.
+    public static List<String> masterGUIDsToNAMEs(List<String> mastersGUIDs, String allNeighborEdgeDirsCache){
+
+        //make a resultant list
+        List<String> mastersNAMEs = new ArrayList<>();
+
+        try{
+
+            //check empty
+            if(mastersGUIDs!= null && mastersGUIDs.size()>0){
+
+                for(String master: mastersGUIDs){
+
+                    //fetch dir object for this particular master
+                    JSONObject particularMasterDirsObject = lsUtils.parseParticularMasterDirectoryFromAllNeighborEdgeDirStr(master, allNeighborEdgeDirsCache);
+
+                    //check null
+                    if (particularMasterDirsObject != null) {
+
+                        //get master name
+                        String masterName = particularMasterDirsObject.getString(MetaDataHandler.MASTERNAME);
+
+                        //add master name to result list
+                        mastersNAMEs.add(masterName);
+
+                    }
+                }
+            }
+
+
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return mastersNAMEs;
+    }
+
+    //takes ls result for lsRequestForAllDirectoriesOfAllNeighborEdges,
     //a master GUID and returns a JSONObject for directory structure for
     //this particular master.
-    //note: the return JUSONObject contains directory strings as kets,
-    //and for each keys, there is another json that contains
+    //note: the return JUSONObject contains directory strings as keys,
+    //and for each key, there is another json that contains
     // two jsons, those are FILES and FOLDERS json inside it.
     //returns JSONObject or null.
-    public static JSONObject parseParticularMasterDirectoryFromAllNeighborEdgeDirStr(String master, String lsResult){
+    public static JSONObject parseParticularMasterDirectoryFromAllNeighborEdgeDirStr(String masterguid, String lsResult){
         try{
 
             //convert string into json
@@ -358,7 +484,7 @@ public class lsUtils {
                         DirsObj.remove(RequestTranslator.resultField);
 
                         //get particular directory for particular master
-                        String particularMasterDirsStr = DirsObj.getString(master);
+                        String particularMasterDirsStr = DirsObj.getString(masterguid);
 
                         //check null
                         if(particularMasterDirsStr!=null){

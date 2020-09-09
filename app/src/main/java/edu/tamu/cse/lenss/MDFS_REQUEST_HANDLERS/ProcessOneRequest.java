@@ -1,17 +1,20 @@
 package edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS;
 
 import java.io.File;
+import java.lang.reflect.ReflectPermission;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
 
-import edu.tamu.lenss.MDFS.Commands.copyfromlocal.copyfromlocal;
 import edu.tamu.lenss.MDFS.Commands.get.get;
+import edu.tamu.lenss.MDFS.Commands.log.myLog;
+import edu.tamu.lenss.MDFS.Commands.put.put;
+import edu.tamu.lenss.MDFS.Commands.copyfromlocal.copyfromlocal;
 import edu.tamu.lenss.MDFS.Commands.help.help;
 import edu.tamu.lenss.MDFS.Commands.ls.ls;
 import edu.tamu.lenss.MDFS.Commands.ls.lsUtils;
 import edu.tamu.lenss.MDFS.Commands.mkdir.mkdir;
-import edu.tamu.lenss.MDFS.Commands.put.put;
 import edu.tamu.lenss.MDFS.Commands.rm.rm;
 import edu.tamu.lenss.MDFS.RSock.testRsock;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
@@ -117,8 +120,9 @@ public class ProcessOneRequest {
                                             String dirValidCheck = utils.isValidMDFSDir(filePathMDFS);
                                             if (dirValidCheck.equals("OK")) {
 
-                                                //handle put command and return reply
-                                                String reply = put.put(filepathLocal, filePathMDFS, filename, clientID);
+                                                //handle put command and return reply=
+                                                String reply= new put().put(filepathLocal, filePathMDFS, filename, clientID);
+
                                                 clientSockets.sendAndClose(clientID, reply);
                                                 return reply;
 
@@ -208,6 +212,8 @@ public class ProcessOneRequest {
 
                                                 //handle get command and return reply
                                                 String reply = get.get(mdfsDirWithFilename, locDir);
+
+
                                                 clientSockets.sendAndClose(clientID, reply);
                                                 return reply;
 

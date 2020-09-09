@@ -74,7 +74,7 @@ public class MDFSFileInfo implements Serializable {
 	 * Return the directory name of a file
 	 * @param fileName
 	 * @param fileID
-	 * @return fileName_MMddyyy_HHmmss
+	 * @return fileName__fileID
 	 */
 	//returns: test1.jpg__0123/
 	public static String getFileDirName(String fileName, String fileID){
@@ -92,7 +92,7 @@ public class MDFSFileInfo implements Serializable {
 		return fileName + "__" + blockIdx;
 	}
 
-	//returns: test1.jpg_-blk__0
+	//returns: test1.jpg__blk__0
 	public static String getBlockName(String fileName, int blockIdx){
 		return fileName + "__blk__" + blockIdx;
 	}

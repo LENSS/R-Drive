@@ -14,6 +14,7 @@ import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.TypedValue;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
@@ -29,12 +30,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import com.tiemens.secretshare.main.cli.Main;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -49,11 +49,7 @@ import edu.tamu.lenss.MDFS.Commands.ls.ls;
 import edu.tamu.lenss.MDFS.Commands.ls.lsUtils;
 import edu.tamu.lenss.MDFS.Constants;
 import edu.tamu.lenss.MDFS.MissingLInk.MissingLink;
-import edu.tamu.lenss.MDFS.PeerFetcher.PeerFetcher;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
-
-import static edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS.ProcessOneRequest.processRequestCpp;
-import static java.lang.Thread.sleep;
 
 //import edu.tamu.cse.lenss.utils
 
@@ -67,14 +63,14 @@ public class MainActivity extends AppCompatActivity {
     //global variables
     public static Activity activity;
     public static Context context;
-    TextView textView;
-    ListView listView;
-    Button backButton;
-    Button refreshButton;
-    Button mkdirButton;
-    Button putButton;
-    Button toggleView;
-    ArrayAdapter arrayAdapter;
+    static TextView textView;
+    static ListView listView;
+    static Button backButton;
+    static Button refreshButton;
+    static Button mkdirButton;
+    static Button putButton;
+    static Button toggleView;
+    public static ArrayAdapter arrayAdapter;
 
     //current browsing directory for own edge
     private static String ownEdgeCurrentDir = "";
@@ -95,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         activity = this;
         context = this;
         MissingLink.context = this;
@@ -106,6 +103,8 @@ public class MainActivity extends AppCompatActivity {
         this.toggleView = (Button) findViewById(R.id.toggleView);
         this.textView = (TextView) findViewById(R.id.textview);
         this.listView = (ListView)  findViewById(R.id.listview);
+
+
         this.listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView <? > arg0, View view, int position, long id) {
 
@@ -146,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
                         //fetch dir object for this particular master
                         //item = masterName
                         //first convert name into guid
-                        String guid = PeerFetcher.NameToGUIDConversion(item);
+                        String guid = lsUtils.nameToGUID(item, allNeighborEdgeDirsCache);
                         if(guid!=null) {
                             JSONObject particularMasterDirsObject = lsUtils.parseParticularMasterDirectoryFromAllNeighborEdgeDirStr(guid, allNeighborEdgeDirsCache);
 
@@ -280,7 +279,7 @@ public class MainActivity extends AppCompatActivity {
                                         neighborEdgeCurrentDir = item;
 
                                         //change textView
-                                        textView.setText(formatGUID(currentBrowsingNeighborGUID) + ": " + neighborEdgeCurrentDir);
+                                        textView.setText(lsUtils.guidTOname(currentBrowsingNeighborGUID, allNeighborEdgeDirsCache) + ": " + neighborEdgeCurrentDir);
 
                                         //change listView
                                         setItemsOnListView(tokens);
@@ -306,6 +305,7 @@ public class MainActivity extends AppCompatActivity {
         //check permission for this app
         checkPermissions();
         setViewForOwnEdge("/");
+
     }
 
     @Override
@@ -496,7 +496,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     //takes a command, executes it, and toasts the result.
-    //this function submits teh task and returns immediately,
+    //this function submits the task and returns immediately,
     //so the caller or UI is never blocked.
     public static void Foo(String command, Context context){
 
@@ -539,7 +539,15 @@ public class MainActivity extends AppCompatActivity {
                     if(result!=null){
                         MainActivity.activity.runOnUiThread(new Runnable() {
                             public void run() {
+
+                                //toast
                                 Toast.makeText(context, result, Toast.LENGTH_SHORT).show();
+
+                                //refresh view
+                                if(command.contains("-put") || command.contains("-rm") || command.contains("-mkdir")){
+                                    setViewForOwnEdge(ownEdgeCurrentDir);
+                                }
+
                             }
                         });
                     }else{
@@ -560,32 +568,6 @@ public class MainActivity extends AppCompatActivity {
         Executor.executor.submit(new executeFutureTaskAndGetResult(command, context));
     }
 
-    //takes mdfs command and execute it.
-    //the execution happens only for ownEdgeDir
-    public static String Foo_for_mkdir_rm_get(String command) {
-
-        String reply = processRequestCpp(Constants.NON_CLI_CLIENT, command);
-
-        if(reply!=null){
-            return reply;
-        }else{
-            return "Returned null!";
-        }
-    }
-
-    //takes mdfs command and execute it.
-    //the execution happens only for ownEdgeDir
-    public static String Foo_for_put(String command, Context context) {
-
-        String reply = processRequestCpp(Constants.NON_CLI_CLIENT, command);
-
-        if(reply!=null){
-            return reply;
-        }else{
-            return "Returned null!";
-        }
-    }
-
 
     //takes a list of items and sets them for view
     public void setItemsOnListView(List<String> list){
@@ -599,7 +581,7 @@ public class MainActivity extends AppCompatActivity {
     //takes a list of items and show in the
 
     //takes a directory string, fetch directory and sets view for ownEdgeDir.
-    public void setViewForOwnEdge(String directory){
+    public static void setViewForOwnEdge(String directory){
 
         //first set current directory
         ownEdgeCurrentDir = directory;
@@ -617,12 +599,12 @@ public class MainActivity extends AppCompatActivity {
             List<String> arrayList = lsUtils.jsonToList(reply);
 
             //initialize and set array adapter
-            this.arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, arrayList);
+            arrayAdapter = new ArrayAdapter(MainActivity.context, android.R.layout.simple_list_item_1, arrayList);
             listView.setAdapter(arrayAdapter);
 
 
         }else{
-            Toast.makeText(this, "Could not fetch root directory.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.context, "Could not fetch root directory.", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -644,34 +626,42 @@ public class MainActivity extends AppCompatActivity {
                     //save it into local cache
                     allNeighborEdgeDirsCache = allNeighborLSstr;
 
-                    //get list of all masters guidss
+                    //get list of all masters guids
                     List<String> neighborMastersGUIDs = lsUtils.getListOfMastersGUIDsFromAllNeighborEdgeDirStr(allNeighborEdgeDirsCache);
 
                     //check if list is null or empty
-                    if(neighborMastersGUIDs!=null && neighborMastersGUIDs.size()!=0){
+                    if(neighborMastersGUIDs!=null){
 
                         //convert GUIDs into Names
-                        List<String> neighborMastersNames = new ArrayList<>();
-                        for(int i=0; i< neighborMastersGUIDs.size(); i++){neighborMastersNames.add(PeerFetcher.GUIDtoNameConversion(neighborMastersGUIDs.get(i))); }
+                        List<String> neighborMastersNames = lsUtils.masterGUIDsToNAMEs(neighborMastersGUIDs, allNeighborEdgeDirsCache);
 
-                        //set currentView
-                        currentMode = NEIGHBOREDGEDIR;
+                        //check empty
+                        if(neighborMastersNames.size()!=0) {
 
-                        //set neighbor current directory
-                        neighborEdgeCurrentDir = SELECTEDGEMASTER;
+                            //set currentView
+                            currentMode = NEIGHBOREDGEDIR;
 
-                        //set all neighbor masters for view and select
-                        setItemsOnListView(neighborMastersNames);
+                            //set neighbor current directory
+                            neighborEdgeCurrentDir = SELECTEDGEMASTER;
 
-                        //set textview
-                        textView.setText(SELECTEDGEMASTER);
+                            //set all neighbor masters for view and select
+                            setItemsOnListView(neighborMastersNames);
 
-                        //disable mkdir, put, back buttons
-                        mkdirButton.setEnabled(false);
-                        putButton.setEnabled(false);
+                            //set textview
+                            textView.setText(SELECTEDGEMASTER);
+
+                            //disable mkdir, put, back buttons
+                            mkdirButton.setEnabled(false);
+                            putButton.setEnabled(false);
+
+                        }else{
+
+                            Toast.makeText(this, "Neighbor masters names list returned empty.", Toast.LENGTH_SHORT).show();
+                        }
 
                     }else if(neighborMastersGUIDs.size()==0){
-                        Toast.makeText(this, "No neighbor directory available.", Toast.LENGTH_SHORT).show();
+
+                        Toast.makeText(this, "Neighbor masters guid list returned null.", Toast.LENGTH_SHORT).show();
                     }
 
                 } else {
@@ -752,15 +742,14 @@ public class MainActivity extends AppCompatActivity {
                 //check if its root
                 if(neighborEdgeCurrentDir.equals("/")){
 
-                    //get list of all masters
+                    //get list of all masters guids
                     List<String> neighborMastersGUIDs = lsUtils.getListOfMastersGUIDsFromAllNeighborEdgeDirStr(allNeighborEdgeDirsCache);
 
                     //check if list is null or empty
                     if(neighborMastersGUIDs!=null && neighborMastersGUIDs.size()!=0){
 
                         //convert guids into names
-                        List<String> neighborMastersNames = new ArrayList<>();
-                        for(int i=0; i< neighborMastersGUIDs.size(); i++){neighborMastersNames.add(PeerFetcher.GUIDtoNameConversion(neighborMastersGUIDs.get(i)));}
+                        List<String> neighborMastersNames = lsUtils.masterGUIDsToNAMEs(neighborMastersGUIDs, allNeighborEdgeDirsCache);
 
                         //set currentView
                         currentMode = NEIGHBOREDGEDIR;
@@ -856,7 +845,7 @@ public class MainActivity extends AppCompatActivity {
                                 neighborEdgeCurrentDir = newDir;
 
                                 //change textView
-                                textView.setText(formatGUID(currentBrowsingNeighborGUID) + ": " + neighborEdgeCurrentDir);
+                                textView.setText(lsUtils.guidTOname(currentBrowsingNeighborGUID, allNeighborEdgeDirsCache) + ": " + neighborEdgeCurrentDir);
 
                                 //change listView
                                 setItemsOnListView(Tokens);
@@ -909,8 +898,7 @@ public class MainActivity extends AppCompatActivity {
                 if(neighborMastersGUIDs!=null && neighborMastersGUIDs.size()!=0){
 
                     //convert guids into names
-                    List<String> neighborMastersNames = new ArrayList<>();
-                    for(int i=0; i< neighborMastersGUIDs.size();i++){neighborMastersNames.add(PeerFetcher.GUIDtoNameConversion(neighborMastersGUIDs.get(i))); }
+                    List<String> neighborMastersNames = lsUtils.masterGUIDsToNAMEs(neighborMastersGUIDs, allNeighborEdgeDirsCache);
 
                     //set currentView
                     currentMode = NEIGHBOREDGEDIR;
@@ -990,7 +978,7 @@ public class MainActivity extends AppCompatActivity {
                             }
 
                             //change textView
-                            textView.setText(formatGUID(currentBrowsingNeighborGUID) + ": " + neighborEdgeCurrentDir);
+                            textView.setText(lsUtils.guidTOname(currentBrowsingNeighborGUID, allNeighborEdgeDirsCache) + ": " + neighborEdgeCurrentDir);
 
                             //change listView
                             setItemsOnListView(Tokens);
@@ -1108,6 +1096,7 @@ public class MainActivity extends AppCompatActivity {
 
                 }else{
                     Toast.makeText(this, "Choose a file from sdcard.", Toast.LENGTH_LONG).show();
+                    //Toast.makeText(this, path, Toast.LENGTH_LONG).show();
                 }
             }
         }
@@ -1180,10 +1169,37 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    //takes a GUID and returns a smaller version only for view purpose
-    public static String formatGUID(String GUID){
-        return PeerFetcher.GUIDtoNameConversion(GUID);
+    //flushes the MainActivity with message
+    public static void flushUI(String msg){
 
+        //UI update
+        MainActivity.activity.runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+
+                //UI
+                MainActivity.textView.setText("");
+                MainActivity.textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+                MainActivity.textView.setText(msg);
+
+                //create emptylist
+                List<String> arrayList = new ArrayList<>();
+
+                //initialize and set array adapter
+                arrayAdapter = new ArrayAdapter(MainActivity.context, android.R.layout.simple_list_item_1, arrayList);
+                listView.setAdapter(arrayAdapter);
+
+                //disable all buttons
+                MainActivity.backButton.setEnabled(false);
+                MainActivity.refreshButton.setEnabled(false);
+                MainActivity.mkdirButton.setEnabled(false);
+                MainActivity.putButton.setEnabled(false);
+                MainActivity.toggleView.setEnabled(false);
+
+            }
+        });
     }
+
 
 }

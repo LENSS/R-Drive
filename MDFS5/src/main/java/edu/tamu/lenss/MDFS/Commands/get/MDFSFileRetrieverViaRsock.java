@@ -7,18 +7,17 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
+import edu.tamu.lenss.MDFS.Commands.log.myLog;
 import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeper;
-import edu.tamu.lenss.MDFS.RSock.RSockConstants;
 import edu.tamu.lenss.MDFS.Model.MDFSFileInfo;
-import edu.tamu.lenss.MDFS.Model.MDFSRsockBlockForFileRetrieve;
+import edu.tamu.lenss.MDFS.Model.MDFSFragmentForFileRetrieve;
+import edu.tamu.lenss.MDFS.RSock.RSockConstants;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
-
 
 public class MDFSFileRetrieverViaRsock {
 
@@ -61,15 +60,15 @@ public class MDFSFileRetrieverViaRsock {
         if(succeeded) {
 
             //print before normalize
-            // getUtils.print2DArray(missingBlocksAndFrags, "print before normalize");
+            // getUtilsGod.print2DArray(missingBlocksAndFrags, "print before normalize");
 
             //check if this node has already K frags for each block
-            if (getUtils.checkEnoughFragsAvailable(missingBlocksAndFrags, fileInfo.getK2())) {
+            if (getUtils.checkEnoughFragsAvailableForWholeFile(missingBlocksAndFrags, fileInfo.getK2())) {
 
-                //make a MDFSRsockBlockForFileRetrieve of type= ReplyFromOneClientToAnotherForOneFragment
+                //make a mdfsfrag of type= ReplyFromOneClientToAnotherForOneFragment
                 //merge the file in a new thread
-                MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.ReplyFromOneClientToAnotherForOneFragment, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, "dummyDestGUID", fileInfo.getFileName(), metadata.getFilePathMDFS(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), 0, 0, localDir, null, true);
-                executor.submit(new FileMerge(mdfsrsockblock));
+                MDFSFragmentForFileRetrieve mdfsfrag = new MDFSFragmentForFileRetrieve(UUID.randomUUID().toString(), MDFSFragmentForFileRetrieve.Type.ReplyFromOneClientToAnotherForOneFragment, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, "dummyDestGUID", fileInfo.getFileName(), metadata.getFilePathMDFS(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), 0, 0, localDir, null, true);
+                executor.submit(new FileMerge(mdfsfrag));
 
                 //log
                 logger.log(Level.ALL, "merged file blocks for filename "  + fileInfo.getFileName() + " without retrieval since all blocks are available");
@@ -109,7 +108,7 @@ public class MDFSFileRetrieverViaRsock {
                 }
 
                 //print after normalize
-                //getUtils.print2DArray(missingBlocksAndFrags, "print after normalize");
+                //getUtilsGod.print2DArray(missingBlocksAndFrags, "print after normalize");
 
                 //choose best nodes for each block, based on metadata.
                 //this list contains each entry as block_frag_guid manner.
@@ -158,52 +157,49 @@ public class MDFSFileRetrieverViaRsock {
     //format, and sends out request on by one.
     private boolean sendFragmentRequest(String s) {
 
-        //tokenize the string
-        String[] tokens = s.split("__");
-
-        //delete empty string
-        tokens = IOUtilities.delEmptyStr(tokens);
-
-        //get the variables
-        String destGUID = tokens[0];
-        int blockIdx =  Integer.parseInt(tokens[1]);
-        int fragmentIndex = Integer.parseInt(tokens[2]);
-
-        //make an object of MDFSRsockBlockRetrieval with request tag
-        MDFSRsockBlockForFileRetrieve mdfsrsockblock = new MDFSRsockBlockForFileRetrieve(UUID.randomUUID().toString(), MDFSRsockBlockForFileRetrieve.Type.RequestFromOneClientToAnotherForOneFragment, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, destGUID, fileInfo.getFileName(), fileInfo.getFilePathMDFS(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), blockIdx, fragmentIndex, localDir, null, true);
-
-        //get byteArray from object and size of the MDFSRsockBlockRetreival obj
-        byte[] data = null;
         try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = null;
-            oos = new ObjectOutputStream(bos);
-            oos.writeObject(mdfsrsockblock);
-            oos.flush();
-            data = bos.toByteArray();
-        } catch (Exception e) {
-            //logger: could not convert object into bytes
-        }
+            //tokenize the string
+            String[] tokens = s.split("__");
 
-        //send request
-        if (data != null) {
-            String uuid = UUID.randomUUID().toString().substring(0, 12);
-            boolean sent = false;
-            if(RSockConstants.RSOCK) {
-                sent = RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing", "nothing", destGUID, 500);
+            //delete empty string
+            tokens = IOUtilities.delEmptyStr(tokens);
+
+            //get the variables
+            String destGUID = tokens[0];
+            int blockIdx = Integer.parseInt(tokens[1]);
+            int fragmentIndex = Integer.parseInt(tokens[2]);
+
+            //make an object of mdfsfragRetrieval with request tag
+            MDFSFragmentForFileRetrieve mdfsfrag = new MDFSFragmentForFileRetrieve(UUID.randomUUID().toString(), MDFSFragmentForFileRetrieve.Type.RequestFromOneClientToAnotherForOneFragment, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, destGUID, fileInfo.getFileName(), fileInfo.getFilePathMDFS(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), blockIdx, fragmentIndex, localDir, null, true);
+
+
+            //get byteArray from object and size of the mdfsfragRetreival obj
+            byte[] data = IOUtilities.objectToByteArray(mdfsfrag);
+
+            //send request
+            if (data != null) {
+                String uuid = UUID.randomUUID().toString().substring(0, 12);
+                boolean sent = false;
+                if (RSockConstants.RSOCK) {
+                    sent = RSockConstants.intrfc_retrieval.send(uuid, data, data.length, "nothing", "nothing", destGUID);
+                }
+
+                if (sent) {
+                    //log
+                    logger.log(Level.ALL, "fragment request sent: " + s);
+
+                    //return
+                    return sent;
+                } else {
+
+                    //log
+                    logger.log(Level.ALL, "failed to send fragment request: " + s);
+                }
             }
 
-            if(sent){
-                //log
-                logger.log(Level.ALL, "fragment request sent: " + s);
-
-                //return
-                return sent;
-            }else{
-
-                //log
-                logger.log(Level.ALL, "failed to send fragment request: " + s);
-            }
+            return false;
+        }catch (Exception e){
+            logger.log(Level.ERROR, "Exception happened in sendFragmentRequest(), ", e);
         }
 
         return false;
@@ -212,18 +208,11 @@ public class MDFSFileRetrieverViaRsock {
 
 
     //this function chooses the best nodes for sending file retrieval request.
-    //each entry in this function is of guid__block#__fragment# style.
+    //each entry in this function return is of guid__block#__fragment# style.
     private List<String> chooseBestCandidateNodes(int[][] missingBlocksAndFrags, int[] blockIndicator) {
-
-        //print block indicator
-        for (int i=0; i< blockIndicator.length; i++){
-            System.out.print(blockIndicator[i] + " ");
-        }
-        System.out.println();
 
         //make return list
         List<String> chosenNodes = new ArrayList<>();
-
 
         //iterate through each block.
         for(int i=0; i< blockIndicator.length; i++){
@@ -232,48 +221,40 @@ public class MDFSFileRetrieverViaRsock {
             if(blockIndicator[i]==1) {
 
                 //for each fragment indicating 1, find its GUIDs
-                int k = fileInfo.getK2()+1;
+                int k = fileInfo.getK2();
                 for(int j=0; j< missingBlocksAndFrags[i].length; j++){
 
+                    //if this fragment is missing
                     if(missingBlocksAndFrags[i][j]==1){
 
                         //get the guids holding this fragment
-                        List<String> fragGUIDs = metadata.getAllFragmentHoldersGUID(i,j);
-
-                        //common guids from olsr and fragGUIDs
-                        List<String> commonGUIDs = new ArrayList<>();
-
-                        commonGUIDs.addAll(fragGUIDs);
+                        List<String> fragGUIDs = metadata.getBlock(i).getFragment(j).getAllFragmentHoldersGUID();
 
                         //remove my guid from the list
-                        commonGUIDs.remove(EdgeKeeper.ownGUID);
+                        fragGUIDs.remove(EdgeKeeper.ownGUID);
 
-                        //check if commonGUIDs is empty,
+                        //check if fragGUIDs is empty,
                         //then we take ony the file creator.
-                        //in this case, file creator is not
-                        //nearby, but we have no other way.
-                        if(commonGUIDs.size()==0){
+                        if(fragGUIDs.size()==0){
                             chosenNodes.add(metadata.getFileCreatorGUID() + "__" + i + "__" + j);
-                        }
-                        //other wise we take the file creator, if it is nearby.
-                        else if(commonGUIDs.contains(metadata.getFileCreatorGUID())){
-                            chosenNodes.add(metadata.getFileCreatorGUID() + "__" + i + "__" + j);
-                        }
-                        //otherwise we consider other nodes as candidate,
-                        //who are nearby and available.
-                        else{
-                            chosenNodes.add(commonGUIDs.get(0) + "__" + i + "__" + j);
+                        } else{
+                            //just get the first one from the list for now.
+                            //note: this is where a good algorithm
+                            // to choose best node would come in play.
+                            chosenNodes.add(fragGUIDs.get(0) + "__" + i + "__" + j);
                         }
 
                         //decrement k
                         k--;
 
+                    }else{
+                        //this fragment already
+                        // exists so decrease k anyways.
+                        k--;
                     }
 
-                    //check for this block we are making k+1 frag request only.
-                    //we do one extra for assurance.
+                    //check for this block we are making k frag request only.
                     if(k==0){ break; }
-
 
                 }
             }

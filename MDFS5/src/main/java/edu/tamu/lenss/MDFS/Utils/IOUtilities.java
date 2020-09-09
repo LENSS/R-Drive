@@ -1,6 +1,7 @@
- package edu.tamu.lenss.MDFS.Utils;
+package edu.tamu.lenss.MDFS.Utils;
 
- import java.io.ByteArrayInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
@@ -18,37 +19,48 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
- import java.util.Collections;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
- import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
- public class IOUtilities {
+import static java.nio.file.StandardOpenOption.READ;
+import static java.nio.file.StandardOpenOption.WRITE;
+import static java.nio.file.StandardOpenOption.APPEND;
+public class IOUtilities {
 
-    //miscellaneous purpose
+	//miscellaneous purpose
 	public static BlockingQueue<Pair> miscellaneousWorks = new LinkedBlockingQueue(5);
 
 	//takes a fullpath of a file and returns the name.
-    //this function assumes that the last entry in the filePath is indeed fileName.
-    public static String getFileNameFromFullPath(String filePath){
-        //first tokenize the filePath
-        String[] tokens = filePath.split("/");
+	//this function assumes that the last entry in the filePath is indeed fileName.
+	public static String getFileNameFromFullPath(String filePath){
+		//first tokenize the filePath
+		String[] tokens = filePath.split("/");
 
-        //delete empty strings
-        tokens = delEmptyStr(tokens);
+		//delete empty strings
+		tokens = delEmptyStr(tokens);
 
-        //return the last element
-        return tokens[tokens.length-1];
+		//return the last element
+		return tokens[tokens.length-1];
 
-    }
+	}
 
 	public static List<String> getOwnIPv4s() {
 		List<String> addrList = new ArrayList<String>();
@@ -106,7 +118,7 @@ import java.util.regex.Pattern;
 
 	public static boolean isValidInet4Address(String ip) {
 
-    	//tokenize
+		//tokenize
 		String[] IPnumbers = IOUtilities.removeAllSpacesAndTokenize(ip, "\\.");
 
 		//check if there are four tokens
@@ -136,13 +148,13 @@ import java.util.regex.Pattern;
 	public static File createNewFile(File dir, String name){
 		if(dir == null || MyTextUtils.isEmpty(name))
 			return null;
-		
+
 		if(!dir.exists()){
 			if(!dir.mkdirs()){
 				return null;
 			}
 		}
-		
+
 		File f = new File(dir, name);
 		if(f.exists())
 			return f;
@@ -156,14 +168,14 @@ import java.util.regex.Pattern;
 		}
 		return f;
 	}
-	
+
 	//Create a new file and its parent directories in the specified path <br>
 	//Return the file handler if the file already exists <br>
 	public static File createNewFile(String path){
 		File f = new File(path);
 		return createNewFile(f.getParentFile(), f.getName());
 	}
-	
+
 
 	//Create a new file and its parent directories.
 	//Return the file handler if the file already exists.
@@ -171,9 +183,9 @@ import java.util.regex.Pattern;
 	public static File createNewFile(File filePath){
 		return createNewFile(filePath.getParentFile(), filePath.getName());
 	}
-	
 
-	
+
+
 	//Parse the first 3 parts of the IP address, including the last dot, .
 	public static String parsePrefix(String IP){
 		try{
@@ -184,10 +196,87 @@ import java.util.regex.Pattern;
 			return null;
 		}
 	}
-	
-	//Convert byte array to a file
-	public static File byteToFile(byte[] data, File dir, String name){
-		File f = createNewFile(dir, name);
+
+	//Appends file bytes into file from start index upto end
+	public static void byteToFile_RAF_append(byte[] source, int offset, int length, File destination, long startIndex){
+		try{
+			destination.setWritable(true);
+			RandomAccessFile randF = new RandomAccessFile(destination, "rw");
+			randF.seek(startIndex);
+			randF.write(source, offset, length);
+			randF.close();
+
+		}catch (Exception e) {e.printStackTrace();}
+	}
+
+	//appends a single byte array to a single file using FileOutputStream.
+	public static void byteToFile_FOS_append(byte[] source, int offset, int length, File outputFile){
+		try {
+			FileOutputStream output = new FileOutputStream(outputFile.getAbsolutePath(), true);
+			output.write(source, offset, length);
+			output.close();
+		}catch (Exception e){
+			e.printStackTrace();
+		}
+
+	}
+
+	//appends a single byte array to a single file using NIO.Files
+	public static void byteToFile_NIOFILES_append(byte[] source, File outputFile){
+
+		try {
+			Path path = Paths.get(outputFile.getAbsolutePath());
+			Files.write(path, source, WRITE, APPEND);
+		}catch (Exception e){
+			e.printStackTrace();
+		}
+	}
+
+	//appends a single byte array to a single file using FileChannel
+	public static void byteToFile_FC_append(byte[] source, int offset,int length, File outputFile){
+
+		try{
+			Path path = Paths.get(outputFile.getAbsolutePath());
+			FileChannel fc = FileChannel.open(path, WRITE, APPEND);
+			ByteBuffer buf = ByteBuffer.wrap(source, offset, length);
+			fc.write(buf);
+			fc.close();
+
+		}catch (Exception e){
+			e.printStackTrace();
+		}
+	}
+
+	//append a single byte array to a single file using BufferedOutputStream
+	public static void byteToFile_BOS_append(byte[] source, int offset,int length, File outputFile, boolean flush){
+		FileOutputStream fos;
+		BufferedOutputStream bos=null;
+		try{
+			fos = new FileOutputStream(outputFile.getAbsolutePath(), true);
+			bos = new BufferedOutputStream(fos);
+			bos.write(source, offset, length);
+			if(flush){bos.flush();}
+		}catch (Exception e){
+			e.printStackTrace();
+		}finally {
+			//only close the outer most object.
+			//no need to close underlying ones.
+			if(bos != null){
+				try {
+					bos.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+
+
+	//Convert a single byte array to a single file
+	//this function creates new file if file already does not exist
+	public static File byteToFile_FOS_write(byte[] data, File filedir, String filename){
+		File f = createNewFile(filedir, filename);
 		try {
 			FileOutputStream fos = new FileOutputStream(f);
 			fos.write(data);
@@ -199,7 +288,6 @@ import java.util.regex.Pattern;
 		}
 		return f;
 	}
-
 
 	//Convert a File to a byte array
 	public static byte[] fileToByte(File file){
@@ -227,20 +315,6 @@ import java.util.regex.Pattern;
 		}catch (Exception e) {e.printStackTrace();}
 	}
 
-	//Appends file bytes into file from start index upto end
-	public static void byteToFile(byte[] source, int offset, int length, File destination, long startIndex){
-		try{
-			destination.setWritable(true);
-			RandomAccessFile randF = new RandomAccessFile(destination, "rw");
-			randF.seek(startIndex);
-			randF.write(source, offset, length);
-			randF.close();
-
-		}catch (Exception e) {e.printStackTrace();}
-	}
-
-	
-
 	//Covert a Serializable Object to a byte array
 	public static <T extends Object> byte[] objectToByteArray(T object){
 		ByteArrayOutputStream byteStr = new ByteArrayOutputStream(10240);
@@ -255,7 +329,7 @@ import java.util.regex.Pattern;
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Convert a bytes array to an Serializable Object
 	 * @param
@@ -303,7 +377,7 @@ import java.util.regex.Pattern;
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Read an Object from a file
 	 * @param file
@@ -331,43 +405,8 @@ import java.util.regex.Pattern;
 		}
 		return object;
 	}
-	
-	
-	
-	/**
-	 * Clean up the files that are more than pastTime old in the specify
-	 * directory <br>
-	 * Set pastTime to 0 will remove all the files in the directory
-	 * 
-	 * @param directory
-	 *            The path of the directory that need to be cleaned up
-	 * @param pastTime
-	 *            The time in milli-seconds.
-	 * @throws FileNotFoundException
-	 */
-	public static void cleanCache(File directory, long pastTime)
-			throws FileNotFoundException {
-		final long timePoint = System.currentTimeMillis() - pastTime;
-		if (directory == null || !directory.exists()) {
-			throw new FileNotFoundException("Directory Do Not Exist!");
-		} else if (!directory.isDirectory()) {
-			throw new FileNotFoundException("The path is not a valid directory");
-		}
-		FileFilter fileFilter = new FileFilter() {
-			public boolean accept(File file) {
-				if (!file.isDirectory()) {
-					if (file.lastModified() < timePoint)
-						return true;
-				}
-				return false;
-			}
-		};
-		File[] files = directory.listFiles(fileFilter);
-		for (File f : files) {
-			f.delete();
-		}
-	}
-	
+
+
 	public static void deleteRecursively(File f) throws IOException {
 		if (f.isDirectory()) {
 			for (File c : f.listFiles())
@@ -392,7 +431,7 @@ import java.util.regex.Pattern;
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Convert a 6 byte, Hex-coded mac address to a 8  Bytes Long
 	 * @param
@@ -401,11 +440,11 @@ import java.util.regex.Pattern;
 	public static Long mac2Long(String macAdd){
 		String[] macAddressParts = macAdd.trim().split(":");
 		long value=0;
-		// convert hex string to byte values. First element is the most significant byte 
+		// convert hex string to byte values. First element is the most significant byte
 		Byte[] macAddressBytes = new Byte[6];
 		for(int i=0; i<6; i++){
-		    Integer hex = Integer.parseInt(macAddressParts[i], 16);
-		    macAddressBytes[i] = hex.byteValue();
+			Integer hex = Integer.parseInt(macAddressParts[i], 16);
+			macAddressBytes[i] = hex.byteValue();
 		}
 		for (int i = 0; i < macAddressBytes.length; i++)
 		{
@@ -413,7 +452,7 @@ import java.util.regex.Pattern;
 		}
 		return value;
 	}
-	
+
 	/**
 	 * Convert an 8 bytes Long to a 6 bytes Mac Address. Assume the first 2 bytes are zero
 	 * @param value
@@ -422,14 +461,14 @@ import java.util.regex.Pattern;
 	public static String long2mac(long value){
 		ByteBuffer buffer = ByteBuffer.allocate(8);
 		StringBuilder str = new StringBuilder();
-	    buffer.putLong(value);
-	    byte[] macAddressBytes = buffer.array();
-	    for(int i=2; i<8; i++){
-	    	str.append(String.format("%02x", macAddressBytes[i] & 0xff));
-	    	if(i < 7)
-	    		str.append(":");
-	    }
-	    return str.toString();
+		buffer.putLong(value);
+		byte[] macAddressBytes = buffer.array();
+		for(int i=2; i<8; i++){
+			str.append(String.format("%02x", macAddressBytes[i] & 0xff));
+			if(i < 7)
+				str.append(":");
+		}
+		return str.toString();
 	}
 
 	//takes a string ip and returns long version of it
@@ -457,20 +496,19 @@ import java.util.regex.Pattern;
 		return ((ip >> 24) & 0xFF) + "." + ((ip >> 16) & 0xFF) + "."
 				+ ((ip >> 8) & 0xFF) + "." + (ip & 0xFF);
 	}
-	
+
 	public static boolean validateIP(final String ip) {
 		final String PATTERN = "^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
 		Pattern pattern = Pattern.compile(PATTERN);
 		Matcher matcher = pattern.matcher(ip);
 		return matcher.matches();
 	}
-	
+
 	public static boolean renameFile(File originalFile, String newName){
 		final File renamedFile = new File(originalFile.getParent()+ File.separator + newName);
 		return originalFile.renameTo(renamedFile);
 	}
 
-	//utility function
 	//takes a hashmap and returns sorted map by value
 	//order = true, results in ascending order, false= descending order
 	public static Map<String, Double> sortByComparator(Map<String, Double> unsortMap, final boolean order) {

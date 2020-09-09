@@ -7,7 +7,7 @@ android {
         targetSdkVersion 26
         buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
         multiDexEnabled  true
-        minSdkVersion 23
+        minSdkVersion 26
 
     }
 
@@ -63,6 +63,7 @@ dependencies {
     implementation files('libs/gson-2.8.5.jar')
     implementation files('libs/json-20180813.jar')
     implementation files('libs/log4j-1.2.17.jar')
+    implementation files('libs/commons-io-2.6.jar')
 }
 
 

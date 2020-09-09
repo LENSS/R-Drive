@@ -31,7 +31,7 @@ public class RsockReceiveForRsockTest implements Runnable{
             //blocking on receiving through rsock at a particular endpoint
             try {
                 rcvdfile = RSockConstants.intrfc_test.receive(); }
-            catch (InterruptedException e) {
+            catch (Exception e) {
                 //rsock api threw exception.
                 //meaning, Rsock api closed down.
                 //need to come out of this thread

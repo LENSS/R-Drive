@@ -50,8 +50,7 @@ public class testRsock {
                     data_64049.length(),
                     "nothing",
                     "nothing",
-                    remoteAddr,
-                    0);
+                    remoteAddr);
 
             System.out.println("testRsock sent data of " + data_64049.length());
 
@@ -72,8 +71,7 @@ public class testRsock {
                     data_64050.length(),
                     "nothing",
                     "nothing",
-                    remoteAddr,
-                    0);
+                    remoteAddr);
 
             System.out.println("testRsock sent data of " + data_64050.length());
 
@@ -94,8 +92,7 @@ public class testRsock {
                     data_64051.length(),
                     "nothing",
                     "nothing",
-                    remoteAddr,
-                    0);
+                    remoteAddr);
 
             System.out.println("testRsock sent data of " + data_64051.length());
 
@@ -116,8 +113,7 @@ public class testRsock {
                     data_128099.length(),
                     "nothing",
                     "nothing",
-                    remoteAddr,
-                    0);
+                    remoteAddr);
 
             System.out.println("testRsock sent data of " + data_128099.length());
 
@@ -139,8 +135,7 @@ public class testRsock {
                     data_128100.length(),
                     "nothing",
                     "nothing",
-                    remoteAddr,
-                    0);
+                    remoteAddr);
 
 
             System.out.println("testRsock sent data of " + data_128100.length());
@@ -161,8 +156,7 @@ public class testRsock {
                     data_128101.length(),
                     "nothing",
                     "nothing",
-                    remoteAddr,
-                    0);
+                    remoteAddr);
 
             System.out.println("testRsock sent data of " + data_128101.length());
 
@@ -182,8 +176,7 @@ public class testRsock {
                     data_1.length(),
                     "nothing",
                     "nothing",
-                    remoteAddr,
-                    0);
+                    remoteAddr);
 
             System.out.println("testRsock sent data of " + data_1.length());
             //-------------------------------------------------------------------
@@ -198,8 +191,7 @@ public class testRsock {
                     data_0.length(),
                     "nothing",
                     "nothing",
-                    remoteAddr,
-                    0);
+                    remoteAddr);
 
             System.out.println("testRsock sent data of " + data_0.length());
         }

@@ -12,7 +12,7 @@ public class AndroidUIUtilities {
 	private AndroidUIUtilities() { }
 
     public static void showToast(Context context, int id, boolean longToast) {
-        Toast.makeText(context, id, longToast ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
+        ///Toast.makeText(context, id, longToast ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
     }
     
     public static void showToast(Context context, String text, boolean longToast) {

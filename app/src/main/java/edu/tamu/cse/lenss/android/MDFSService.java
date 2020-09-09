@@ -18,6 +18,8 @@ import java.util.concurrent.TimeUnit;
 
 import edu.tamu.cse.lenss.Notifications.NotificationUtils;
 import edu.tamu.lenss.MDFS.Constants;
+import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeper;
+import edu.tamu.lenss.MDFS.RSock.RSockConstants;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 import edu.tamu.lenss.MDFS.Utils.Pair;
 
@@ -58,9 +60,24 @@ public class MDFSService extends Service {
                     while (miscThdEnabled) {
                         Pair p = IOUtilities.miscellaneousWorks.poll(10, TimeUnit.MILLISECONDS);
                         if(p!=null) {
+
                             if (p.getString_1().equals(Constants.NOTIFICATION)) {
+
+                                //its a notification, show it
                                 set_alarm(0, p.getString_2());
+
+                            }else if(p.getString_1().equals(Constants.EDGEKEEPER_CLOSED)){
+
+                                //EK closed, freeze UI
+                                MainActivity.flushUI(p.getString_2());
+
+                            }else if(p.getString_1().equals(Constants.RSOCK_CLOSED)){
+
+                                //rsock api closed, freeze UI
+                                MainActivity.flushUI(p.getString_2());
                             }
+
+                            //dummy sleep
                             sleep(0);
                         }
                     }

@@ -23,7 +23,7 @@ public class Constants {
 	public static final String ANDROID_DIR_ROOT = "MDFS";
 	public static final String ANDROID_DIR_CACHE = ANDROID_DIR_ROOT + File.separator + "cache";
 	public static final String DEFAULT_DECRYPTION_FOLDER_NAME = "decrypted";
-	public static String ANDROID_DIR_DECRYPTED = "";
+    public static String ANDROID_DIR_DECRYPTED = "";
 
     //encoding parameters
 	public static final double K_N_RATIO = 0.5;
@@ -33,6 +33,8 @@ public class Constants {
     public static final boolean metadataIsGlobal = true;
 
     public final static String NOTIFICATION = "NOTIFICATION";
+	public static final String RSOCK_CLOSED = "RSOCK_CLOSED" ;
+	public static final String EDGEKEEPER_CLOSED = "EDGEKEEPER_CLOSED";
 	public static final String NON_CLI_CLIENT = "NONCLICLIENT";
 
 

@@ -13,6 +13,7 @@ import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.ShortBufferException;
 import javax.crypto.spec.SecretKeySpec;
 
 
@@ -90,8 +91,40 @@ public class MDFSCipher {
 		} catch (BadPaddingException e) {
 			e.printStackTrace();
 		}
-		
+
 		return encryptedMessage;
+	}
+
+	//return value is how many bytes have been encrypted and added at the the output buffer , starting from the outputOffset.
+	//so the final buffer contains 'good' data of (outputOffset + return value) size starting from 0.
+	public int encryptX(byte[] plainMessage,  int plainMessageOffset, int plainMessageLength, byte[] rawSecretKey, byte[] output, int outputOffset){
+		int count = 0;
+		Cipher cipher = getCipher(rawSecretKey, Cipher.ENCRYPT_MODE);
+
+		try {
+			count = cipher.doFinal(plainMessage, plainMessageOffset, plainMessageLength, output, outputOffset);
+		} catch (ShortBufferException e) {
+			e.printStackTrace();
+		} catch (IllegalBlockSizeException e) {
+			e.printStackTrace();
+		} catch (BadPaddingException e) {
+			e.printStackTrace();
+		}
+
+		return count;
+	}
+
+	//input: encrypted bytearray, secretKey, output bytearray, output offset
+	public int decryptX(byte[] encryptedMessage, int encryptedMessageOffset, int encryptedMessageLength, byte[] rawSecretKey, byte[] output, int outputOffset){
+		int count = 0;
+		Cipher cipher = getCipher(rawSecretKey, Cipher.DECRYPT_MODE);
+
+		try {
+			count = cipher.doFinal(encryptedMessage, encryptedMessageOffset ,encryptedMessageLength, output, outputOffset);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return count;
 	}
 	
 	public byte[] decrypt(byte[] encryptedMessage, byte[] rawSecretKey) {

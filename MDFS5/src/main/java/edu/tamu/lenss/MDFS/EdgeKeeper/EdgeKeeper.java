@@ -1,18 +1,16 @@
 package edu.tamu.lenss.MDFS.EdgeKeeper;
 
-import android.os.Looper;
-import android.widget.Toast;
-
 import org.apache.log4j.Level;
-import org.apache.log4j.chainsaw.Main;
 
 import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
-import edu.tamu.lenss.MDFS.MissingLInk.MissingLink;
+import edu.tamu.lenss.MDFS.Constants;
 import edu.tamu.lenss.MDFS.RSock.RSockConstants;
 import edu.tamu.lenss.MDFS.RSock.network.RsockReceiveForFileCreation;
 import edu.tamu.lenss.MDFS.RSock.network.RsockReceiveForFileDeletion;
 import edu.tamu.lenss.MDFS.RSock.network.RsockReceiveForFileRetrieval;
 import edu.tamu.lenss.MDFS.RSock.network.RsockReceiveForRsockTest;
+import edu.tamu.lenss.MDFS.Utils.IOUtilities;
+import edu.tamu.lenss.MDFS.Utils.Pair;
 
 public class EdgeKeeper {
 
@@ -21,50 +19,34 @@ public class EdgeKeeper {
 
     public static String ownGUID;
     public static String ownName;
-    public static boolean started = false;
+    public static boolean isActive = false;
+    public static String EK_Library_Closed_Message = "EdgeKeeper closed! \n restart EdgeKeeper -> Rsock -> MDFS.";
     private static int count = 0;
 
-    public EdgeKeeper(){
-        Thread tr1 = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Looper.prepare();
-                while(!started) {
-                    doo();
-
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
-        tr1.start();
-    }
-
-    private static void doo() {
+    public EdgeKeeper() {
         register();
         obtainOwnGUID();
+
     }
 
 
     //note: must make sure this function starts after EdgeKeeper server is running
     private static void obtainOwnGUID() {
-        ownGUID = EKClient.getOwnGuid();
-        ownName = EKClient.getOwnAccountName();
-        if(ownGUID==null | ownName==null){
-            logger.log(Level.ERROR, "EdgeKeeper Error! could not init local EdgeKeeper " + count++);
-        }else{
-            logger.log(Level.ALL,"own GUID: " + ownGUID);
-            started = true;
-            if(count==0) {
-                RSockConstants.RSOCK = true;
-            }else{
-                RSockConstants.RSOCK = false;
+        try {
+            ownGUID = EKClient.getOwnGuid();
+            if (ownGUID == null) {
+                logger.log(Level.ERROR, "EdgeKeeper initialization error...Maybe local EdgeKeeper server is not running or not connected.");
+                IOUtilities.miscellaneousWorks.put(new Pair(Constants.EDGEKEEPER_CLOSED, EK_Library_Closed_Message ));
+                isActive = false;
+            } else {
+                //success happening here
+                ownName = EKClient.getAccountNamebyGUID(ownGUID);
+                isActive = true;
+                runRsock();
             }
-            runRsock();
-
+        }catch (Exception e){
+            logger.log(Level.DEBUG, "EdgeKeeper Exception! could not fetch ownGUID and ownNAME.");
+            isActive = false;
         }
 
     }
@@ -80,6 +62,7 @@ public class EdgeKeeper {
         if(RSockConstants.RSOCK) {
 
             //start file creator rsock in a thread
+            //Thread t1 = new Thread(new RsockReceiveForFileCreation());
             Thread t1 = new Thread(new RsockReceiveForFileCreation());
             t1.start();
 
@@ -100,16 +83,26 @@ public class EdgeKeeper {
     }
 
 
-    public static boolean stop(){
+    public static void stop(){
 
-        //stop rsock if its running.
-        if(RSockConstants.RSOCK) {
-            RsockReceiveForFileCreation.stop();
-            RsockReceiveForFileRetrieval.stop();
-            RsockReceiveForFileDeletion.stop();
-            RsockReceiveForRsockTest.stop();
+        //stop rsock
+        try {
+            //stop rsock if its running.
+            if (RSockConstants.RSOCK) {
+                RsockReceiveForFileCreation.stop();
+                RsockReceiveForFileRetrieval.stop();
+                RsockReceiveForFileDeletion.stop();
+                if(RSockConstants.testRsock){RsockReceiveForRsockTest.stop();}
+            }
+        }catch (Exception e){
+            logger.debug("Rsock Exception! could not call close() in Interface.java, ", e);
         }
 
-        return EKClient.removeService(EdgeKeeperConstants.EdgeKeeper_s);
+        //stop edgekeeper
+        try {
+            EKClient.removeService(EdgeKeeperConstants.EdgeKeeper_s);
+        }catch (Exception e){
+            logger.debug("EdgeKeeper Exception! exception when calling removeService(), ",e);;
+        }
     }
 }

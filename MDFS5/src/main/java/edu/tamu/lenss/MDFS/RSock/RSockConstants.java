@@ -10,6 +10,8 @@ public class RSockConstants {
     //enable/disable rsock from the whole project
     public static boolean RSOCK = true;
 
+    //testrsock
+    public static boolean testRsock = false;
 
     //rsock api instances.
     public static Interface intrfc_creation;
@@ -26,11 +28,8 @@ public class RSockConstants {
     //deletion tag
     public static final String deletion_tag = "_delete_";
 
-    //rsock endpoints
-    //Note: values must have to be seven bytes
-    public static final String fileCreateEndpoint = "RsockFC";
-    public static final String fileRetrieveEndpoint = "RsockFR";
-    public static final String fileDeleteEndpoint = "RsockDL";
+    //error message
+    public static String Rsock_Library_Closed_Message = "RSOCK library closed, please restart Rsock -> MDFS.";
 
-    public static boolean testRsock = false;
+
 }
