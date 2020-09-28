@@ -18,8 +18,6 @@ import java.util.concurrent.TimeUnit;
 
 import edu.tamu.cse.lenss.Notifications.NotificationUtils;
 import edu.tamu.lenss.MDFS.Constants;
-import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeper;
-import edu.tamu.lenss.MDFS.RSock.RSockConstants;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 import edu.tamu.lenss.MDFS.Utils.Pair;
 
@@ -53,12 +51,16 @@ public class MDFSService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         //start miscellaneous thread
+        //used primarily for notifying UI stuff.
+        //no hard if this thread is disabled,
+        //only the UI will not be updated for error events.
         miscellaneous = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     while (miscThdEnabled) {
-                        Pair p = IOUtilities.miscellaneousWorks.poll(10, TimeUnit.MILLISECONDS);
+                        //Pair p = IOUtilities.miscellaneousWorks.poll(10, TimeUnit.MILLISECONDS);
+                        Pair p = IOUtilities.miscellaneousWorks.take();
                         if(p!=null) {
 
                             if (p.getString_1().equals(Constants.NOTIFICATION)) {
@@ -69,12 +71,12 @@ public class MDFSService extends Service {
                             }else if(p.getString_1().equals(Constants.EDGEKEEPER_CLOSED)){
 
                                 //EK closed, freeze UI
-                                MainActivity.flushUI(p.getString_2());
+                                MainActivity.freezeUI(p.getString_2());
 
                             }else if(p.getString_1().equals(Constants.RSOCK_CLOSED)){
 
                                 //rsock api closed, freeze UI
-                                MainActivity.flushUI(p.getString_2());
+                                MainActivity.freezeUI(p.getString_2());
                             }
 
                             //dummy sleep

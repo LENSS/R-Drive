@@ -1169,8 +1169,8 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    //flushes the MainActivity with message
-    public static void flushUI(String msg){
+    //freezes the MainActivity with message
+    public static void freezeUI(String msg){
 
         //UI update
         MainActivity.activity.runOnUiThread(new Runnable() {
