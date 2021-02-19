@@ -18,7 +18,7 @@ public class UIRequestHandler{
 
     public String run(){
 
-        String ret = edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS.ProcessOneRequest.processRequestCpp(Constants.NON_CLI_CLIENT, command);
+        String ret = edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS.ProcessOneRequest.processRequest(Constants.NON_CLI_CLIENT, command);
         return ret;
     }
 

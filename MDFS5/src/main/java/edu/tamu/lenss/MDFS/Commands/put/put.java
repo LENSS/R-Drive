@@ -31,7 +31,7 @@ public class put {
     private String fileID;                          //file ID
     private byte[] encryptKey;                      //put_encryption key
     private int blockCount;
-    private int maxBlockSize;
+    private int blockSize;
     private double encodingRatio;
     private List<String> chosenNodes;
     private MDFSMetadata metadata;                  //metadata object for this file
@@ -50,6 +50,7 @@ public class put {
 
     //takes parameters to file creation and does the job
     public String put(String filePathLocal, String filePathMDFS, String filename, String clientID) {
+
 
         //add slash filepathlocal does not have an ending slash
         if(filePathLocal.charAt(filePathLocal.length()-1)!='/'){
@@ -78,10 +79,9 @@ public class put {
         }
 
         //if file is good, init variables
-        this.encodingRatio = Constants.K_N_RATIO;
-        this.maxBlockSize = Constants.MAX_BLOCK_SIZE;
-        if(this.maxBlockSize >= Integer.MAX_VALUE){ this.maxBlockSize = (int) Constants.DEFAULT_BLOCK_SIZE; }
-        this.blockCount = (int)Math.ceil((double)this.file.length()/this.maxBlockSize);
+        this.encodingRatio = Constants.DEFAULT_K_N_RATIO;
+        this.blockSize = (Constants.BLOCK_SIZE_IN_MB * (1024*1024));
+        this.blockCount = (int)Math.ceil((double)this.file.length()/this.blockSize);
         this.encryptKey = ServiceHelper.getInstance().getEncryptKey();
         this.filePathMDFS = filePathMDFS;
         this.fileID = UUID.randomUUID().toString().replaceAll("-", "");
@@ -92,26 +92,37 @@ public class put {
         //first decide the candidate nodes
         //add ownGUID if not in the list already.
         chosenNodes = EKClient.getAllLocalGUID();
-        if(chosenNodes==null){
-            chosenNodes = new ArrayList<>();
-            chosenNodes.add(EdgeKeeper.ownGUID);
+        if(chosenNodes.size() == 0) {
+            return "Error: EdgeKeeper not running";
         }
 
-        //this selects n2, k2 values,
+     //   if(chosenNodes==null){
+     //       chosenNodes = new ArrayList<>();
+     //       chosenNodes.add(EdgeKeeper.ownGUID);
+     //   }
+
+        //this block of code selects n2, k2 values,
         //based on the size of the chosenNodes list.
         //n2 will be chosen equal to number of nodes in the list.
-        //k2 will be chosen by the below equation.
-        //set n2 , k2
+        //k2 will be chosen by the below equation or user input.
         if(chosenNodes.size() >= Constants.MAX_N_VAL){ this.n2 = Constants.MAX_N_VAL;} else{ this.n2 = chosenNodes.size();}
-        this.k2 = (int) Math.round(n2 * encodingRatio);
+        if(Constants.K_VALUE==Constants.DEFAULT_K_VALUE) {
+            //the user did not set a k value, so we take default one determined by equation.
+            this.k2 = (int) Math.round(n2 * encodingRatio);
+        }else if(Constants.K_VALUE>=this.n2){
+            //user set K value very high, even as high or higher than current n value, so we set k value as current n value.
+            this.k2 = this.n2;
+        }else{
+            this.k2 = Constants.K_VALUE;
+        }
 
         //for testing only | delete me
         //n2 = 3; k2 = 2;
 
-        this.metadata.setn2((int)n2);
-        this.metadata.setk2((int)k2);
-        if(n2 < 1 || k2 < 1){
-            return "Decided N or K value is invalid, " + "N: " + n2  + " K: " + k2 + ".";
+        this.metadata.setn2((int)this.n2);
+        this.metadata.setk2((int)this.k2);
+        if(this.n2 < 1 || this.k2 < 1){
+            return "Decided N or K value is invalid, " + "N: " + this.n2  + " K: " + this.k2 + ".";
         }
 
         //check if single block or multiple block
@@ -124,7 +135,7 @@ public class put {
             //partition and send
             long filesize = file.length();
             long startIndex = 0;
-            long endIndex = maxBlockSize;
+            long endIndex = blockSize;
             byte[] blockBytes;
             for (int i = 0; i < blockCount; i++) {
 
@@ -140,7 +151,7 @@ public class put {
 
                 //update start and end index for next block iteration
                 startIndex = endIndex;
-                endIndex = endIndex + maxBlockSize;
+                endIndex = endIndex + blockSize;
                 if (endIndex > filesize) {
                     endIndex = filesize;
                 }
@@ -274,6 +285,10 @@ public class put {
 
         //return
         return shards;
+    }
+
+    public static List<String> getalllocalguids(){
+        return EKClient.getAllLocalGUID();
     }
 
 }

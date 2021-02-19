@@ -30,7 +30,7 @@ public class APIserver extends Thread {
         this.isRunning = true;
 
         //init server
-        try { ds= new DatagramSocket(MDFS_API_PORT,InetAddress.getByName("127.0.0.1")); } catch (Exception e) { e.printStackTrace(); }
+        try { ds= new DatagramSocket(MDFS_API_PORT, InetAddress.getByName("127.0.0.1")); } catch (Exception e) { e.printStackTrace(); }
 
         //init buffer
         byte[] receive = new byte[64000];
@@ -61,9 +61,9 @@ public class APIserver extends Thread {
                     //execute request command
                     String command = "mdfs -put " + req.getString(LOCALFILEPATH) + " " + req.getString(MDFSFILEPATH);
 
-                    //execute command using a callable
+                    //execute command using a nonblocking futuretask.
                     if(RSockConstants.RSOCK) {
-                        MainActivity.Foo(command, MainActivity.context);
+                        MainActivity.Foo(command, MainActivity.context, false);
                     }else{
                         System.out.println("MDFS API server error! Could not -put in MDFS, Rsock is down!");
                     }

@@ -11,5 +11,5 @@ public final class BuildConfig {
   public static final int VERSION_CODE = -1;
   public static final String VERSION_NAME = "";
   // Fields from default config.
-  public static final long TIMESTAMP = 1601151506344L;
+  public static final long TIMESTAMP = 1613765158168L;
 }

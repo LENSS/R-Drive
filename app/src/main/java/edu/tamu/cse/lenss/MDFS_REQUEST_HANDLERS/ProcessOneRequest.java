@@ -1,24 +1,23 @@
 package edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS;
 
 import java.io.File;
-import java.lang.reflect.ReflectPermission;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Level;
 
-import edu.tamu.lenss.MDFS.Commands.get.get;
-import edu.tamu.lenss.MDFS.Commands.log.myLog;
-import edu.tamu.lenss.MDFS.Commands.put.put;
 import edu.tamu.lenss.MDFS.Commands.copyfromlocal.copyfromlocal;
+import edu.tamu.lenss.MDFS.Commands.get.get;
 import edu.tamu.lenss.MDFS.Commands.help.help;
 import edu.tamu.lenss.MDFS.Commands.ls.ls;
 import edu.tamu.lenss.MDFS.Commands.ls.lsUtils;
 import edu.tamu.lenss.MDFS.Commands.mkdir.mkdir;
+import edu.tamu.lenss.MDFS.Commands.put.put;
 import edu.tamu.lenss.MDFS.Commands.rm.rm;
 import edu.tamu.lenss.MDFS.RSock.testRsock;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 
+
+//this class processes one mdfs command
 public class ProcessOneRequest {
 
     //commands
@@ -27,7 +26,7 @@ public class ProcessOneRequest {
 
 
     //this function works as a parser and syntactical analyzer
-    public static String processRequestCpp(String clientID, String command) {
+    public static String processRequest(String clientID, String command) {
 
         //check if its an empty string
         if(command.equals("")){
@@ -91,6 +90,12 @@ public class ProcessOneRequest {
                             String isValLocDir  = utils.isValidLocalDirInAndroidPhone(filepathLocal);  //Isagor0!
 
                             if(isValLocDir.equals("OK")) {
+
+                                //special case for survey123 appdata directory
+                                //replace <SuRvEy123> with a space.
+                                if(filepathLocal.contains("<SuRvEy123>")){
+                                    filepathLocal = filepathLocal.replace("<SuRvEy123>", " ");
+                                }
 
                                 //check if this file exists
                                 File[] listoffiles = new File(filepathLocal).listFiles();
@@ -306,9 +311,9 @@ public class ProcessOneRequest {
                                 //check if the last elem is file or dir
                                 String reqType = "";
                                 if (utils.checkFileExtension(dirTokens[dirTokens.length - 1])) {
-                                    reqType = "del_file";
+                                    reqType = rm.RM_FILE;
                                 } else {
-                                    reqType = "del_dir";
+                                    reqType = rm.RM_DIRECTORY;
                                 }
 
                                 //handle rm command and return reply

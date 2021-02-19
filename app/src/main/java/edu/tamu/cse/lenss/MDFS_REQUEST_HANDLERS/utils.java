@@ -1,6 +1,10 @@
 package edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS;
 
 
+import android.os.Environment;
+
+import java.io.File;
+
 //this class contains utility functions for commands passed through cli_processor.java class
 public class utils {
 
@@ -44,18 +48,14 @@ public class utils {
 
     //check if local dir is valid in android linux system
     //returns "OK" if correct,
-    //else returns he reason the local dir is not valid.
-    //note: the reason this function checks linux directory,
-    //explicitly for phones is because android host filesystem(sdcard),
-    //is a bit different that the usual linux(like ubuntu) file system.
     public static String isValidLocalDirInAndroidPhone(String dir){
 
-        //check if dir length is enough
-        if(dir.length()<"/storage/emulated/0/".length()){ return "directory path must start with /storage/emulated/0/";}
+        //check if dir length is at least /storage/emulated/0/
+        if(dir.length()< (Environment.getExternalStorageDirectory().toString() + File.separator).length()){ return "directory path must start with " + Environment.getExternalStorageDirectory().toString() + File.separator;}
 
         //check if dir starts with /storage/emulated/0/
-        else if(!dir.substring(0, new StringBuilder("/storage/emulated/0/").toString().length()).equals("/storage/emulated/0/")){
-            return "directory path must start with /storage/emulated/0/";
+        else if(!dir.substring(0, new StringBuilder(Environment.getExternalStorageDirectory().toString() + File.separator).toString().length()).equals(Environment.getExternalStorageDirectory().toString() + File.separator)){
+            return "directory path must start with " + Environment.getExternalStorageDirectory().toString() + File.separator;
         }
 
         else{ return "OK"; }

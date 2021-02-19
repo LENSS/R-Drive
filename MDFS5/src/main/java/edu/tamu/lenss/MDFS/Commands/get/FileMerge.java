@@ -6,7 +6,6 @@ import org.apache.log4j.Level;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 
 import edu.tamu.lenss.MDFS.Cipher.MDFSCipher;
@@ -138,15 +137,7 @@ public class FileMerge implements Runnable{
 
     //modifies decrypted path
     private String getDecryptedFilePath(){  //Isagor0!
-
-        //first set the path where the file ought to be saved
-        //replace the "/storage/emulated/0" part from user inputted localDir since it will be added again.
-        Constants.ANDROID_DIR_DECRYPTED = mdfsfrag.localDir.replace("/storage/emulated/0/", "/");
-
-        ///storage/emulated/0/decrypted/test1.jpg
-        return Environment.getExternalStorageDirectory().getAbsolutePath()
-                + File.separator + Constants.ANDROID_DIR_DECRYPTED
-                + File.separator + mdfsfrag.fileName;
+        return mdfsfrag.localDir + File.separator + mdfsfrag.fileName;
     }
 
 

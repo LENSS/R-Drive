@@ -8,7 +8,6 @@ import java.net.Socket;
 import java.util.UUID;
 
 
-
 //this class only takes requests from Command Line Interface.
 public class CLIRequestHandler implements Runnable {
 
@@ -40,7 +39,7 @@ public class CLIRequestHandler implements Runnable {
             clientSockets.sockets.put(clientID, socket);
 
             //process req
-            edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS.ProcessOneRequest.processRequestCpp(clientID, command);
+            edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS.ProcessOneRequest.processRequest(clientID, command);
 
         }catch (IOException e) {
             System.out.println("Problem handling client socket in RequestHandler "+ e);

@@ -1,10 +1,8 @@
 package edu.tamu.cse.lenss.MDFS_REQUEST_HANDLERS;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.net.ServerSocket;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.net.Socket;
 
 
 //this class runs on a thread as a server, and receives new client connection.
@@ -42,9 +40,13 @@ public class CLIserver extends Thread {
                 cSocket = serverSocket.accept();
                 System.out.println("CLI received new connection..." );
 
+                //execute the request.
+                //note: since it is from CLI,
+                // we should not make user waiting,
+                // so we should bypass putting this request in any qeueu,
+                // and directly execute it by some thread.
                 try {
-                    //new Thread(new CLIRequestHandler(cSocket)).run();
-                    Executor.executor.submit(new CLIRequestHandler(cSocket));
+                    new Thread(new CLIRequestHandler(cSocket)).run();
 
                 } catch (Exception e) {
                     System.out.println("Exception in handling the request in cli_processor. " + e);

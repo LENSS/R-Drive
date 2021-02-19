@@ -20,11 +20,15 @@ public class rm {
     //logger
     public static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(rm.class);
 
+    //constants
+    public static String RM_FILE = "RM_FILE";
+    public static String RM_DIRECTORY = "RM_DIRECTORY";
+
     public static String rm(String mdfsPath, String reqType){
 
 
         try {
-            if (reqType.equals("del_file")) {
+            if (reqType.equals(RM_FILE)) {
 
                 //log
                 logger.log(Level.ALL, "Starting to perform -rm command for file " + mdfsPath);
@@ -100,7 +104,7 @@ public class rm {
                     return "Could not connect to local EdgeKeeper.";
                 }
 
-            } else if (reqType.equals("del_dir")) {
+            } else if (reqType.equals(RM_DIRECTORY)) {
 
                 //send rm_directory request
                 JSONObject repJSON = EKClient.rm_directory(mdfsPath);

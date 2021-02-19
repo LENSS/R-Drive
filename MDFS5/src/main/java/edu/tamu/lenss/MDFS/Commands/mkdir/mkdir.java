@@ -34,7 +34,7 @@ public class mkdir {
                 return "Json exception.";
             }
         }else{
-            return "Could not connect to local EdgeKeeper.";
+            return "Error: EdgeKeeper not running";
         }
     }
 }

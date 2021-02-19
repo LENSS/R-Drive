@@ -1,10 +1,13 @@
 package edu.tamu.lenss.MDFS.Commands.get;
 
 
+import android.os.Environment;
+
 import org.apache.log4j.Level;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.ObjectOutputStream;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -13,7 +16,6 @@ import java.util.concurrent.Executors;
 import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
 import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
 import edu.tamu.cse.lenss.edgeKeeper.server.RequestTranslator;
-import edu.tamu.lenss.MDFS.Commands.log.myLog;
 import edu.tamu.lenss.MDFS.Constants;
 import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeper;
 import edu.tamu.lenss.MDFS.Handler.ServiceHelper;
@@ -119,7 +121,7 @@ public class get {
             public void run(){
                 //make a mdfsfrag of type = RequestFromOneClientInOneAEdgeToMasterOfAnotherEdgeForWholeFile
                 //note: a lot of fields are unknown to us, so we put dummy data or null.
-                MDFSFragmentForFileRetrieve mdfsfrag = new MDFSFragmentForFileRetrieve(UUID.randomUUID().toString(), MDFSFragmentForFileRetrieve.Type.RequestFromOneClientInOneAEdgeToMasterOfAnotherEdgeForWholeFile, -1, -1, EdgeKeeper.ownGUID, neighborMasterGUID, filename, filePathMDFS, "FileIDUnknown", -1, -1, -1, "/storage/emulated/0/" + Constants.DEFAULT_DECRYPTION_FOLDER_NAME + "/", null, false); //Isagor0!
+                MDFSFragmentForFileRetrieve mdfsfrag = new MDFSFragmentForFileRetrieve(UUID.randomUUID().toString(), MDFSFragmentForFileRetrieve.Type.RequestFromOneClientInOneAEdgeToMasterOfAnotherEdgeForWholeFile, -1, -1, EdgeKeeper.ownGUID, neighborMasterGUID, filename, filePathMDFS, "FileIDUnknown", -1, -1, -1, Environment.getExternalStorageDirectory().toString() + File.separator + Constants.DECRYPTION_FOLDER_NAME + File.separator, null, false); //Isagor0!
 
                 //get byteArray from object and size of the MDFSFragmentForFileRetrieve obj
                 byte[] data = null;
@@ -131,7 +133,7 @@ public class get {
                     oos.flush();
                     data = bos.toByteArray();
                 } catch (Exception e) {
-                    logger.log(Level.DEBUG, "could not convert object into bytes.");
+                    logger.log(Level.DEBUG, "could not convert object into bytes in getFileFromNeighbor() function.");
                 }
 
                 //send request

@@ -410,9 +410,10 @@ public class lsUtils {
         return null;
     }
 
-    //takes a list of master guids and returns their names
+    //takes a list of master guids and returns their names.
+    //strip out ".distressnet.org" if boolean is true.
     //the list may be empty, if no conversion happens.
-    public static List<String> masterGUIDsToNAMEs(List<String> mastersGUIDs, String allNeighborEdgeDirsCache){
+    public static List<String> masterGUIDsToNAMEs(List<String> mastersGUIDs, String allNeighborEdgeDirsCache, boolean stripped){
 
         //make a resultant list
         List<String> mastersNAMEs = new ArrayList<>();
@@ -430,12 +431,15 @@ public class lsUtils {
                     //check null
                     if (particularMasterDirsObject != null) {
 
-                        //get master name
+                        //parse master name
                         String masterName = particularMasterDirsObject.getString(MetaDataHandler.MASTERNAME);
 
                         //add master name to result list
-                        mastersNAMEs.add(masterName);
-
+                        if(stripped){
+                            mastersNAMEs.add(masterName.replace(".distressnet.org",""));
+                        }else {
+                            mastersNAMEs.add(masterName);
+                        }
                     }
                 }
             }

@@ -1,105 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<androidx.drawerlayout.widget.DrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    android:fitsSystemWindows="true"
+    tools:openDrawer="start"
+    >
 
-    <LinearLayout
-        android:id="@+id/PARENT"
+    <include
+        layout="@layout/app_bar_main"
         android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <LinearLayout
-            android:id="@+id/CHILD1"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:orientation="horizontal">
+        android:layout_gravity="start"
+        android:fitsSystemWindows="true"
+        app:headerLayout="@layout/nav_header_main"
+        app:menu="@menu/activity_main_drawer" />
 
 
-            <Button
-                android:id="@+id/backButton"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="fill_horizontal"
-                android:gravity="center"
-                android:hint="Back"
-                android:onClick="backButtonClicked"
-                android:textStyle="bold"
-                android:visibility="visible" />
 
-            <Button
-                android:id="@+id/refreshButton"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="fill_horizontal"
-                android:gravity="center"
-                android:hint="Refresh"
-                android:onClick="refreshButtonClicked"
-                android:textStyle="bold"
-                android:visibility="visible" />
-
-            <Button
-                android:id="@+id/mkdirButton"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="fill_horizontal"
-                android:gravity="center"
-                android:hint="Mkdir"
-                android:onClick="mkdirButtonClicked"
-                android:textStyle="bold"
-                android:visibility="visible" />
-
-            <Button
-                android:id="@+id/putButton"
-                android:layout_width="fill_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="fill_horizontal"
-                android:gravity="center"
-                android:hint="Put"
-                android:onClick="putButtonClicked"
-                android:textStyle="bold"
-                android:visibility="visible" />
-
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/CHILD2"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/toggleView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="fill_horizontal"
-                android:gravity="center"
-                android:hint="Toggle View"
-                android:textStyle="bold"
-                android:visibility="visible"
-                android:onClick="toggleViewClicked"/>
-
-        </LinearLayout>
-
-
-        <TextView
-            android:id="@+id/textview"
-            android:layout_width="match_parent"
-            android:layout_height="82dp"
-            android:hint="Directory: Empty"
-            android:textSize="25sp"
-            android:textStyle="bold" />
-
-        <ListView
-            android:id="@+id/listview"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            />
-
-
-    </LinearLayout>
-</android.support.constraint.ConstraintLayout>
+</androidx.drawerlayout.widget.DrawerLayout>

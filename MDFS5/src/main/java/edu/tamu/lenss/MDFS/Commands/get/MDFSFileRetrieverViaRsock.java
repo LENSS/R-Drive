@@ -2,8 +2,6 @@ package edu.tamu.lenss.MDFS.Commands.get;
 
 import org.apache.log4j.Level;
 
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,7 +10,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
-import edu.tamu.lenss.MDFS.Commands.log.myLog;
 import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeper;
 import edu.tamu.lenss.MDFS.Model.MDFSFileInfo;
 import edu.tamu.lenss.MDFS.Model.MDFSFragmentForFileRetrieve;
@@ -74,7 +71,7 @@ public class MDFSFileRetrieverViaRsock {
                 logger.log(Level.ALL, "merged file blocks for filename "  + fileInfo.getFileName() + " without retrieval since all blocks are available");
 
                 //return
-                return "-get Info: File has been retrieved..check directory.";
+                return "File has been retrieved..check directory.";
 
             }else {
 
@@ -131,7 +128,7 @@ public class MDFSFileRetrieverViaRsock {
                     }
 
                     //return success
-                    return "-get Info: request has been placed.";
+                    return "Request has been placed.";
 
                 } else {
                     //log

@@ -96,7 +96,7 @@ public class copytolocal {
             if(reply.length()>1000) {
 
                 //create replyToken array length
-                int numOfReplyTokens = (int)Math.ceil(reply.length()/1000);
+                int numOfReplyTokens = (int) Math.ceil(reply.length()/1000);
                 if((reply.length() - (1000*numOfReplyTokens))>0){ numOfReplyTokens = numOfReplyTokens + 1;}
 
                 //create reply tokens array

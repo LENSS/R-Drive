@@ -2,8 +2,6 @@ package edu.tamu.lenss.MDFS.RSock;
 
 import java.util.UUID;
 
-import edu.tamu.lenss.MDFS.Constants;
-
 public class testRsock {
 
     public static String testrsock(){

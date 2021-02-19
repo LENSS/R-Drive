@@ -20,7 +20,7 @@ public class EdgeKeeper {
     public static String ownGUID;
     public static String ownName;
     public static boolean isActive = false;
-    public static String EK_Library_Closed_Message = "EdgeKeeper closed! \n restart EdgeKeeper -> Rsock -> MDFS.";
+    public static String EK_Library_Closed_Message = "EdgeKeeper Closed!";
     private static int count = 0;
 
     public EdgeKeeper() {

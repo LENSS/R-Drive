@@ -29,7 +29,7 @@ public class RSockConstants {
     public static final String deletion_tag = "_delete_";
 
     //error message
-    public static String Rsock_Library_Closed_Message = "RSOCK library closed, please restart Rsock -> MDFS.";
+    public static String Rsock_Library_Closed_Message = "RSock Closed!";
 
 
 }
