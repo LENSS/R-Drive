@@ -9,6 +9,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 
 import edu.tamu.cse.lenss.android.MainActivity;
+import edu.tamu.lenss.MDFS.Commands.put.put;
 import edu.tamu.lenss.MDFS.RSock.RSockConstants;
 
 public class APIserver extends Thread {
@@ -58,6 +59,7 @@ public class APIserver extends Thread {
                 //check
                 if(!req.get(LOCALFILEPATH).equals("") && !req.get(MDFSFILEPATH).equals("")) {
 
+                    //log
                     //execute request command
                     String command = "mdfs -put " + req.getString(LOCALFILEPATH) + " " + req.getString(MDFSFILEPATH);
 

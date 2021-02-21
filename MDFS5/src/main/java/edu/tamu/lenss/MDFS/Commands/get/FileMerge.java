@@ -85,7 +85,7 @@ public class FileMerge implements Runnable{
 
         }
 
-        MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "File Retrieval Success! filename: " + mdfsfrag.fileName);
+        MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "SUCCESS_ File Retrieval Success! filename: " + mdfsfrag.fileName + " of size " + totalBytesWritten);
 
     }
 

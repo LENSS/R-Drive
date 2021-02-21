@@ -172,7 +172,7 @@ public class put {
         JSONObject repJSON = EKClient.putMetadata(metadata);
 
         //update final log
-        logger.log(Level.ALL, "File Creation Success! filename: " + filename + " blockCount: " + blockCount + " n2: " + n2 + " k2: " + k2);
+        logger.log(Level.ALL, "SUCCESS_ File Creation Success! filename: " + filename + " blockCount: " + blockCount + " n2: " + n2 + " k2: " + k2);
 
         return "File Creation Success!";
     }

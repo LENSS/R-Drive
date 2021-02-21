@@ -68,7 +68,7 @@ public class MDFSFileRetrieverViaRsock {
                 executor.submit(new FileMerge(mdfsfrag));
 
                 //log
-                logger.log(Level.ALL, "merged file blocks for filename "  + fileInfo.getFileName() + " without retrieval since all blocks are available");
+                //logger.log(Level.ALL, "SUCCESS_ merged file blocks for filename "  + fileInfo.getFileName() + " of size " + fileInfo.getFileSize() +  " without retrieval since all blocks are available");
 
                 //return
                 return "File has been retrieved..check directory.";
