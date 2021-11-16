@@ -26,7 +26,7 @@ public class Constants {
 	public static final String DEFAULT_DECRYPTION_FOLDER_NAME = "decrypted";  					//decrypted folder in sdcard
     public static String DECRYPTION_FOLDER_NAME = DEFAULT_DECRYPTION_FOLDER_NAME;
 
-    //encoding parameters
+	//encoding parameters
 	public static final double DEFAULT_K_N_RATIO = 0.5;
 	public static final int MAX_N_VAL = 15;
 	public static final int DEFAULT_K_VALUE = -1;	//-1 means default which is determined by an equation in put class.

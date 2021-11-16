@@ -16,6 +16,7 @@ import edu.tamu.lenss.MDFS.Cipher.MDFSCipher;
 import edu.tamu.lenss.MDFS.Constants;
 import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeper;
 import edu.tamu.lenss.MDFS.Handler.ServiceHelper;
+import edu.tamu.lenss.MDFS.Model.Fragment;
 import edu.tamu.lenss.MDFS.Model.MDFSFileInfo;
 import edu.tamu.lenss.MDFS.Model.MDFSFragmentForFileCreate;
 import edu.tamu.lenss.MDFS.RSock.RSockConstants;
@@ -96,10 +97,10 @@ public class put {
             return "Error: EdgeKeeper not running";
         }
 
-     //   if(chosenNodes==null){
-     //       chosenNodes = new ArrayList<>();
-     //       chosenNodes.add(EdgeKeeper.ownGUID);
-     //   }
+        //   if(chosenNodes==null){
+        //       chosenNodes = new ArrayList<>();
+        //       chosenNodes.add(EdgeKeeper.ownGUID);
+        //   }
 
         //this block of code selects n2, k2 values,
         //based on the size of the chosenNodes list.
@@ -197,34 +198,54 @@ public class put {
             fragsDir.mkdirs();
         }
 
+        //first copy over chosenNodes in a new list
+        List<String> candNodes = new ArrayList<>(chosenNodes);
+
+        //remove my GUID if present
+        candNodes.remove(EdgeKeeper.ownGUID);
+
         //handle each shard, aka fragment
         for(int j=0; j< shards.length; j++){
 
-            //save the shard in own device.
-            IOUtilities.byteToFile_FOS_write(shards[j], fragsDir , MDFSFileInfo.getFragName(filename, blockIdx, j));
+            if(j==0) {
+                //create a Fragment object
+                Fragment fr = new Fragment(filename, filePathMDFS, shards[j], fileID, filesize, n2, k2, blockIdx, j, blockCount);
 
-            //wrap shards in MDFSFragmentForFileCreate class
-            MDFSFragmentForFileCreate oneFragment = new MDFSFragmentForFileCreate(
-                    filename,
-                    filePathMDFS,
-                    shards[j],
-                    fileID,
-                    filesize,
-                    n2,
-                    k2,
-                    blockIdx,
-                    j,
-                    EdgeKeeper.ownGUID,
-                    uniqueReqID,
-                    true);
+                //convert Fragment object into byteArray
+                byte[] frArray = IOUtilities.objectToByteArray(fr);
 
-
-            //send the shard to the destinations
-            for(String GUID: chosenNodes){
-                sendFragment(GUID, oneFragment);
+                //save the frARrra, the first shard in own device.
+                IOUtilities.byteToFile_FOS_write(frArray, fragsDir, MDFSFileInfo.getFragName(filename, blockIdx, j));
 
                 //update metadata
-                metadata.addInfo(GUID, blockIdx, j);
+                metadata.addInfo(EdgeKeeper.ownGUID, blockIdx, j);
+            }else {
+
+                //send the jth shard to (j-1)th device
+                //wrap shards in MDFSFragmentForFileCreate class
+                MDFSFragmentForFileCreate oneFragment = new MDFSFragmentForFileCreate(
+                        filename,
+                        filePathMDFS,
+                        shards[j],
+                        fileID,
+                        filesize,
+                        n2,
+                        k2,
+                        blockIdx,
+                        j,
+                        EdgeKeeper.ownGUID,
+                        uniqueReqID,
+                        blockCount,
+                        true
+                );
+
+
+                //send the shard to the destination
+                sendFragment(candNodes.get(j-1), oneFragment);
+
+                //update metadata
+                metadata.addInfo(candNodes.get(j-1), blockIdx, j);
+
             }
 
         }

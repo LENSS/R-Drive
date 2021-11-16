@@ -1,5 +1,7 @@
 package edu.tamu.lenss.MDFS.Commands.get;
 
+import androidx.annotation.FloatRange;
+
 import org.apache.log4j.Level;
 
 import java.io.ByteArrayOutputStream;
@@ -9,14 +11,20 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+import edu.tamu.lenss.MDFS.Model.Fragment;
 import edu.tamu.lenss.MDFS.Model.MDFSFileInfo;
+import edu.tamu.lenss.MDFS.Model.MDFSFragmentForFileCreate;
 import edu.tamu.lenss.MDFS.Model.MDFSFragmentForFileRetrieve;
 import edu.tamu.lenss.MDFS.RSock.RSockConstants;
 import edu.tamu.lenss.MDFS.Utils.AndroidIOUtils;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
+
+import static edu.tamu.lenss.MDFS.Constants.ANDROID_DIR_ROOT;
 
 //this class contains only static functions
 public class getUtils {
@@ -116,6 +124,68 @@ public class getUtils {
     }
 
 
+    //get a Map of all MDFS files have enough fragments available locally so that they can be decoded right away
+    public static Map<String, List<String>> getAllLocallyAvailableFiles(){
+        Map<String, List<String>> locallyAvailableFiles = new HashMap<>();
+
+        String localStorageDir = File.separator + "sdcard" + File.separator + ANDROID_DIR_ROOT + File.separator;
+        File[] filesInLocalStorage = new File(localStorageDir).listFiles();
+
+        //iterate over each folders in /sdcard/MDFS/ directory in Android
+        for(File f: filesInLocalStorage){
+
+            String fname = f.getName().substring(0, f.getName().indexOf('_'));
+            List<String> l = locallyAvailableFiles.getOrDefault(fname, new ArrayList<>());
+
+            //we are inside the block directory of this file
+            //check if there is any block available for this file (load the first block)
+            File blockDir = new File(localStorageDir + f.getName());
+            File[] blocks = blockDir.listFiles();
+            if(blocks.length==0){
+                l.add(null);
+            }else{
+                //load the fragmentDir
+                File fragDir = new File(localStorageDir + f.getName() + File.separator + blocks[0].getName() + File.separator);
+                File[] fragments = fragDir.listFiles();
+                if(fragments.length==0){
+                    l.add(null);
+                }else{
+                    //load the fragment (as Fragment object) and convert from bytes to object
+                    File frFile = new File(localStorageDir + f.getName() + File.separator + blocks[0].getName() + File.separator + fragments[0].getName());
+
+                    //get byteArray from this file
+                    byte[] byteArray = IOUtilities.fileToByte(frFile);
+
+                    //convert bytesArray into Fragment object
+                    Fragment fr = IOUtilities.bytesToObject(byteArray, Fragment.class);
+
+                    int[][]missingBlocksAndFrags = new int[fr.totalNumOfBlocks][fr.n2];
+
+                    boolean succeeded  = false;
+                    for(int i=0; i< fr.totalNumOfBlocks; i++){
+                        succeeded = getUtils.getMissingFragmentsOfABlockFromDisk(missingBlocksAndFrags, fr.fileName, fr.fileID, fr.n2 , i);
+                    }
+
+                    if(succeeded) {
+                        if (getUtils.checkEnoughFragsAvailableForWholeFile(missingBlocksAndFrags, fr.k2)) {
+                            l.add(fr.fileID + "__" + fr.n2 + "__" + fr.k2 + "__" + fr.totalNumOfBlocks);
+                        }else{
+                            l.add(null);
+                        }
+                    }else{
+                        l.add(null);
+                    }
+
+                }
+
+            }
+
+            locallyAvailableFiles.put(fname, l);
+
+        }
+
+        return locallyAvailableFiles;
+    }
 
     //get block number from a fragment name
     public static int parseBlockNum(String fName){
@@ -147,7 +217,7 @@ public class getUtils {
     }
 
     //takes a mdfsfragForFileRetrieve and serves a RequestFromOneClientToAnotherForOneFragment request.
-    //this function fetched the particular fragment of particular block of a file, and sends it back to the sourceGUID.
+    //this function fetches the particular fragment of particular block of a file, and sends it back to the sourceGUID.
     //the functions flips the source and destination.
     //if the file directory, blockDirectory, or fragment doesnt exist, then nothing is sent.
     public static void justDoit(MDFSFragmentForFileRetrieve mdfsfrag){
@@ -158,14 +228,17 @@ public class getUtils {
         //if the file directory doesnt exist, tmp0 size will be 0.
         File tmp0 = AndroidIOUtils.getExternalFile(MDFSFileInfo.getFragmentPath(mdfsfrag.fileName, mdfsfrag.fileId, mdfsfrag.blockIdx, mdfsfrag.fragmentIndex));
 
-        //if fragment was fetched
+        //if fragment was loaded from disk
         if (tmp0!=null && tmp0.exists() && tmp0.isFile() && tmp0.length() > 0) {
 
             //convert file tmp0 into byteArray
             byte[] byteArray = IOUtilities.fileToByte(tmp0);
 
+            //convert bytesArray into Fragment object
+            Fragment fr = IOUtilities.bytesToObject(byteArray, Fragment.class);
+
             //now, change mdfsfrag into a ReplyFromOneClientToAnotherForOneFragment object
-            mdfsfrag.flipIntoReply(byteArray);
+            mdfsfrag.flipIntoReply(fr.fileFrag);
 
             //convert mdfsfrag object into bytearray and do send
             ByteArrayOutputStream bos = new ByteArrayOutputStream();

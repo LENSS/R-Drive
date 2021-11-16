@@ -12,6 +12,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -149,6 +150,13 @@ public class utils {
 
     }
 
+    public static <T> void printList(String headline, List<T> l){
+        String res = "";
+        for(T item: l){
+            res+= item + " " ;
+        }
+        System.out.println(headline + " " + res);
+    }
 
 
 }

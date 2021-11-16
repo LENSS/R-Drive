@@ -10,6 +10,7 @@ import RsockCommLibrary.Interface;
 import RsockCommLibrary.ReceivedFile;
 import edu.tamu.lenss.MDFS.Constants;
 import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeper;
+import edu.tamu.lenss.MDFS.Model.Fragment;
 import edu.tamu.lenss.MDFS.Model.MDFSFileInfo;
 import edu.tamu.lenss.MDFS.Model.MDFSFragmentForFileCreate;
 import edu.tamu.lenss.MDFS.RSock.RSockConstants;
@@ -172,7 +173,7 @@ public class RsockReceiveForFileCreation implements Runnable{
                         int fragmentIdx = (int) mdfsfrag.fragmentIdx;
 
                         //now save the fileFrag
-                        saveTheFileFrag(fileName, byteArray, fileID, blockIdx, fragmentIdx);
+                        saveTheFileFrag(mdfsfrag);
                         logger.log(Level.DEBUG, "fragment# " + fragmentIdx + " of block# " + blockIdx + " of filename " + fileName + " received from rsock.");
 
                     }
@@ -198,19 +199,24 @@ public class RsockReceiveForFileCreation implements Runnable{
 
     }
 
-    //this function saves the filefrag locally in this device.
-    //NOte, this byteArray is the file fragment.
-    private void saveTheFileFrag(String fileName, byte[] byteArray, String fileID , int blockIdx, int fragmentIdx) {
+    //this function saves the filefrag locally in this device
+    private void saveTheFileFrag(MDFSFragmentForFileCreate mdfsfrag) {
 
         //create a directory where all fragments reside.
         ///storage/emulated/0/MDFS/test.jpg_0123/test.jpg_0/ (directory)
-        File fragsDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(fileName, fileID, blockIdx));
+        File fragsDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(mdfsfrag.fileName, mdfsfrag.fileID, mdfsfrag.blockIdx));
         if(!fragsDir.exists()){
             fragsDir.mkdirs();
         }
 
+        //create a Fragment object
+        Fragment fr = new Fragment(mdfsfrag.fileName, mdfsfrag.filePathMDFS, mdfsfrag.fileFrag, mdfsfrag.fileID, mdfsfrag.entireFileSize, mdfsfrag.n2, mdfsfrag.k2, mdfsfrag.blockIdx, mdfsfrag.fragmentIdx, mdfsfrag.totalNumOfBlocks);
+
+        //convert Fragment object into byteArray
+        byte[] frArray = IOUtilities.objectToByteArray(fr);
+
         //save the shard in own device.
-        IOUtilities.byteToFile_FOS_write(byteArray, fragsDir , MDFSFileInfo.getFragName(fileName, blockIdx, fragmentIdx));
+        IOUtilities.byteToFile_FOS_write(frArray, fragsDir , MDFSFileInfo.getFragName(mdfsfrag.fileName, mdfsfrag.blockIdx, mdfsfrag.fragmentIdx));
 
     }
 

@@ -26,13 +26,13 @@ public class MDFSFileRetrieverViaRsock {
     private byte[] decryptKey;
     private MDFSFileInfo fileInfo;
     private MDFSMetadata metadata;
-    private String localDir;
+    private String outputDir;
 
     //constructor
-    public MDFSFileRetrieverViaRsock(MDFSFileInfo fInfo, MDFSMetadata metadata, String localDir, byte[] decryptKey) {
+    public MDFSFileRetrieverViaRsock(MDFSFileInfo fInfo, MDFSMetadata metadata, String outputDir, byte[] decryptKey) {
         this.fileInfo = fInfo;
         this.metadata = metadata;
-        this.localDir = localDir;
+        this.outputDir = outputDir;
         this.decryptKey = decryptKey;
     }
 
@@ -64,7 +64,7 @@ public class MDFSFileRetrieverViaRsock {
 
                 //make a mdfsfrag of type= ReplyFromOneClientToAnotherForOneFragment
                 //merge the file in a new thread
-                MDFSFragmentForFileRetrieve mdfsfrag = new MDFSFragmentForFileRetrieve(UUID.randomUUID().toString(), MDFSFragmentForFileRetrieve.Type.ReplyFromOneClientToAnotherForOneFragment, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, "dummyDestGUID", fileInfo.getFileName(), metadata.getFilePathMDFS(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), 0, 0, localDir, null, true);
+                MDFSFragmentForFileRetrieve mdfsfrag = new MDFSFragmentForFileRetrieve(UUID.randomUUID().toString(), MDFSFragmentForFileRetrieve.Type.ReplyFromOneClientToAnotherForOneFragment, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, "dummyDestGUID", fileInfo.getFileName(), metadata.getFilePathMDFS(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), 0, 0, outputDir, null, fileInfo.getFileSize(), true);
                 executor.submit(new FileMerge(mdfsfrag));
 
                 //log
@@ -167,7 +167,7 @@ public class MDFSFileRetrieverViaRsock {
             int fragmentIndex = Integer.parseInt(tokens[2]);
 
             //make an object of mdfsfragRetrieval with request tag
-            MDFSFragmentForFileRetrieve mdfsfrag = new MDFSFragmentForFileRetrieve(UUID.randomUUID().toString(), MDFSFragmentForFileRetrieve.Type.RequestFromOneClientToAnotherForOneFragment, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, destGUID, fileInfo.getFileName(), fileInfo.getFilePathMDFS(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), blockIdx, fragmentIndex, localDir, null, true);
+            MDFSFragmentForFileRetrieve mdfsfrag = new MDFSFragmentForFileRetrieve(UUID.randomUUID().toString(), MDFSFragmentForFileRetrieve.Type.RequestFromOneClientToAnotherForOneFragment, fileInfo.getN2(), fileInfo.getK2(), EdgeKeeper.ownGUID, destGUID, fileInfo.getFileName(), fileInfo.getFilePathMDFS(), fileInfo.getFileID(), fileInfo.getNumberOfBlocks(), blockIdx, fragmentIndex, outputDir, null, 0, true);
 
 
             //get byteArray from object and size of the mdfsfragRetreival obj

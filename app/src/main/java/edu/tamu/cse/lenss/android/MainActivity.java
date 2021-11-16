@@ -65,6 +65,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -75,12 +76,16 @@ import edu.tamu.cse.lenss.monitor.Atak;
 import edu.tamu.cse.lenss.monitor.Collector;
 import edu.tamu.cse.lenss.monitor.Dropbox;
 import edu.tamu.cse.lenss.monitor.Survey123;
+import edu.tamu.lenss.MDFS.Commands.get.FileMerge;
+import edu.tamu.lenss.MDFS.Commands.get.MDFSFileRetrieverViaRsock;
 import edu.tamu.lenss.MDFS.Commands.get.get;
+import edu.tamu.lenss.MDFS.Commands.get.getUtils;
 import edu.tamu.lenss.MDFS.Commands.ls.ls;
 import edu.tamu.lenss.MDFS.Commands.ls.lsUtils;
 import edu.tamu.lenss.MDFS.Commands.put.put;
 import edu.tamu.lenss.MDFS.Constants;
 import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeper;
+import edu.tamu.lenss.MDFS.Model.MDFSFragmentForFileRetrieve;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 
 
@@ -111,21 +116,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     static String MONITOR_INTERVAL = "MONITOR_INTERVAL_IN_SECONDS";
 
     //current browsing directory for own edge
-    private static String ownEdgeCurrentDir = "";
+    public static String ownEdgeCurrentDir = "";
 
-    //current browsing direcotory for neighbor edge
+    //current browsing directory for neighbor edge
     private static String neighborEdgeCurrentDir = "";
     private static String currentBrowsingNeighborGUID = "";
 
     //view mode whether its ownEdgeDir or neighborEdgeDir view.
     private static final String OWNEDGEDIR = "OWN EDGE DIR";
     private static final String NEIGHBOREDGEDIR = "NEIGHBOR EDGE DIR";
+
     private static String allNeighborEdgeDirsCache = "";
+    public static String ownEdgeDirCache = "";
+
     private static String currentMode = OWNEDGEDIR; //start with own edge dir
     private boolean scrollEnabled;
 
 
-    //important booleans
+    //important booleans checked during startup
     private static boolean checkCameraPermission = false;
     public static boolean freezeUI = false;
     private static String freezeUI_Reason = "";
@@ -133,8 +141,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     //current list of files and folders in current view
     private static String FILE = "FILE";
     private static String FOLDER = "FOLDER";
-    private static List<String> directoryItems = new ArrayList<>();
+    private static List<String> directoryItems = new ArrayList<>(); //possible entries: FOLDER, FILE_null, FILE__fileID__N__K__totalNumOfBlocks
     private static String tempFile;
+
+    public static DirectoryUpdater drUpdater;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -154,6 +164,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         this.textView = (TextView) findViewById(R.id.textview);
         this.textView.setMovementMethod(new ScrollingMovementMethod());
 
+        //start directory updater function
+        //this.drUpdater = new DirectoryUpdater(context, activity);
 
         //swipe refresh
         // Lookup the swipe container view
@@ -259,7 +271,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                 //so we show toast.
                                 runOnUiThread(new Runnable() {
                                     public void run() {
-                                        Toast.makeText(getApplicationContext(), "Requested directory no longer exists in Neighbors edge, please Toggle view and come back.", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getApplicationContext(), "Requested directory no longer exists in Neighbor edge.", Toast.LENGTH_SHORT).show();
                                     }
                                 });
                             }
@@ -351,21 +363,45 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 //check if currentView is OWNEDGEDIR or NEIGHBOREDGEDIR
                 if(currentMode.equals(OWNEDGEDIR)) {
 
-                    //check its a directory or file
-                    if (item.charAt(0) == '/') {
+                    //check if item is lt least one char long
+                    if(item.length()>0) {
 
-                        //item is a directory
-                        //tokenize current directory
-                        String[] tokens = IOUtilities.delEmptyStr(ownEdgeCurrentDir.split("/"));
+                        //check its a directory or file
+                        if (item.charAt(0) == '/') {
 
-                        //make new directory
-                        String newDir = ownEdgeCurrentDir + item.subSequence(1, item.length()) + "/";
+                            //item is a directory
+                            //tokenize current directory
+                            String[] tokens = IOUtilities.delEmptyStr(ownEdgeCurrentDir.split("/"));
 
-                        //setview
-                        setViewForOwnEdge(newDir);
+                            //make new directory
+                            String newDir = ownEdgeCurrentDir + item.subSequence(1, item.length()) + "/";
 
-                    }else{
-                        //it must be a file. file only responds to hold clicks which we handle onContextItemSelected() function
+                            //setview
+                            setViewForOwnEdge(newDir);
+
+                        } else {
+                            try {
+                                String[] fInfo = directoryItems.get(position).split("__");
+                                if (fInfo[0].equals(FILE) && !fInfo[1].equals("null")) {
+                                    String outputDir = Environment.getExternalStorageDirectory().toString() + File.separator + Constants.DECRYPTION_FOLDER_NAME + File.separator;
+                                    MDFSFragmentForFileRetrieve mdfsfrag = new MDFSFragmentForFileRetrieve(null, null, Integer.parseInt(fInfo[2]), Integer.parseInt(fInfo[3]), null, null, item, null, fInfo[1], Integer.parseInt(fInfo[4]), -1, -1, outputDir, null, -1, true);
+                                    boolean res = FileMerge.fileMerge(mdfsfrag);
+                                    if (res) {
+                                        if (item.contains(".jpg") || item.contains(".png")) {
+                                            File file = new File(outputDir + item);
+                                            Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
+                                            Uri data = Uri.parse("file://" + file.getAbsolutePath());
+                                            intent.setDataAndType(data, "image/*");
+                                            startActivity(intent);
+                                        }
+                                    }
+                                } else {
+                                    Toast.makeText(MainActivity.context, "File must be retrieved first", Toast.LENGTH_SHORT).show();
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
                 }else if(currentMode.equals(NEIGHBOREDGEDIR)){
 
@@ -445,7 +481,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                             }
                         }
                     }else{
-                        //it must be a file. file only responds to hold clicks which we handle onContextItemSelected() function
+                        //it must be a file. file on neighbor edge only responds to hold clicks which we handle onContextItemSelected() function
                     }
 
                 }
@@ -458,8 +494,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         //check permission for this app
         utils.vibrator(300, this);
         checkPermissions();
-        setViewForOwnEdge("/");
-        setPreviousAppSetting();
+
     }
 
 
@@ -542,36 +577,39 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         //check if its OWNEDGEDIR OR NEIGHBOREDGEDIR
         if(currentMode.equals(OWNEDGEDIR)) {
 
-            //check if value is a directory or file
-            if (value.charAt(0) == '/') {
+            //check if item is at least oen char long
+            if(value.length()>0) {
+                //check if value is a directory or file
+                if (value.charAt(0) == '/') {
 
-                //value is a directory
-                if (menuitem.getItemId() == R.id.open) {
+                    //value is a directory
+                    if (menuitem.getItemId() == R.id.open) {
 
-                    //just fetch directory ans set view
-                    setViewForOwnEdge(ownEdgeCurrentDir + value.substring(1, value.length()) + "/");
+                        //just fetch directory ans set view
+                        setViewForOwnEdge(ownEdgeCurrentDir + value.substring(1, value.length()) + "/");
 
-                } else if (menuitem.getItemId() == R.id.delete) {
+                    } else if (menuitem.getItemId() == R.id.delete) {
 
-                    //delete the directory and refresh
-                    Foo("mdfs -rm " + ownEdgeCurrentDir + value.substring(1, value.length()) + "/", this, true);
+                        //delete the directory and refresh
+                        Foo("mdfs -rm " + ownEdgeCurrentDir + value.substring(1, value.length()) + "/", this, true);
+
+                    }
+                } else {
+                    //value is a file
+                    if (menuitem.getItemId() == R.id.open) {
+
+                        //make mdfs get request
+                        Foo("mdfs -get " + ownEdgeCurrentDir + value + " " + Environment.getExternalStorageDirectory().toString() + File.separator + Constants.DECRYPTION_FOLDER_NAME + File.separator, this, true);
+
+
+                    } else if (menuitem.getItemId() == R.id.delete) {
+
+                        //delete the file and refresh
+                        Foo("mdfs -rm " + ownEdgeCurrentDir + value, this, true);
+
+                    }
 
                 }
-            } else {
-                //value is a file
-                if (menuitem.getItemId() == R.id.open) {
-
-                    //make mdfs get request
-                    Foo("mdfs -get " + ownEdgeCurrentDir + value + " " + Environment.getExternalStorageDirectory().toString() + File.separator + Constants.DECRYPTION_FOLDER_NAME + File.separator, this, true);
-
-
-                } else if (menuitem.getItemId() == R.id.delete) {
-
-                    //delete the file and refresh
-                    Foo("mdfs -rm " + ownEdgeCurrentDir + value, this, true);
-
-                }
-
             }
         }else if(currentMode.equals(NEIGHBOREDGEDIR)){
 
@@ -674,68 +712,157 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
 
 
-    //takes a list of items and sets them for view on directory ListView (listview).
+    //takes a list of items (FILEs and FOLDERs)and sets them for view on directory ListView (listview).
+    //does the same thing as setViewForOwnEdge() function
+    //this function is mostly used when setting neighbor edge items (edge name, FILEs, FOLDERs)
     public void setItemsOnListView(List<String> list){
 
         int[] drawableIds = new int[list.size()];
         String[] itemtextIds = new String[list.size()];
         directoryItems.clear();
+
+        //take care of FOLDERs first
+        int index=0;
         for(int i=0;i< list.size(); i++){
             if(list.get(i).charAt(0)=='/'){
-                drawableIds[i] = R.drawable.ic_folder;
+                //check if this file has enough
+                drawableIds[index] = R.drawable.ic_folder;
                 directoryItems.add(FOLDER);
-                itemtextIds[i] = list.get(i).substring(1);
-            }else{
-                drawableIds[i] = R.drawable.ic_file;
-                directoryItems.add(FILE);
-                itemtextIds[i] = list.get(i);
-
+                itemtextIds[index] = list.get(i).substring(1);
+                index++;
             }
         }
+
+        //take care if FILEs second
+        for(int i=0;i< list.size(); i++){
+            if(list.get(i).charAt(0)!='/'){
+                drawableIds[index] = R.drawable.ic_file;
+                directoryItems.add(FILE + "__" + null);
+                itemtextIds[index] = list.get(i);
+                index++;
+            }
+        }
+
+
         CustomAdapter adapter = new CustomAdapter(this, itemtextIds, drawableIds);
         listView.setAdapter(adapter);
 
     }
 
+    //a static function to be called from anywhere of the project.
     //takes a directory string, fetch directory and sets view for ownEdgeDir.
+    //does the same thing as setItemsOnListView() function
+    //this function is used for setting oqn edge FILEs and FOLDERs in listview.
     public static void setViewForOwnEdge(String directory){
 
-        //first set current directory
-        ownEdgeCurrentDir = directory;
+        Thread tr = new Thread(new Runnable() {
+            @Override
+            public void run() {
 
-        //first get reply for ls command for / directory
-        String reply = ls.ls(directory, "lsRequestForOwnEdge");
+                try {
+                    //first set current directory
+                    ownEdgeCurrentDir = directory;
 
-        //check if reply is correct
-        if(reply!=null){
+                    //first get reply for ls command for / directory
+                    ownEdgeDirCache = ls.ls(directory, "lsRequestForOwnEdge");
 
-            //set textview
-            textView.setText(ownEdgeCurrentDir);
+                    //check if reply is correct
+                    if (ownEdgeDirCache != null) {
 
-            //create List and populate with ls infols
-            List<String> list = lsUtils.jsonToList(reply);
+                        //set textview
+                        activity.runOnUiThread(new Runnable() {
+                            public void run() {
+                                textView.setText(ownEdgeCurrentDir);
+                            }
+                        });
 
-            int[] drawableIds = new int[list.size()];
-            String[] itemtextIds = new String[list.size()];
-            directoryItems.clear();
-            for(int i=0;i< list.size(); i++){
-                if(list.get(i).charAt(0)=='/'){
-                    drawableIds[i] = R.drawable.ic_folder;
-                    directoryItems.add(FOLDER);
-                    itemtextIds[i] = list.get(i).substring(1);
-                }else{
-                    drawableIds[i] = R.drawable.ic_file;
-                    directoryItems.add(FILE);
-                    itemtextIds[i] = list.get(i);
+                        //create List and populate with file names from ls reply
+                        List<String> list = lsUtils.jsonToList(ownEdgeDirCache);
+                        
+                        //get a list of all files from local storage which are ready to be decoded right away
+                        Map<String, List<String>> locallyAvailableFiles = getUtils.getAllLocallyAvailableFiles();
+
+                        //prepare array for drawable icons
+                        int[] drawableIds = new int[list.size()];
+
+                        //prepare array for file or folder name
+                        String[] itemtextIds = new String[list.size()];
+
+                        //clear old directory items
+                        directoryItems.clear();
+
+                        //iterate over each items from ls reply
+                        //take care of FOLDERs first
+                        int index = 0;
+                        for (int i = 0; i < list.size(); i++) {
+                            if (list.get(i).charAt(0) == '/') {
+                                drawableIds[index] = R.drawable.ic_folder;
+                                directoryItems.add(FOLDER);
+                                itemtextIds[index] = list.get(i).substring(1);
+                                index++;
+                            }
+                        }
+
+                        //iterate over each items from ls reply
+                        //take care of FILEs second
+                        for (int i = 0; i < list.size(); i++) {
+                            if (list.get(i).charAt(0) != '/') {
+
+                                String fname = list.get(i);
+
+                                //check if this file has enough fragments available
+                                List<String> isAvail = locallyAvailableFiles.getOrDefault(fname, new ArrayList<>());
+
+                                if (isAvail.size() == 0) {
+                                    //enough fragments not available
+                                    drawableIds[index] = R.drawable.ic_file;
+                                    directoryItems.add(FILE + "__" + null);
+                                    itemtextIds[index] = fname;
+                                } else {
+                                    if (isAvail.get(0)!=null){
+                                        //enough fragments available
+                                        drawableIds[index] = R.drawable.ic_file_available;
+                                        directoryItems.add(FILE+ "__"+isAvail.get(0));
+                                        itemtextIds[index] = fname;
+                                    }else{
+                                        //enough fragments not available
+                                        drawableIds[index] = R.drawable.ic_file;
+                                        directoryItems.add(FILE+"__"+null);
+                                        itemtextIds[index] = fname;
+                                    }
+
+                                    //update the map
+                                    isAvail.remove(0);
+                                    locallyAvailableFiles.put(fname, isAvail);
+                                }
+                                index++;
+                            }
+                        }
+
+
+                        activity.runOnUiThread(new Runnable() {
+                            public void run() {
+                                CustomAdapter adapter = new CustomAdapter(context, itemtextIds, drawableIds);
+                                listView.setAdapter(adapter);
+                            }
+                        });
+
+
+                    } else {
+                        activity.runOnUiThread(new Runnable() {
+                            public void run() {
+                                Toast.makeText(MainActivity.context, "Could not fetch root directory.", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
                 }
             }
-            CustomAdapter adapter = new CustomAdapter(context, itemtextIds, drawableIds);
-            listView.setAdapter(adapter);
+        });
 
+        tr.start();
 
-        }else{
-            Toast.makeText(MainActivity.context, "Could not fetch root directory.", Toast.LENGTH_SHORT).show();
-        }
     }
 
     @Override
@@ -1015,21 +1142,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     }
 
-    //monitors a third party application's
-    // appData directory and pulls the data,
-    //to store in R-Drive.
-    //works with monitor_view_check.xml
-    //UNFINISHED IMPLEMENTATION
-    private void monitorHandler_Checkbox() {
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
-        LayoutInflater inflater = getLayoutInflater();
-        View dialogView = (View) inflater.inflate(R.layout.monitor_view_check, null);
-        alertDialog.setView(dialogView);
-        alertDialog.setCancelable(true);
-        final AlertDialog dialog = alertDialog.show();
-
-
-    }
 
     //monitors a third party application's
     // appData directory and pulls the data,
@@ -1565,6 +1677,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else {
             startService(intent);
         }
+
+        //coming here means R-Drive (both service and app) started properly
+        setViewForOwnEdge("/");
+        setPreviousAppSetting();
+
     }
 
 
@@ -1887,7 +2004,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         newDir = newDir + tokens[i] + "/";
                     }
 
-                    //fetch directory from edgeKeeper
+                    /*//fetch directory from edgeKeeper
                     String reply = ls.ls(newDir, "lsRequestForOwnEdge");
 
                     //check
@@ -1905,7 +2022,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                     } else {
                         Toast.makeText(this, "Could not fetch directory, EdgeKeeper returned null.", Toast.LENGTH_SHORT).show();
-                    }
+                    }*/
+
+                    setViewForOwnEdge(newDir);
 
                 }
             }else if(currentMode.equals(NEIGHBOREDGEDIR)){
@@ -2026,7 +2145,5 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
 
     }
-
-
 
 }

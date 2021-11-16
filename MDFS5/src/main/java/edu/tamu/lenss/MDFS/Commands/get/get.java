@@ -30,7 +30,7 @@ public class get {
     //logger
     public static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(get.class);
 
-    public static String get(String mdfsDirWithFilename, String localDir){
+    public static String get(String mdfsDirWithFilename, String outputDir){
 
         //first retrieve the metadata from edgeKeeper
         MDFSMetadata metadata = fetchFileMetadataFromEdgeKeeper(mdfsDirWithFilename);
@@ -48,7 +48,7 @@ public class get {
             fileInfo.setFragmentsParms(metadata.getn2(), metadata.getk2());
 
             //make MDFSFileRetrieverViaRsock object
-            MDFSFileRetrieverViaRsock retriever = new MDFSFileRetrieverViaRsock(fileInfo, metadata, localDir, ServiceHelper.getInstance().getEncryptKey());
+            MDFSFileRetrieverViaRsock retriever = new MDFSFileRetrieverViaRsock(fileInfo, metadata, outputDir, ServiceHelper.getInstance().getEncryptKey());
 
             //return
             return retriever.start();
@@ -108,6 +108,17 @@ public class get {
 
     }
 
+    public static String fetchFileMetadataFromEdgeKeeper_getBNK(String mdfsDirWithFilename){
+        MDFSMetadata metadata = fetchFileMetadataFromEdgeKeeper(mdfsDirWithFilename);
+
+        if(metadata!=null){
+            return metadata.getBlockCount() + "_" + metadata.getn2() + "_" + metadata.getk2();
+        }
+
+        return null;
+    }
+
+
     //this function is used,
     //for sending a file fetch request from neighbor edge using rsock.
     public static void getFileFromNeighbor(String filename, String filePathMDFS, String neighborMasterGUID){
@@ -121,7 +132,7 @@ public class get {
             public void run(){
                 //make a mdfsfrag of type = RequestFromOneClientInOneAEdgeToMasterOfAnotherEdgeForWholeFile
                 //note: a lot of fields are unknown to us, so we put dummy data or null.
-                MDFSFragmentForFileRetrieve mdfsfrag = new MDFSFragmentForFileRetrieve(UUID.randomUUID().toString(), MDFSFragmentForFileRetrieve.Type.RequestFromOneClientInOneAEdgeToMasterOfAnotherEdgeForWholeFile, -1, -1, EdgeKeeper.ownGUID, neighborMasterGUID, filename, filePathMDFS, "FileIDUnknown", -1, -1, -1, Environment.getExternalStorageDirectory().toString() + File.separator + Constants.DECRYPTION_FOLDER_NAME + File.separator, null, false); //Isagor0!
+                MDFSFragmentForFileRetrieve mdfsfrag = new MDFSFragmentForFileRetrieve(UUID.randomUUID().toString(), MDFSFragmentForFileRetrieve.Type.RequestFromOneClientInOneAEdgeToMasterOfAnotherEdgeForWholeFile, -1, -1, EdgeKeeper.ownGUID, neighborMasterGUID, filename, filePathMDFS, "FileIDUnknown", -1, -1, -1, Environment.getExternalStorageDirectory().toString() + File.separator + Constants.DECRYPTION_FOLDER_NAME + File.separator, null,  0, false); //Isagor0!
 
                 //get byteArray from object and size of the MDFSFragmentForFileRetrieve obj
                 byte[] data = null;

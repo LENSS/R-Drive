@@ -29,17 +29,18 @@ public class MDFSFragmentForFileRetrieve implements Serializable {
     public int totalNumOfBlocks;
     public int blockIdx;
     public int fragmentIndex;
-    public String localDir;
+    public String outputDir;
     public byte[] fileFrag;
     public String filePathMDFS;
     public boolean sameEdge;
+    public long entireFileSize;
     public long fragSendingTime; //the timestamp when a fragment is sent from one device to another.
 
     //default private constructor
     private MDFSFragmentForFileRetrieve(){}
 
 
-    public MDFSFragmentForFileRetrieve(String uuid, Type type, int n2, int k2, String srcGUID, String destGUID, String fileName, String filePathMDFS, String fileId, int totalNumOfBlocks , int blockIdx, int fragmentIndex, String locDir, byte[] fileFrag, boolean sameedge){
+    public MDFSFragmentForFileRetrieve(String uuid, Type type, int n2, int k2, String srcGUID, String destGUID, String fileName, String filePathMDFS, String fileId, int totalNumOfBlocks , int blockIdx, int fragmentIndex, String outputDir, byte[] fileFrag, long entireFileSize, boolean sameedge){
         this.blockRetrieveReqUUID = uuid;
         this.type = type;
         this.n2 = n2;
@@ -52,8 +53,9 @@ public class MDFSFragmentForFileRetrieve implements Serializable {
         this.totalNumOfBlocks = totalNumOfBlocks;
         this.blockIdx = blockIdx;
         this.fragmentIndex = fragmentIndex;
-        this.localDir = locDir;
+        this.outputDir = outputDir;
         this.fileFrag = fileFrag;
+        this.entireFileSize = entireFileSize;
         this.sameEdge = sameedge;
     }
 

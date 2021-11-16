@@ -18,6 +18,7 @@ import edu.tamu.lenss.MDFS.Commands.get.get;
 import edu.tamu.lenss.MDFS.Commands.get.getUtils;
 import edu.tamu.lenss.MDFS.Constants;
 import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeper;
+import edu.tamu.lenss.MDFS.Model.Fragment;
 import edu.tamu.lenss.MDFS.Model.MDFSFileInfo;
 import edu.tamu.lenss.MDFS.Model.MDFSFragmentForFileRetrieve;
 import edu.tamu.lenss.MDFS.RSock.RSockConstants;
@@ -213,8 +214,14 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                                         fragsDir.mkdirs();
                                     }
 
+                                    //create a Fragment object
+                                    Fragment fr = new Fragment(mdfsfrag.fileName, mdfsfrag.filePathMDFS, mdfsfrag.fileFrag, mdfsfrag.fileId, mdfsfrag.entireFileSize, mdfsfrag.n2, mdfsfrag.k2, mdfsfrag.blockIdx, mdfsfrag.fragmentIndex, mdfsfrag.totalNumOfBlocks);
+
+                                    //convert Fragment object into byteArray
+                                    byte[] frArray = IOUtilities.objectToByteArray(fr);
+
                                     //save the shard in own device.
-                                    IOUtilities.byteToFile_FOS_write(mdfsfrag.fileFrag, fragsDir , MDFSFileInfo.getFragName(mdfsfrag.fileName, mdfsfrag.blockIdx, mdfsfrag.fragmentIndex));
+                                    IOUtilities.byteToFile_FOS_write(frArray, fragsDir , MDFSFileInfo.getFragName(mdfsfrag.fileName, mdfsfrag.blockIdx, mdfsfrag.fragmentIndex));
 
                                     //log
                                     logger.log(Level.ALL, "Received fragment# " + mdfsfrag.fragmentIndex + " of block# " + mdfsfrag.blockIdx + " of filename " + mdfsfrag.fileName + " from node " + mdfsfrag.srcGUID);
@@ -314,7 +321,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                                                     // and send request to own self.
                                                     //source = file requester from diff edge
                                                     //destination = ownGUID
-                                                    MDFSFragmentForFileRetrieve mdfsfrag1 = new MDFSFragmentForFileRetrieve(mdfsfrag.blockRetrieveReqUUID, MDFSFragmentForFileRetrieve.Type.RequestFromOneClientToAnotherForOneFragment, metadata.getn2(), metadata.getk2(), mdfsfrag.srcGUID, EdgeKeeper.ownName, mdfsfrag.fileName, metadata.getFilePathMDFS(), metadata.getFileID(), metadata.getBlockCount(), i, j, mdfsfrag.localDir, null, false);
+                                                    MDFSFragmentForFileRetrieve mdfsfrag1 = new MDFSFragmentForFileRetrieve(mdfsfrag.blockRetrieveReqUUID, MDFSFragmentForFileRetrieve.Type.RequestFromOneClientToAnotherForOneFragment, metadata.getn2(), metadata.getk2(), mdfsfrag.srcGUID, EdgeKeeper.ownName, mdfsfrag.fileName, metadata.getFilePathMDFS(), metadata.getFileID(), metadata.getBlockCount(), i, j, mdfsfrag.outputDir, null, 0, false);
 
                                                     //get each fragment of each block and send
                                                     getUtils.justDoit(mdfsfrag1);
@@ -336,7 +343,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                                         //send the fragment requests to the fileCreatorGUID.
                                         //source: file requester from diff edge
                                         //destination: file creator.
-                                        MDFSFragmentForFileRetrieve mdfsfrag1 = new MDFSFragmentForFileRetrieve(mdfsfrag.blockRetrieveReqUUID, MDFSFragmentForFileRetrieve.Type.RequestFromMasterToClientInSameEdgeForWholeFile, metadata.getn2(), metadata.getk2(), mdfsfrag.srcGUID, metadata.getFileCreatorGUID(), mdfsfrag.fileName, mdfsfrag.filePathMDFS, metadata.getFileID(), metadata.getBlockCount(), -1, -1, mdfsfrag.localDir, null, false);
+                                        MDFSFragmentForFileRetrieve mdfsfrag1 = new MDFSFragmentForFileRetrieve(mdfsfrag.blockRetrieveReqUUID, MDFSFragmentForFileRetrieve.Type.RequestFromMasterToClientInSameEdgeForWholeFile, metadata.getn2(), metadata.getk2(), mdfsfrag.srcGUID, metadata.getFileCreatorGUID(), mdfsfrag.fileName, mdfsfrag.filePathMDFS, metadata.getFileID(), metadata.getBlockCount(), -1, -1, mdfsfrag.outputDir, null, mdfsfrag.entireFileSize, false);
 
                                         //get byteArray from object
                                         byte[] data = IOUtilities.objectToByteArray(mdfsfrag1);
@@ -382,7 +389,7 @@ public class RsockReceiveForFileRetrieval implements Runnable {
                                         //create dummy mdfsfragForFileRetrieve of type == RequestFromOneClientToAnotherForOneFragment,
                                         //source = file requester from diff edge
                                         //destination = original fileCreator aka ownGUID.
-                                        MDFSFragmentForFileRetrieve mdfsfrag1 = new MDFSFragmentForFileRetrieve(mdfsfrag.blockRetrieveReqUUID, MDFSFragmentForFileRetrieve.Type.RequestFromOneClientToAnotherForOneFragment, mdfsfrag.n2, mdfsfrag.k2, mdfsfrag.srcGUID, EdgeKeeper.ownGUID, mdfsfrag.fileName, mdfsfrag.filePathMDFS, mdfsfrag.fileId, mdfsfrag.totalNumOfBlocks, i, j, mdfsfrag.localDir, null, false);
+                                        MDFSFragmentForFileRetrieve mdfsfrag1 = new MDFSFragmentForFileRetrieve(mdfsfrag.blockRetrieveReqUUID, MDFSFragmentForFileRetrieve.Type.RequestFromOneClientToAnotherForOneFragment, mdfsfrag.n2, mdfsfrag.k2, mdfsfrag.srcGUID, EdgeKeeper.ownGUID, mdfsfrag.fileName, mdfsfrag.filePathMDFS, mdfsfrag.fileId, mdfsfrag.totalNumOfBlocks, i, j, mdfsfrag.outputDir, null, mdfsfrag.entireFileSize, false);
 
                                         //get each fragment of each block and send
                                         getUtils.justDoit(mdfsfrag1);

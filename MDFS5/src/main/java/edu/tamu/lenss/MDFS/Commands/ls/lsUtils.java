@@ -217,7 +217,7 @@ public class lsUtils {
         return neighborMasters;
     }
 
-    //takes a ls result from edgekeeper for lsRequestForOwnEdge
+    //takes an unmodified ls result from edgekeeper for lsRequestForOwnEdge
     //and returns all tokens as a list.
     //lsReplyForOwnEdge is used for doing ls for a
     //particular directory for own edge directory.
@@ -270,7 +270,7 @@ public class lsUtils {
         }
     }
 
-    //takes a ls results from edgekeeper for lsRequestForAllDirectoryiesOfAllNeighborEdges,
+    //takes an unmodified ls results from edgekeeper for lsRequestForAllDirectoryiesOfAllNeighborEdges,
     //and return a list of neighbor masters guids.
     //returns empty list if no masters available().
     public static List<String> getListOfMastersGUIDsFromAllNeighborEdgeDirStr(String allNeighborEdgeDirsCache){

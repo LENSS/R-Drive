@@ -1,7 +1,5 @@
 package edu.tamu.lenss.MDFS.Commands.get;
 
-import android.os.Environment;
-
 import org.apache.log4j.Level;
 
 import java.io.File;
@@ -9,8 +7,8 @@ import java.io.FileFilter;
 import java.nio.ByteBuffer;
 
 import edu.tamu.lenss.MDFS.Cipher.MDFSCipher;
-import edu.tamu.lenss.MDFS.Constants;
 import edu.tamu.lenss.MDFS.Handler.ServiceHelper;
+import edu.tamu.lenss.MDFS.Model.Fragment;
 import edu.tamu.lenss.MDFS.Model.MDFSFileInfo;
 import edu.tamu.lenss.MDFS.Model.MDFSFragmentForFileRetrieve;
 import edu.tamu.lenss.MDFS.ReedSolomon.ReedSolomon;
@@ -39,10 +37,14 @@ public class FileMerge implements Runnable{
 
     @Override
     public void run() {
+        fileMerge(this.mdfsfrag);
+    }
 
+
+    public static boolean fileMerge(MDFSFragmentForFileRetrieve mdfsfrag){
         //make the resultant file
         //create a new file and append bytes in it
-        File outputFile = IOUtilities.createNewFile(getDecryptedFilePath());
+        File outputFile = IOUtilities.createNewFile(mdfsfrag.outputDir + File.separator + mdfsfrag.fileName);
         outputFile.setWritable(true);
 
         //variables
@@ -52,46 +54,57 @@ public class FileMerge implements Runnable{
         long totalBytesWritten = 0;
 
         //for each block decode blockFile
+        boolean result = true;
         for(int blockIdx=0; blockIdx< mdfsfrag.totalNumOfBlocks; blockIdx++){
 
-            //hack!
-            blockidx = blockIdx;
+            try {
+                blockidx = blockIdx;
 
-            // get stored fragments for each block
-            ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg__0/  (directory)
-            File fragDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(mdfsfrag.fileName, mdfsfrag.fileId, blockIdx));
-            fragments = fragDir.listFiles(new FileFilter(){
-                @Override
-                public boolean accept(File f) {
+                // get stored fragments for each block
+                ///storage/emulated/0/MDFS/test1.jpg_0123/test1.jpg__0/  (directory)
+                File fragDir = AndroidIOUtils.getExternalFile(MDFSFileInfo.getBlockDirPath(mdfsfrag.fileName, mdfsfrag.fileId, blockIdx));
+                fragments = fragDir.listFiles(new FileFilter() {
+                    @Override
+                    public boolean accept(File f) {
 
-                    //filter
-                    return ( f.isFile() && f.getName().contains(mdfsfrag.fileName + "__" + blockidx + "__frag__") );
-                }
-            });
+                        //filter
+                        return (f.isFile() && f.getName().contains(mdfsfrag.fileName + "__" + blockidx + "__frag__"));
+                    }
+                });
 
-            //decode from fragments/shards to block as bytearray
-            encryptedBlockBytes = decodeBlockFile(fragments, blockIdx, mdfsfrag.n2, mdfsfrag.k2);
+                //decode from fragments/shards to block as bytearray
+                encryptedBlockBytes = decodeBlockFile(fragments, blockIdx, mdfsfrag.n2, mdfsfrag.k2);
 
-            //decrypt the bytearray
-            blockBytes = new byte[encryptedBlockBytes.length];
-            int encryptCount = ByteBuffer.wrap(encryptedBlockBytes).getInt();
-            int decryptCount = MDFSCipher.getInstance().decryptX(encryptedBlockBytes, BYTES_IN_INT, encryptCount , ServiceHelper.getInstance().getEncryptKey(),blockBytes, 0);
+                //decrypt the bytearray
+                blockBytes = new byte[encryptedBlockBytes.length];
+                int encryptCount = ByteBuffer.wrap(encryptedBlockBytes).getInt();
+                int decryptCount = MDFSCipher.getInstance().decryptX(encryptedBlockBytes, BYTES_IN_INT, encryptCount, ServiceHelper.getInstance().getEncryptKey(), blockBytes, 0);
 
-            //append the bytes to the resultant file
-            IOUtilities.byteToFile_RAF_append(blockBytes, 0, decryptCount, outputFile, totalBytesWritten);
-            //IOUtilities.byteToFile_FC_append(blockBytes, 0, decryptCount, outputFile);
-            //IOUtilities.byteToFile_BOS_append(blockBytes, 0, decryptCount, outputFile, false);
-            totalBytesWritten = totalBytesWritten + decryptCount;
+                //append the bytes to the resultant file
+                IOUtilities.byteToFile_RAF_append(blockBytes, 0, decryptCount, outputFile, totalBytesWritten);
+                //IOUtilities.byteToFile_FC_append(blockBytes, 0, decryptCount, outputFile);
+                //IOUtilities.byteToFile_BOS_append(blockBytes, 0, decryptCount, outputFile, false);
+                totalBytesWritten = totalBytesWritten + decryptCount;
+            }catch (Exception e){
+                e.printStackTrace();
+                get.logger.log(Level.ALL, "file decoding failed in FileMerge class, filename: " + mdfsfrag.fileName + " fileID: " + mdfsfrag.fileId + " blockCount: " + mdfsfrag.totalNumOfBlocks + " failed block#: " + blockidx, e);
+                result = result & false;
+                break;
+            }
 
         }
 
-        MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "SUCCESS_ File Retrieval Success! filename: " + mdfsfrag.fileName + " of size " + totalBytesWritten);
+        if(result) {
+            MDFSFileRetrieverViaRsock.logger.log(Level.ALL, "SUCCESS_ File Retrieval Success! filename: " + mdfsfrag.fileName + " of size " + totalBytesWritten);
+        }
 
+        return result;
     }
+
 
     //takes a list of shards as bytearrays, uses erasure coding and
     // returns the decoded bytearray.
-    private byte[] decodeBlockFile(File[] blockFragments, int blockidx, int N2, int K2){
+    private static byte[] decodeBlockFile(File[] blockFragments, int blockidx, int N2, int K2){
 
         //create space for file fragments
         byte[][] shards = new byte[N2][];
@@ -101,8 +114,14 @@ public class FileMerge implements Runnable{
 
         for(File f: blockFragments){
 
+            //convert file tmp0 into byteArray
+            byte[] byteArray = IOUtilities.fileToByte(f);
+
+            //convert bytesArray into Fragment object
+            Fragment fr = IOUtilities.bytesToObject(byteArray, Fragment.class);
+
             //get bytes from fragments
-            byte[] fragBytes = IOUtilities.fileToByte(f);
+            byte[] fragBytes = fr.fileFrag;
 
             //get fragment number
             int fragmentIdx = getUtils.parseFragNum(f.getName());
@@ -134,19 +153,5 @@ public class FileMerge implements Runnable{
 
         return allBytes;
     }
-
-    //modifies decrypted path
-    private String getDecryptedFilePath(){  //Isagor0!
-        return mdfsfrag.localDir + File.separator + mdfsfrag.fileName;
-    }
-
-
-
 }
-
-
-
-
-
-
 

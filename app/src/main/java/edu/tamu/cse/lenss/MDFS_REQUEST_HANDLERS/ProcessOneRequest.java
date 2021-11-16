@@ -13,6 +13,7 @@ import edu.tamu.lenss.MDFS.Commands.ls.lsUtils;
 import edu.tamu.lenss.MDFS.Commands.mkdir.mkdir;
 import edu.tamu.lenss.MDFS.Commands.put.put;
 import edu.tamu.lenss.MDFS.Commands.rm.rm;
+import edu.tamu.lenss.MDFS.Constants;
 import edu.tamu.lenss.MDFS.RSock.testRsock;
 import edu.tamu.lenss.MDFS.Utils.IOUtilities;
 
@@ -125,9 +126,7 @@ public class ProcessOneRequest {
                                             String dirValidCheck = utils.isValidMDFSDir(filePathMDFS);
                                             if (dirValidCheck.equals("OK")) {
 
-                                                //handle put command and return reply=
                                                 String reply= new put().put(filepathLocal, filePathMDFS, filename, clientID);
-
                                                 clientSockets.sendAndClose(clientID, reply);
                                                 return reply;
 
@@ -208,15 +207,15 @@ public class ProcessOneRequest {
                                         if(cmd.length>3){
 
                                             //next token exists that is local dir
-                                            String locDir = cmd[3];
+                                            String outputDir = cmd[3];
 
                                             //check if local path is valid
-                                            String locDirValid = utils.isValidLocalDirInAndroidPhone(locDir);  //Isagor0!
+                                            String locDirValid = utils.isValidLocalDirInAndroidPhone(outputDir);  //Isagor0!
 
                                             if(locDirValid.equals("OK")){
 
                                                 //handle get command and return reply
-                                                String reply = get.get(mdfsDirWithFilename, locDir);
+                                                String reply = get.get(mdfsDirWithFilename, outputDir);
 
 
                                                 clientSockets.sendAndClose(clientID, reply);
