@@ -128,60 +128,66 @@ public class getUtils {
     public static Map<String, List<String>> getAllLocallyAvailableFiles(){
         Map<String, List<String>> locallyAvailableFiles = new HashMap<>();
 
-        String localStorageDir = File.separator + "sdcard" + File.separator + ANDROID_DIR_ROOT + File.separator;
-        File[] filesInLocalStorage = new File(localStorageDir).listFiles();
+        try {
+            String localStorageDir = File.separator + "sdcard" + File.separator + ANDROID_DIR_ROOT + File.separator;
+            File localStorage = new File(localStorageDir);
+            if(!localStorage.exists()){localStorage.mkdir();}
+            File[] filesInLocalStorage = localStorage.listFiles();
 
-        //iterate over each folders in /sdcard/MDFS/ directory in Android
-        for(File f: filesInLocalStorage){
+            //iterate over each folders in /sdcard/MDFS/ directory in Android
+            for (File f : filesInLocalStorage) {
 
-            String fname = f.getName().substring(0, f.getName().indexOf('_'));
-            List<String> l = locallyAvailableFiles.getOrDefault(fname, new ArrayList<>());
+                String fname = f.getName().substring(0, f.getName().indexOf('_'));
+                List<String> l = locallyAvailableFiles.getOrDefault(fname, new ArrayList<>());
 
-            //we are inside the block directory of this file
-            //check if there is any block available for this file (load the first block)
-            File blockDir = new File(localStorageDir + f.getName());
-            File[] blocks = blockDir.listFiles();
-            if(blocks.length==0){
-                l.add(null);
-            }else{
-                //load the fragmentDir
-                File fragDir = new File(localStorageDir + f.getName() + File.separator + blocks[0].getName() + File.separator);
-                File[] fragments = fragDir.listFiles();
-                if(fragments.length==0){
+                //we are inside the block directory of this file
+                //check if there is any block available for this file (load the first block)
+                File blockDir = new File(localStorageDir + f.getName());
+                File[] blocks = blockDir.listFiles();
+                if (blocks.length == 0) {
                     l.add(null);
-                }else{
-                    //load the fragment (as Fragment object) and convert from bytes to object
-                    File frFile = new File(localStorageDir + f.getName() + File.separator + blocks[0].getName() + File.separator + fragments[0].getName());
+                } else {
+                    //load the fragmentDir
+                    File fragDir = new File(localStorageDir + f.getName() + File.separator + blocks[0].getName() + File.separator);
+                    File[] fragments = fragDir.listFiles();
+                    if (fragments.length == 0) {
+                        l.add(null);
+                    } else {
+                        //load the fragment (as Fragment object) and convert from bytes to object
+                        File frFile = new File(localStorageDir + f.getName() + File.separator + blocks[0].getName() + File.separator + fragments[0].getName());
 
-                    //get byteArray from this file
-                    byte[] byteArray = IOUtilities.fileToByte(frFile);
+                        //get byteArray from this file
+                        byte[] byteArray = IOUtilities.fileToByte(frFile);
 
-                    //convert bytesArray into Fragment object
-                    Fragment fr = IOUtilities.bytesToObject(byteArray, Fragment.class);
+                        //convert bytesArray into Fragment object
+                        Fragment fr = IOUtilities.bytesToObject(byteArray, Fragment.class);
 
-                    int[][]missingBlocksAndFrags = new int[fr.totalNumOfBlocks][fr.n2];
+                        int[][] missingBlocksAndFrags = new int[fr.totalNumOfBlocks][fr.n2];
 
-                    boolean succeeded  = false;
-                    for(int i=0; i< fr.totalNumOfBlocks; i++){
-                        succeeded = getUtils.getMissingFragmentsOfABlockFromDisk(missingBlocksAndFrags, fr.fileName, fr.fileID, fr.n2 , i);
-                    }
+                        boolean succeeded = false;
+                        for (int i = 0; i < fr.totalNumOfBlocks; i++) {
+                            succeeded = getUtils.getMissingFragmentsOfABlockFromDisk(missingBlocksAndFrags, fr.fileName, fr.fileID, fr.n2, i);
+                        }
 
-                    if(succeeded) {
-                        if (getUtils.checkEnoughFragsAvailableForWholeFile(missingBlocksAndFrags, fr.k2)) {
-                            l.add(fr.fileID + "__" + fr.n2 + "__" + fr.k2 + "__" + fr.totalNumOfBlocks);
-                        }else{
+                        if (succeeded) {
+                            if (getUtils.checkEnoughFragsAvailableForWholeFile(missingBlocksAndFrags, fr.k2)) {
+                                l.add(fr.fileID + "__" + fr.n2 + "__" + fr.k2 + "__" + fr.totalNumOfBlocks);
+                            } else {
+                                l.add(null);
+                            }
+                        } else {
                             l.add(null);
                         }
-                    }else{
-                        l.add(null);
+
                     }
 
                 }
 
+                locallyAvailableFiles.put(fname, l);
+
             }
-
-            locallyAvailableFiles.put(fname, l);
-
+        }catch (Exception e){
+            e.printStackTrace();
         }
 
         return locallyAvailableFiles;

@@ -54,8 +54,10 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.MediaController;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -165,7 +167,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         this.textView.setMovementMethod(new ScrollingMovementMethod());
 
         //start directory updater function
-        //this.drUpdater = new DirectoryUpdater(context, activity);
+        this.drUpdater = new DirectoryUpdater(context, activity);
 
         //swipe refresh
         // Lookup the swipe container view
@@ -380,27 +382,43 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                             setViewForOwnEdge(newDir);
 
                         } else {
-                            try {
-                                String[] fInfo = directoryItems.get(position).split("__");
-                                if (fInfo[0].equals(FILE) && !fInfo[1].equals("null")) {
-                                    String outputDir = Environment.getExternalStorageDirectory().toString() + File.separator + Constants.DECRYPTION_FOLDER_NAME + File.separator;
-                                    MDFSFragmentForFileRetrieve mdfsfrag = new MDFSFragmentForFileRetrieve(null, null, Integer.parseInt(fInfo[2]), Integer.parseInt(fInfo[3]), null, null, item, null, fInfo[1], Integer.parseInt(fInfo[4]), -1, -1, outputDir, null, -1, true);
-                                    boolean res = FileMerge.fileMerge(mdfsfrag);
-                                    if (res) {
-                                        if (item.contains(".jpg") || item.contains(".png")) {
-                                            File file = new File(outputDir + item);
-                                            Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
-                                            Uri data = Uri.parse("file://" + file.getAbsolutePath());
-                                            intent.setDataAndType(data, "image/*");
-                                            startActivity(intent);
+                            String finalItem = item;
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        String[] fInfo = directoryItems.get(position).split("__");
+                                        if (fInfo[0].equals(FILE) && !fInfo[1].equals("null")) {
+                                            String outputDir = Environment.getExternalStorageDirectory().toString() + File.separator + Constants.DECRYPTION_FOLDER_NAME + File.separator;
+                                            MDFSFragmentForFileRetrieve mdfsfrag = new MDFSFragmentForFileRetrieve(null, null, Integer.parseInt(fInfo[2]), Integer.parseInt(fInfo[3]), null, null, finalItem, null, fInfo[1], Integer.parseInt(fInfo[4]), -1, -1, outputDir, null, -1, true);
+                                            boolean res = FileMerge.fileMerge(mdfsfrag);
+                                            if (res) {
+
+                                                if (finalItem.contains(".jpg") || finalItem.contains(".png")) {
+                                                    File file = new File(outputDir + finalItem);
+                                                    Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
+                                                    Uri data = Uri.parse("file://" + file.getAbsolutePath());
+                                                    intent.setDataAndType(data, "image/*");
+                                                    startActivity(intent);
+                                                }else if(finalItem.contains(".mp4")){
+                                                    File file = new File(outputDir + finalItem);
+                                                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                                                    intent.setDataAndType(Uri.fromFile(file), "video/*");
+                                                    startActivity(intent);
+                                                }
+                                            }
+                                        } else {
+                                            activity.runOnUiThread(new Runnable() {
+                                                public void run() {
+                                                    Toast.makeText(MainActivity.context, "File must be retrieved first", Toast.LENGTH_SHORT).show();
+                                                }
+                                            });
                                         }
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
                                     }
-                                } else {
-                                    Toast.makeText(MainActivity.context, "File must be retrieved first", Toast.LENGTH_SHORT).show();
                                 }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
+                            }).start();
                         }
                     }
                 }else if(currentMode.equals(NEIGHBOREDGEDIR)){
@@ -778,7 +796,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                         //create List and populate with file names from ls reply
                         List<String> list = lsUtils.jsonToList(ownEdgeDirCache);
-                        
+
                         //get a list of all files from local storage which are ready to be decoded right away
                         Map<String, List<String>> locallyAvailableFiles = getUtils.getAllLocallyAvailableFiles();
 
@@ -867,16 +885,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
+
         int id = item.getItemId();
         return super.onOptionsItemSelected(item);
     }
