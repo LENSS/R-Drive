@@ -17,6 +17,8 @@ public class Constants {
 	public static final int MAX_BLOCK_SIZE_IN_MB = 50;
 	public static final int DEFAULT_BLOCK_SIZE_IN_MB = 1;
 	public static int BLOCK_SIZE_IN_MB = DEFAULT_BLOCK_SIZE_IN_MB;
+	public static final Double DEFAULT_WA_FOR_ALGORITHM = 0.65;
+	public static final int MAX_FILE_AVAILABILITY_TIME = 12 * 60; //in minutes
 
 
 	//directory parameters
@@ -25,6 +27,8 @@ public class Constants {
 	public static final String ANDROID_DIR_CACHE = ANDROID_DIR_ROOT + File.separator + "cache";
 	public static final String DEFAULT_DECRYPTION_FOLDER_NAME = "decrypted";  					//decrypted folder in sdcard
     public static String DECRYPTION_FOLDER_NAME = DEFAULT_DECRYPTION_FOLDER_NAME;
+    public static Double WA_FOR_ALGORITHM = DEFAULT_WA_FOR_ALGORITHM;
+    public static int FILE_AVAILABILITY_TIME = MAX_FILE_AVAILABILITY_TIME;
 
 	//encoding parameters
 	public static final double DEFAULT_K_N_RATIO = 0.5;

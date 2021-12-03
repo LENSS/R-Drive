@@ -116,6 +116,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     static String BLOCK_SIZE = "BLOCK_SIZE";
     static String FILE_DECRYPTION_PATH = "FILE_DECRYPTION_PATH";
     static String MONITOR_INTERVAL = "MONITOR_INTERVAL_IN_SECONDS";
+    static String WA_FOR_ALGORITHM  =  "WA_FOR_ALGORITHM";
+    static String FILE_AVAILABILITY_TIME  =  "FILE_AVAILABILITY_TIME";
 
     //current browsing directory for own edge
     public static String ownEdgeCurrentDir = "";
@@ -542,6 +544,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if(interval!=null && !interval.equals("")){
             edu.tamu.cse.lenss.monitor.Constants.MONITOR_INTERVAL_IN_SECONDS = Integer.parseInt(interval);
         }
+
+        //fetch and set Wa for algorithm
+        String Wa = utils.SharedPreferences_get(RDRIVE_SHARED_PREF, WA_FOR_ALGORITHM);
+        if(Wa!=null && !Wa.equals("")){
+            Constants.WA_FOR_ALGORITHM = Double.parseDouble(Wa);
+        }
+
+        //fetch and set File Availability Time (in minutes) for algorithm
+        String FAT = utils.SharedPreferences_get(RDRIVE_SHARED_PREF, FILE_AVAILABILITY_TIME);
+        if(FAT!=null && !FAT.equals("")){
+            System.out.println("hohoho FAT: " + FAT);
+            Constants.FILE_AVAILABILITY_TIME = Integer.parseInt(FAT);
+        }
+
     }
 
 
@@ -936,7 +952,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void drawerSettingHandler() {
 
         //prepare the list of setting options
-        String settingOptions[] ={"Change K Value","Change Block Size","Change File Decryption Path", "Change Monitor Interval", "Clear Cache"};
+        String settingOptions[] ={"Change K Value","Change Block Size","Change File Decryption Path", "Change Monitor Interval", "Change File Availability Weight", "Change File Availability Time", "Clear Cache"};
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
         LayoutInflater inflater = getLayoutInflater();
         View convertView = (View) inflater.inflate(R.layout.setting_listview, null);
@@ -955,7 +971,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 d1.dismiss();
                 d1.cancel();
 
-                //get item that was selected form setting list
+                //get item that was selected from setting list
                 String settingListItem =  (String)((TextView) view).getText();
 
                 //prepare second alertdialog based on the chosen setting option from setting list
@@ -1010,6 +1026,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     hint = hint + " | " + "current: " + currVal + " sec";
                     tv.setHint(hint);
                 }else if(settingListItem.equals(settingOptions[4])){
+                    bldr.setTitle("Enter New Wa:");
+                    hint = "0.0 ≤ Wa ≤ 1.0 or 'auto'";
+                    Double currVal = Constants.WA_FOR_ALGORITHM;
+                    hint = hint + " | " + "current: " + currVal;
+                    tv.setHint(hint);
+                }else if(settingListItem.equals(settingOptions[5])){
+                    bldr.setTitle("Enter New File Availability Time:");
+                    hint = "1 ≤ FAT ≤ " + Constants.FILE_AVAILABILITY_TIME + " or 'auto'";
+                    int currVal = Constants.FILE_AVAILABILITY_TIME;
+                    hint = hint + " | " + "current: " + currVal + " min";
+                    tv.setHint(hint);
+                }else if(settingListItem.equals(settingOptions[6])){
                     try {
                         //get list of files from Cache dir
                         File cacheDir = new File(Environment.getExternalStorageDirectory() + File.separator + Constants.ANDROID_DIR_CACHE);
@@ -1024,9 +1052,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     Toast.makeText(MainActivity.context, "Cache Directory Cleaned", Toast.LENGTH_SHORT).show();
                 }
 
-                //show the second alertdialog if needed
+                //show the second alertdialog except index 6 (clear cache)
                 final AlertDialog d2 = bldr.create();
-                if(!settingListItem.equals(settingOptions[4])) {
+                if(!settingListItem.equals(settingOptions[6])) {
                     d2.show();
                 }
 
@@ -1065,7 +1093,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                 Toast.makeText(MainActivity.context, "K value changed to default", Toast.LENGTH_SHORT).show();
                                 d2.dismiss();
                             } else {
-                                Toast.makeText(MainActivity.context, "Value is not integer or 'auto'", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MainActivity.context, "Value is not integer\nor 'auto'", Toast.LENGTH_SHORT).show();
                             }
 
 
@@ -1093,7 +1121,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                 Toast.makeText(MainActivity.context, "Block size changed to default", Toast.LENGTH_SHORT).show();
                                 d2.dismiss();
                             }else{
-                                Toast.makeText(MainActivity.context, "Value is not integer or 'auto'", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MainActivity.context, "Value is not integer\nor 'auto'", Toast.LENGTH_SHORT).show();
                             }
 
 
@@ -1111,7 +1139,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                 tv.setText("");
                                 tv.setHint(finalSethint);
                             }else if(!value.contains(" ")){
-                                System.out.println("xyz: " + value);
                                 utils.SharedPreferences_put(RDRIVE_SHARED_PREF, FILE_DECRYPTION_PATH, value);
                                 Constants.DECRYPTION_FOLDER_NAME = value;
                                 Toast.makeText(MainActivity.context, "File decryption path changed to\n" + value, Toast.LENGTH_SHORT).show();
@@ -1144,7 +1171,58 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                 Toast.makeText(MainActivity.context, "Monitor interval changed to default", Toast.LENGTH_SHORT).show();
                                 d2.dismiss();
                             }else{
-                                Toast.makeText(MainActivity.context, "Value is not integer or 'auto'", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MainActivity.context, "Value is not integer\nor 'auto'", Toast.LENGTH_SHORT).show();
+                            }
+                        }else if(settingListItem.equals(settingOptions[4])){
+
+                            boolean isNumeric = true;
+                            try { Double.parseDouble(value);} catch(NumberFormatException e) {isNumeric = false;}
+
+                            if(isNumeric){
+
+                                Double valDouble = Double.parseDouble(value);
+
+                                if(valDouble>=0.0 && valDouble<=1.0){
+                                    utils.SharedPreferences_put(RDRIVE_SHARED_PREF, WA_FOR_ALGORITHM, value);
+                                    Constants.WA_FOR_ALGORITHM = valDouble;
+                                    Toast.makeText(MainActivity.context, "Wa changed to " + valDouble, Toast.LENGTH_SHORT).show();
+                                    d2.dismiss();
+                                }else{
+                                    Toast.makeText(MainActivity.context, "Value is not valid", Toast.LENGTH_SHORT).show();
+                                    tv.setText("");
+                                    tv.setHint(finalSethint);
+                                }
+                            }else if(value.toLowerCase().equals("auto")){
+                                utils.SharedPreferences_put(RDRIVE_SHARED_PREF, WA_FOR_ALGORITHM, Double.toString(Constants.DEFAULT_WA_FOR_ALGORITHM));
+                                Constants.WA_FOR_ALGORITHM = Constants.DEFAULT_WA_FOR_ALGORITHM;
+                                Toast.makeText(MainActivity.context, "Wa changed to default", Toast.LENGTH_SHORT).show();
+                                d2.dismiss();
+                            }else{
+                                Toast.makeText(MainActivity.context, "Value is not between 0 and 1\nor 'auto'", Toast.LENGTH_SHORT).show();
+                            }
+                        }else if(settingListItem.equals(settingOptions[5])){
+
+                            if(utils.isNumeric(value)){
+
+                                int valInt = Integer.parseInt(value);
+
+                                if(valInt>= 1 && valInt <= Constants.MAX_FILE_AVAILABILITY_TIME){
+                                    utils.SharedPreferences_put(RDRIVE_SHARED_PREF, FILE_AVAILABILITY_TIME, value);
+                                    Constants.FILE_AVAILABILITY_TIME = valInt;
+                                    Toast.makeText(MainActivity.context, "File Avail Time changed to " + valInt + " min", Toast.LENGTH_SHORT).show();
+                                    d2.dismiss();
+                                }else{
+                                    Toast.makeText(MainActivity.context, "Value is not valid", Toast.LENGTH_SHORT).show();
+                                    tv.setText("");
+                                    tv.setHint(finalSethint);
+                                }
+                            }else if(value.toLowerCase().equals("auto")){
+                                utils.SharedPreferences_put(RDRIVE_SHARED_PREF, FILE_AVAILABILITY_TIME, Long.toString(Constants.MAX_FILE_AVAILABILITY_TIME));
+                                Constants.FILE_AVAILABILITY_TIME = Constants.MAX_FILE_AVAILABILITY_TIME;
+                                Toast.makeText(MainActivity.context, "File Avail Time changed to default", Toast.LENGTH_SHORT).show();
+                                d2.dismiss();
+                            }else{
+                                Toast.makeText(MainActivity.context, "Value is not integer\nor 'auto'", Toast.LENGTH_SHORT).show();
                             }
                         }
                     }
@@ -1833,6 +1911,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         cameraButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                File cacheDir = new File(Environment.getExternalStorageDirectory() + File.separator + Constants.ANDROID_DIR_CACHE);
+                if(!cacheDir.exists()){
+                    cacheDir.mkdirs();
+                }
                 checkCameraPermission = true;
                 if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
                 {
@@ -1841,10 +1923,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 else
                 {
                     Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-                    File cacheDir = new File(Environment.getExternalStorageDirectory() + File.separator + Constants.ANDROID_DIR_CACHE);
-                    if(!cacheDir.exists()){
-                        cacheDir.mkdirs();
-                    }
                     tempFile = EdgeKeeper.ownName.replace(".distressnet.org","") + "_" + new SimpleDateFormat("MM_dd_yy_HH_mm_ss").format(new Date()) + ".jpg";
                     File photoFile = new File("/sdcard/" + Constants.ANDROID_DIR_CACHE + File.separator + tempFile);
                     cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
