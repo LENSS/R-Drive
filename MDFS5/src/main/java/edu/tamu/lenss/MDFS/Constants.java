@@ -28,7 +28,7 @@ public class Constants {
 	public static final String DEFAULT_DECRYPTION_FOLDER_NAME = "decrypted";  					//decrypted folder in sdcard
     public static String DECRYPTION_FOLDER_NAME = DEFAULT_DECRYPTION_FOLDER_NAME;
     public static Double WA_FOR_ALGORITHM = DEFAULT_WA_FOR_ALGORITHM;
-    public static int FILE_AVAILABILITY_TIME = MAX_FILE_AVAILABILITY_TIME;
+    public static int FILE_AVAILABILITY_TIME = MAX_FILE_AVAILABILITY_TIME; //in mins
 
 	//encoding parameters
 	public static final double DEFAULT_K_N_RATIO = 0.5;

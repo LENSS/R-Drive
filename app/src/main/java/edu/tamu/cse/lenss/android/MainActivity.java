@@ -554,7 +554,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         //fetch and set File Availability Time (in minutes) for algorithm
         String FAT = utils.SharedPreferences_get(RDRIVE_SHARED_PREF, FILE_AVAILABILITY_TIME);
         if(FAT!=null && !FAT.equals("")){
-            System.out.println("hohoho FAT: " + FAT);
             Constants.FILE_AVAILABILITY_TIME = Integer.parseInt(FAT);
         }
 

@@ -2,16 +2,21 @@ package edu.tamu.lenss.MDFS.Commands.put;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import edu.tamu.cse.lenss.edgeKeeper.client.EKClient;
 import edu.tamu.cse.lenss.edgeKeeper.fileMetaData.MDFSMetadata;
+import edu.tamu.cse.lenss.edgeKeeper.server.RequestTranslator;
+import edu.tamu.cse.lenss.edgeKeeper.utils.EKUtils;
 import edu.tamu.lenss.MDFS.Cipher.MDFSCipher;
 import edu.tamu.lenss.MDFS.Constants;
 import edu.tamu.lenss.MDFS.EdgeKeeper.EdgeKeeper;
@@ -33,8 +38,6 @@ public class put {
     private byte[] encryptKey;                      //put_encryption key
     private int blockCount;
     private int blockSize;
-    private double encodingRatio;
-    private List<String> chosenNodes;
     private MDFSMetadata metadata;                  //metadata object for this file
     private String filePathMDFS;                    //virtual directory path in MDFS in which the file will be saved. if dir doesnt exist, it willbe created first
     private String fileCreationReqUUID;             //unique id
@@ -80,7 +83,6 @@ public class put {
         }
 
         //if file is good, init variables
-        this.encodingRatio = Constants.DEFAULT_K_N_RATIO;
         this.blockSize = (Constants.BLOCK_SIZE_IN_MB * (1024*1024));
         this.blockCount = (int)Math.ceil((double)this.file.length()/this.blockSize);
         this.encryptKey = ServiceHelper.getInstance().getEncryptKey();
@@ -90,36 +92,96 @@ public class put {
         this.metadata = MDFSMetadata.createFileMetadata(this.fileCreationReqUUID, this.fileID, this.file.length(), EdgeKeeper.ownGUID, EdgeKeeper.ownGUID, this.filePathMDFS + "/" + this.file.getName(), Constants.metadataIsGlobal);
         this.uniqueReqID = "uniqueReqID";
 
-        //first decide the candidate nodes
-        //add ownGUID if not in the list already.
-        chosenNodes = EKClient.getAllLocalGUID();
-        if(chosenNodes.size() == 0) {
-            return "Error: EdgeKeeper not running";
+        //create empty node of candidate nodes that will be passed into the alg
+        List<NK.Node> candidateNodes = new ArrayList<>();
+
+        //get user expected file availability time
+        int FAT_int = Constants.FILE_AVAILABILITY_TIME;
+
+        //variable to hold highest Battery Remaining Time in all Devices
+        Double highest_BRT = 0.0;
+
+        //get Wa
+        Double Wa = Constants.WA_FOR_ALGORITHM;
+
+        //fetch edge health status
+        JSONObject edgeStatus = EKClient.getEdgeStatus();
+        if(edgeStatus==null){return "Error: Failed to decide replica devices";}
+
+        //get device status for all devices in the edge
+        JSONObject allDeviceStatus=null;
+        try {allDeviceStatus = edgeStatus.getJSONObject(RequestTranslator.deviceStatus);} catch (JSONException e) {e.printStackTrace();}
+        if(allDeviceStatus==null){return "Error: Failed to decide replica devices";}
+
+        //get all GUIDs which have device status availble
+        Iterator<String> guids = allDeviceStatus.keys();
+
+        while(guids.hasNext()) {
+            String guid = guids.next();
+
+            //get device status for this guid
+            JSONObject deviceStatus = null;
+
+            try { deviceStatus = allDeviceStatus.getJSONObject(guid); } catch (JSONException e) { e.printStackTrace(); }
+            if(deviceStatus==null){continue;}
+
+            try {
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+
+            //get battery percentage for this guid
+            int battParc = -1;
+            try {battParc = deviceStatus.getInt(EKUtils.batteryPercentage); } catch (JSONException e) {e.printStackTrace();}
+
+            //get avail storage for this guid
+            Long availStorage = new Long(-1);
+            try {availStorage = deviceStatus.getLong(EKUtils.freeExternalMemory); } catch (JSONException e) {e.printStackTrace();}
+
+
+            //make new Node object
+            if(battParc!=-1 && availStorage!=-1) {
+
+                //convert battery percentage into battery remaining time in mins
+                Double BRT = new Double(battParc * 3);
+
+                //save the highest Battery Remaining Time
+                highest_BRT = Math.max(BRT, highest_BRT);
+
+                //convert storage size from bytes into MB
+                Double availStorageInMB = new Double(availStorage/new Long(1000000));
+
+                //add this node to candidateNodes list
+                candidateNodes.add(new NK.Node(availStorageInMB, BRT, guid, new Double(FAT_int)));
+
+            }
         }
 
-        //   if(chosenNodes==null){
-        //       chosenNodes = new ArrayList<>();
-        //       chosenNodes.add(EdgeKeeper.ownGUID);
-        //   }
 
-        //this block of code selects n2, k2 values,
-        //based on the size of the chosenNodes list.
-        //n2 will be chosen equal to number of nodes in the list.
-        //k2 will be chosen by the below equation or user input.
-        if(chosenNodes.size() >= Constants.MAX_N_VAL){ this.n2 = Constants.MAX_N_VAL;} else{ this.n2 = chosenNodes.size();}
-        if(Constants.K_VALUE==Constants.DEFAULT_K_VALUE) {
-            //the user did not set a k value, so we take default one determined by equation.
-            this.k2 = (int) Math.round(n2 * encodingRatio);
-        }else if(Constants.K_VALUE>=this.n2){
-            //user set K value very high, even as high or higher than current n value, so we set k value as current n value.
-            this.k2 = this.n2;
+        //check if user expected File Availability Time is higher than highest Available Battery Remaining Time in any device
+        //in that case user expected File Availability Time is shrunk down to the highest Available Battery Remaining Time
+        Double FAT_double = null;
+        if(FAT_int>highest_BRT){
+            FAT_double = highest_BRT;
         }else{
-            this.k2 = Constants.K_VALUE;
+            FAT_double = new Double(FAT_int);
         }
 
-        //for testing only | delete me
-        //n2 = 3; k2 = 2;
+        //run the algorithm and get solution
+        NK.Solution sol = NK.simple_n_k_combinations(candidateNodes, Wa, FAT_double, new Double(file.length()/1000));
 
+        //create empty choden nodes
+        List<String> chosenNodes = null;
+        if(sol!=null && sol.CR>0.0){
+            chosenNodes = sol.getTopNNodesGUIDs();
+            this.n2 = sol.N;
+            this.k2 = sol.K;
+        }else{
+            return "Not enough resource available!";
+        }
+
+        //set N2 and K2
         this.metadata.setn2((int)this.n2);
         this.metadata.setk2((int)this.k2);
         if(this.n2 < 1 || this.k2 < 1){
@@ -148,8 +210,7 @@ public class put {
                 IOUtilities.fileToByte(file, startIndex, endIndex, blockBytes, 0);
 
                 //handle each block one after another
-                handleOneBlock(filename, filePathMDFS, fileID, n2, k2, blockBytes, filesize, i, uniqueReqID, metadata, encryptKey, chosenNodes);
-
+                handleOneBlock(filename, filePathMDFS, fileID, n2, k2, blockBytes, filesize, i, uniqueReqID, metadata, encryptKey,chosenNodes);
                 //update start and end index for next block iteration
                 startIndex = endIndex;
                 endIndex = endIndex + blockSize;
@@ -198,7 +259,7 @@ public class put {
             fragsDir.mkdirs();
         }
 
-        //first copy over chosenNodes in a new list
+        //first copy over candidateNodes in a new list
         List<String> candNodes = new ArrayList<>(chosenNodes);
 
         //remove my GUID if present
@@ -311,5 +372,4 @@ public class put {
     public static List<String> getalllocalguids(){
         return EKClient.getAllLocalGUID();
     }
-
 }

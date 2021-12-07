@@ -1,14 +1,25 @@
 package edu.tamu.lenss.MDFS.Commands.put;
 
+import android.content.Context;
+import android.widget.Toast;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-public class NK {
+import edu.tamu.lenss.MDFS.Constants;
 
+public class NK{
+
+    private static ExecutorService foothread = Executors.newSingleThreadExecutor();
 
     private static Random fRandom = new Random(); //add an int as seed
 
@@ -565,6 +576,13 @@ public class NK {
             System.out.println();
         }
 
+        public List<String> getTopNNodesGUIDs(){
+            List<String> topNnodes = new ArrayList<>();
+            for(int i=0; i< this.N; i++){
+                topNnodes.add(Nodes.get(i).guid);
+            }
+            return topNnodes;
+        }
     }
 
 
@@ -633,5 +651,4 @@ public class NK {
             this.K = k;
         }
     }
-
 }
